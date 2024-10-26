@@ -44,13 +44,13 @@ class AuthService(
         var isDuplicatedNickname = false
         val member = when (command.providerType) {
             ProviderType.KAKAO -> {
-                val userInfo = getKakaoMemberInfo(command.providerCode)
+                val userInfo = getKakaoMemberInfo(command.providerCode, getRedirectUriByOrigin(command.originHost, ProviderType.KAKAO))
                 val member = memberReader.findMember(userInfo.id)
                 userInfo.kakaoAccount.profile?.let { profile -> isDuplicatedNickname = memberReader.existMember(profile.nickname) }
                 member ?: memberWriter.save(MemberEntity.ofKakao(command, userInfo))
             }
             ProviderType.GOOGLE -> {
-                val userInfo = getGoogleMemberInfo(command.providerCode)
+                val userInfo = getGoogleMemberInfo(command.providerCode, getRedirectUriByOrigin(command.originHost, ProviderType.GOOGLE))
                 val member = memberReader.findMember(userInfo.id)
                 isDuplicatedNickname = memberReader.existMember(userInfo.name)
                 member ?: memberWriter.save(MemberEntity.ofGoogle(command, userInfo))
@@ -59,13 +59,13 @@ class AuthService(
         return makeLoginResponse(member.id.toString(), member.isNeedAdditionalUserInfo() || isDuplicatedNickname)
     }
 
-    private fun getKakaoMemberInfo(provideCode: String): KakaoMemberInfoDto {
-        val accessToken = kakaoMemberClient.getAccessTokenByCode(provideCode)
+    private fun getKakaoMemberInfo(provideCode: String, redirectUri: String): KakaoMemberInfoDto {
+        val accessToken = kakaoMemberClient.getAccessTokenByCode(provideCode, redirectUri)
         return kakaoMemberClient.getMemberInfoByAccessToken(accessToken)
     }
 
-    private fun getGoogleMemberInfo(provideCode: String): GoogleUserInfoDto {
-        val accessToken = googleMemberClient.getAccessTokenByCode(provideCode)
+    private fun getGoogleMemberInfo(provideCode: String, redirectUri: String): GoogleUserInfoDto {
+        val accessToken = googleMemberClient.getAccessTokenByCode(provideCode, redirectUri)
         return googleMemberClient.getMemberInfoByAccessToken(accessToken)
     }
 
@@ -97,27 +97,36 @@ class AuthService(
         )
     }
 
+    private fun getRedirectUriByOrigin(originHost: String, providerType: ProviderType) : String {
+        val providerTypeStr = providerType.toString().lowercase()
+        val client = oAuthProperties.client[providerTypeStr]!!
+
+        return if (originHost.endsWith("/")) "$originHost${client.redirectUriPath}" else "$originHost/${client.redirectUriPath}"
+    }
+
     override fun getRedirectUrl(command: GetRedirectUrlCommand): GetRedirectUrlDto.Response {
         val providerTypeStr = command.providerType.toString().lowercase()
         val client = oAuthProperties.client[providerTypeStr]!!
         val provider = oAuthProperties.provider[providerTypeStr]!!
 
+        val redirectUri = getRedirectUriByOrigin(command.originHost, command.providerType)
+
         return GetRedirectUrlDto.Response(
             when (command.providerType) {
-                ProviderType.KAKAO -> UriComponentsBuilder.fromUriString(provider.loginUri)
-                        .queryParam("client_id", client.clientId)
-                        .queryParam("redirect_uri", client.redirectUri)
-                        .queryParam("response_type", client.responseType)
-                        .build()
-                        .toString()
-                ProviderType.GOOGLE -> UriComponentsBuilder.fromUriString(provider.loginUri)
-                        .queryParam("client_id", client.clientId)
-                        .queryParam("redirect_uri", client.redirectUri)
-                        .queryParam("access_type", client.accessType)
-                        .queryParam("response_type", client.responseType)
-                        .queryParam("scope", client.scope)
-                        .build()
-                        .toString()
+            ProviderType.KAKAO -> UriComponentsBuilder.fromUriString(provider.loginUri)
+                .queryParam("client_id", client.clientId)
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("response_type", client.responseType)
+                .build()
+                .toString()
+            ProviderType.GOOGLE -> UriComponentsBuilder.fromUriString(provider.loginUri)
+                .queryParam("client_id", client.clientId)
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("access_type", client.accessType)
+                .queryParam("response_type", client.responseType)
+                .queryParam("scope", client.scope)
+                .build()
+                .toString()
         })
     }
 }

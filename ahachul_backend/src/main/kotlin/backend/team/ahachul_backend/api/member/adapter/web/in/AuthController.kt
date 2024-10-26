@@ -24,15 +24,21 @@ class AuthController(
 ) {
 
     @GetMapping("/v1/auth/redirect-url")
-    fun getRedirectUrl(@RequestParam providerType: ProviderType): CommonResponse<GetRedirectUrlDto.Response> {
-        return CommonResponse.success(authUseCase.getRedirectUrl(GetRedirectUrlCommand(providerType)))
+    fun getRedirectUrl(@RequestHeader(value="Origin") origin: String?, @RequestParam providerType: ProviderType): CommonResponse<GetRedirectUrlDto.Response> {
+        if (origin == null) {
+            throw CommonException(ResponseCode.BAD_REQUEST);
+        } else {
+            return CommonResponse.success(authUseCase.getRedirectUrl(GetRedirectUrlCommand(origin, providerType)))
+        }
     }
 
     @PostMapping("/v1/auth/login")
     fun login(@RequestHeader(value="Origin") origin: String?, @RequestBody request: LoginMemberDto.Request): CommonResponse<LoginMemberDto.Response> {
-        // TODO 개발용 코드. 추후 삭제
-        oAuthProperties.client[request.providerType.toString().lowercase()]!!.redirectUri = "$origin/onboarding/redirect?type=${request.providerType}"
-        return CommonResponse.success(authUseCase.login(request.toCommand()))
+        if (origin == null) {
+            throw CommonException(ResponseCode.BAD_REQUEST);
+        } else {
+            return CommonResponse.success(authUseCase.login(request.toCommand(origin)))
+        }
     }
 
     @PostMapping("/v1/auth/token/refresh")

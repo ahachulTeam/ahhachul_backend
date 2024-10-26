@@ -11,8 +11,9 @@ class LoginMemberDto {
             @NotNull
             val providerCode: String
     ) {
-        fun toCommand(): LoginMemberCommand {
+        fun toCommand(originHost:String): LoginMemberCommand {
             return LoginMemberCommand(
+                    originHost = originHost,
                     providerType = providerType,
                     providerCode = providerCode
             )
