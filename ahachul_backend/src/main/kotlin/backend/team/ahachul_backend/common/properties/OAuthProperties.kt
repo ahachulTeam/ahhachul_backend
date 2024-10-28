@@ -6,8 +6,9 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "oauth")
 class OAuthProperties(
-        val client: Map<String, Client> = HashMap(),
-        val provider: Map<String, Provider> = HashMap()
+    val client: Map<String, Client> = HashMap(),
+    val provider: Map<String, Provider> = HashMap(),
+    val properties: Map<String, Properties> = HashMap(),
 ) {
 
     data class Client(
@@ -16,12 +17,20 @@ class OAuthProperties(
         var redirectUri: String,
         val scope: String?,
         val responseType: String,
-        val accessType: String?
+        val accessType: String?,
+        val responseMode: String?
     )
 
     data class Provider(
-            val loginUri: String,
-            val tokenUri: String,
-            val userInfoUri: String
+        val loginUri: String,
+        val tokenUri: String,
+        val userInfoUri: String?
+    )
+
+    data class Properties(
+        val kid: String?,
+        val iss: String?,
+        val sub: String?,
+        val aud: String?
     )
 }

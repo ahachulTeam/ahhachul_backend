@@ -55,7 +55,7 @@ class GoogleMemberClientImpl(
             setBearerAuth(accessToken)
         }
         val httpEntity = HttpEntity<Any>(headers)
-        val response = restTemplate.exchange(provider.userInfoUri, HttpMethod.GET, httpEntity, String::class.java)
+        val response = restTemplate.exchange(provider.userInfoUri!!, HttpMethod.GET, httpEntity, String::class.java)
 
         if (response.statusCode == HttpStatus.OK) {
             return objectMapper.readValue(response.body, GoogleUserInfoDto::class.java)

@@ -53,7 +53,7 @@ class KakaoMemberClientImpl(
         val url = oAuthProperties.provider["kakao"]!!.userInfoUri
 
         val response = restTemplate.exchange(
-                url,
+                url!!,
                 HttpMethod.GET,
                 request,
                 String::class.java
