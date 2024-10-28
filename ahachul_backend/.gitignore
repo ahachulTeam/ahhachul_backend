@@ -49,3 +49,7 @@ src/test/resources/
 
 ### restdocs ###
 src/main/resources/static
+
+### p8, md ###
+src/main/resources/*.p8
+src/main/resources/*.md
