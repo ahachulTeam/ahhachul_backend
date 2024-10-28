@@ -11,8 +11,10 @@ import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberWriter
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
+import backend.team.ahachul_backend.common.client.AppleMemberClient
 import backend.team.ahachul_backend.common.client.GoogleMemberClient
 import backend.team.ahachul_backend.common.client.KakaoMemberClient
+import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
 import backend.team.ahachul_backend.common.dto.GoogleUserInfoDto
 import backend.team.ahachul_backend.common.dto.KakaoMemberInfoDto
 import backend.team.ahachul_backend.common.properties.JwtProperties
@@ -30,6 +32,7 @@ class AuthService(
         private val memberReader: MemberReader,
         private val kakaoMemberClient: KakaoMemberClient,
         private val googleMemberClient: GoogleMemberClient,
+        private val appleMemberClient: AppleMemberClient,
         private val jwtUtils: JwtUtils,
         private val jwtProperties: JwtProperties,
         private val oAuthProperties: OAuthProperties,
@@ -55,6 +58,11 @@ class AuthService(
                 isDuplicatedNickname = memberReader.existMember(userInfo.name)
                 member ?: memberWriter.save(MemberEntity.ofGoogle(command, userInfo))
             }
+            ProviderType.APPLE -> {
+                val userInfo = getAppleMemberInfo(command.providerCode)
+                val member = memberReader.findMember(userInfo.sub)
+                member ?: memberWriter.save(MemberEntity.ofApple(command, userInfo))
+            }
         }
         return makeLoginResponse(member.id.toString(), member.isNeedAdditionalUserInfo() || isDuplicatedNickname)
     }
@@ -67,6 +75,11 @@ class AuthService(
     private fun getGoogleMemberInfo(provideCode: String): GoogleUserInfoDto {
         val accessToken = googleMemberClient.getAccessTokenByCode(provideCode)
         return googleMemberClient.getMemberInfoByAccessToken(accessToken)
+    }
+
+    private fun getAppleMemberInfo(provideCode: String): AppleUserInfoDto {
+        val idToken = appleMemberClient.getIdTokenByCode(provideCode)
+        return appleMemberClient.getMemberInfoByIdToken(idToken)
     }
 
     private fun makeLoginResponse(memberId: String, isNeedAdditionalUserInfo: Boolean): LoginMemberDto.Response {
@@ -116,6 +129,14 @@ class AuthService(
                         .queryParam("access_type", client.accessType)
                         .queryParam("response_type", client.responseType)
                         .queryParam("scope", client.scope)
+                        .build()
+                        .toString()
+                ProviderType.APPLE -> UriComponentsBuilder.fromUriString(provider.loginUri)
+                        .queryParam("client_id", client.clientId)
+                        .queryParam("redirect_uri", client.redirectUri)
+                        .queryParam("response_type", client.responseType)
+                        .queryParam("scope", client.scope)
+                        .queryParam("response_mode", client.responseMode)
                         .build()
                         .toString()
         })

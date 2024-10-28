@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 
 import backend.team.ahachul_backend.api.member.domain.model.MemberStatusType
 import backend.team.ahachul_backend.api.report.domain.ReportEntity
+import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
 import backend.team.ahachul_backend.common.dto.GoogleUserInfoDto
 import backend.team.ahachul_backend.common.dto.KakaoMemberInfoDto
 import backend.team.ahachul_backend.common.entity.BaseEntity
@@ -62,6 +63,18 @@ class MemberEntity(
                         return MemberEntity(
                                 nickname = userInfo.name,
                                 providerUserId = userInfo.id,
+                                provider = command.providerType,
+                                email = userInfo.email,
+                                gender = null,
+                                ageRange = null,
+                                status = MemberStatusType.ACTIVE
+                        )
+                }
+
+                fun ofApple(command: LoginMemberCommand, userInfo: AppleUserInfoDto): MemberEntity {
+                        return MemberEntity(
+                                nickname = null,
+                                providerUserId = userInfo.sub,
                                 provider = command.providerType,
                                 email = userInfo.email,
                                 gender = null,
