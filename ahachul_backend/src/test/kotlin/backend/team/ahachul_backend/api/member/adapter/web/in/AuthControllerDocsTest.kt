@@ -82,7 +82,7 @@ class AuthControllerDocsTest : CommonDocsTestConfig() {
 
         // TODO 개발용 코드. 추후 삭제
         given(oAuthProperties.client).willReturn(
-            mapOf("kakao" to OAuthProperties.Client("", "", "", "", "", "", ""))
+            mapOf("kakao" to OAuthProperties.Client("", "", "", "", "", ""))
         )
 
         val request = LoginMemberDto.Request(

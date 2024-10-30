@@ -136,7 +136,6 @@ class AuthService(
                         .queryParam("redirect_uri", client.redirectUri)
                         .queryParam("response_type", client.responseType)
                         .queryParam("scope", client.scope)
-                        .queryParam("response_mode", client.responseMode)
                         .build()
                         .toString()
         })

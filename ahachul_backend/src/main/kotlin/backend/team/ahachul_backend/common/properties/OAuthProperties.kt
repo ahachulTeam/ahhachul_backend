@@ -18,7 +18,6 @@ class OAuthProperties(
         val scope: String?,
         val responseType: String,
         val accessType: String?,
-        val responseMode: String?
     )
 
     data class Provider(
