@@ -4,7 +4,7 @@ import backend.team.ahachul_backend.common.dto.KakaoMemberInfoDto
 
 interface KakaoMemberClient {
 
-    fun getAccessTokenByCode(code: String): String
+    fun getAccessTokenByCode(code: String, redirectUri: String): String
 
     fun getMemberInfoByAccessToken(accessToken: String): KakaoMemberInfoDto
 }

@@ -24,7 +24,7 @@ class KakaoMemberClientImpl(
         private val oAuthProperties: OAuthProperties
 ): KakaoMemberClient {
 
-    override fun getAccessTokenByCode(code: String): String {
+    override fun getAccessTokenByCode(code: String, redirectUri: String): String {
         val headers = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_FORM_URLENCODED
         }
@@ -32,7 +32,7 @@ class KakaoMemberClientImpl(
         val params = LinkedMultiValueMap<String, String>()
         params.add("grant_type", "authorization_code")
         params.add("client_id", oAuthProperties.client["kakao"]!!.clientId)
-        params.add("redirect_uri", oAuthProperties.client["kakao"]!!.redirectUri)
+        params.add("redirect_uri", redirectUri)
         params.add("code", code)
 
         val request = HttpEntity(params, headers)
