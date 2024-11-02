@@ -7,7 +7,6 @@ import backend.team.ahachul_backend.api.member.application.port.`in`.AuthUseCase
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.GetRedirectUrlCommand
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.exception.CommonException
-import backend.team.ahachul_backend.common.properties.OAuthProperties
 import backend.team.ahachul_backend.common.response.CommonResponse
 import backend.team.ahachul_backend.common.response.ResponseCode
 import io.jsonwebtoken.ExpiredJwtException
@@ -18,27 +17,32 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 class AuthController(
-        private val authUseCase: AuthUseCase,
-
-        private val oAuthProperties: OAuthProperties,
+    private val authUseCase: AuthUseCase,
 ) {
-
-    @GetMapping("/v1/auth/redirect-url")
-    fun getRedirectUrl(@RequestHeader(value="Origin") origin: String?, @RequestParam providerType: ProviderType): CommonResponse<GetRedirectUrlDto.Response> {
+    fun verifyOrigin(origin: String?) {
         if (origin == null) {
-            throw CommonException(ResponseCode.BAD_REQUEST);
-        } else {
-            return CommonResponse.success(authUseCase.getRedirectUrl(GetRedirectUrlCommand(origin, providerType)))
+            throw CommonException(ResponseCode.BAD_REQUEST)
         }
     }
 
+    @GetMapping("/v1/auth/redirect-url")
+    fun getRedirectUrl(
+        @RequestHeader(value = "Origin") origin: String?,
+        @RequestParam providerType: ProviderType
+    ): CommonResponse<GetRedirectUrlDto.Response> {
+        verifyOrigin(origin)
+
+        return CommonResponse.success(authUseCase.getRedirectUrl(GetRedirectUrlCommand(origin!!, providerType)))
+    }
+
     @PostMapping("/v1/auth/login")
-    fun login(@RequestHeader(value="Origin") origin: String?, @RequestBody request: LoginMemberDto.Request): CommonResponse<LoginMemberDto.Response> {
-        if (origin == null) {
-            throw CommonException(ResponseCode.BAD_REQUEST);
-        } else {
-            return CommonResponse.success(authUseCase.login(request.toCommand(origin)))
-        }
+    fun login(
+        @RequestHeader(value = "Origin") origin: String?,
+        @RequestBody request: LoginMemberDto.Request
+    ): CommonResponse<LoginMemberDto.Response> {
+        verifyOrigin(origin)
+
+        return CommonResponse.success(authUseCase.login(request.toCommand(origin!!)))
     }
 
     @PostMapping("/v1/auth/token/refresh")
@@ -47,7 +51,10 @@ class AuthController(
             return CommonResponse.success(authUseCase.getToken(request.toCommand()))
         } catch (e: Exception) {
             throw when (e) {
-                is SignatureException, is UnsupportedJwtException, is IllegalArgumentException, is MalformedJwtException -> CommonException(ResponseCode.INVALID_REFRESH_TOKEN)
+                is SignatureException, is UnsupportedJwtException, is IllegalArgumentException, is MalformedJwtException -> CommonException(
+                    ResponseCode.INVALID_REFRESH_TOKEN
+                )
+
                 is ExpiredJwtException -> CommonException(ResponseCode.EXPIRED_REFRESH_TOKEN)
                 else -> CommonException(ResponseCode.INTERNAL_SERVER_ERROR)
             }
