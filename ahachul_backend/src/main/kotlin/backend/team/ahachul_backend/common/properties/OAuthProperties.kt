@@ -18,7 +18,11 @@ class OAuthProperties(
         val scope: String?,
         val responseType: String,
         val accessType: String?,
-    )
+    ) {
+        fun getRedirectUri(origin: String?): String {
+            return "${origin ?: ""}${redirectUriPath}"
+        }
+    }
 
     data class Provider(
         val loginUri: String,

@@ -34,17 +34,17 @@ class AppleMemberClientImpl(
         val PROVIDER = ProviderType.APPLE.toString().lowercase(Locale.getDefault())
     }
 
-    private val client : OAuthProperties.Client =  oAuthProperties.client[PROVIDER]!!
-    private val provider : OAuthProperties.Provider =  oAuthProperties.provider[PROVIDER]!!
+    private val client : OAuthProperties.Client = oAuthProperties.client[PROVIDER]!!
+    private val provider : OAuthProperties.Provider = oAuthProperties.provider[PROVIDER]!!
     private val properties : OAuthProperties.Properties = oAuthProperties.properties[PROVIDER]!!
 
     val objectMapper: ObjectMapper = ObjectMapper()
 
-    override fun getIdTokenByCode(code: String): String {
+    override fun getIdTokenByCodeAndOrigin(code: String, origin: String?): String {
         val headers = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_FORM_URLENCODED
         }
-        val httpEntity = HttpEntity(getHttpBodyParams(code), headers)
+        val httpEntity = HttpEntity(getHttpBodyParams(code, origin), headers)
         val response = restTemplate.exchange(provider.tokenUri, HttpMethod.POST, httpEntity, String::class.java)
 
         if (response.statusCode == HttpStatus.OK) {
@@ -61,13 +61,13 @@ class AppleMemberClientImpl(
         return objectMapper.readValue(payload, AppleUserInfoDto::class.java)
     }
 
-    private fun getHttpBodyParams(code: String): LinkedMultiValueMap<String, String?> {
+    private fun getHttpBodyParams(code: String, origin: String?): LinkedMultiValueMap<String, String?> {
         val params = LinkedMultiValueMap<String, String?>()
 
         params["code"] = code
         params["client_id"] = client.clientId
         params["client_secret"] = getClientSecret()
-        params["redirect_uri"] = client.redirectUri
+        params["redirect_uri"] = client.getRedirectUri(origin)
         params["grant_type"] = "authorization_code"
 
         return params

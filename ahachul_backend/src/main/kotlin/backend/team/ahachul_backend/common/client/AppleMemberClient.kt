@@ -4,7 +4,7 @@ import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
 
 interface AppleMemberClient {
 
-    fun getIdTokenByCode(code: String): String
+    fun getIdTokenByCodeAndOrigin(code: String, origin: String?): String
 
     fun getMemberInfoByIdToken(idToken: String): AppleUserInfoDto
 }
