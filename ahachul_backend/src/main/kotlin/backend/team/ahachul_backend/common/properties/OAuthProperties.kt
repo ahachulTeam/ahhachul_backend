@@ -14,7 +14,7 @@ class OAuthProperties(
     data class Client(
         val clientId: String,
         val clientSecret: String?,
-        var redirectUri: String,
+        var redirectUriPath: String,
         val scope: String?,
         val responseType: String,
         val accessType: String?,

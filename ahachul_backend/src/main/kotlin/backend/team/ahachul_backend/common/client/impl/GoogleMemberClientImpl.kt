@@ -27,11 +27,11 @@ class GoogleMemberClientImpl(
     private val provider :OAuthProperties.Provider =  oAuthProperties.provider[PROVIDER]!!
     val objectMapper: ObjectMapper = ObjectMapper()
 
-    override fun getAccessTokenByCode(code: String): String {
+    override fun getAccessTokenByCode(code: String, redirectUri: String): String {
         val headers = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_FORM_URLENCODED
         }
-        val httpEntity = HttpEntity(getHttpBodyParams(code), headers)
+        val httpEntity = HttpEntity(getHttpBodyParams(code, redirectUri), headers)
         val response = restTemplate.exchange(provider.tokenUri, HttpMethod.POST, httpEntity, String::class.java)
 
         if (response.statusCode == HttpStatus.OK) {
@@ -40,12 +40,12 @@ class GoogleMemberClientImpl(
         throw CommonException(ResponseCode.INVALID_OAUTH_AUTHORIZATION_CODE)
     }
 
-    private fun getHttpBodyParams(code: String): LinkedMultiValueMap<String, String?>{
+    private fun getHttpBodyParams(code: String, redirectUri: String): LinkedMultiValueMap<String, String?>{
         val params = LinkedMultiValueMap<String, String?>()
         params["code"] = code
         params["client_id"] = client.clientId
         params["client_secret"] = client.clientSecret
-        params["redirect_uri"] = client.redirectUri
+        params["redirect_uri"] = redirectUri
         params["grant_type"] = "authorization_code"
         return params
     }
