@@ -133,7 +133,6 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
         val result = mockMvc.perform(
             get("/v1/lost-posts")
                 .queryParam("lostType", LostType.LOST.name)
-                .queryParam("lostOrigin", LostOrigin.LOST112.name)
                 .queryParam("subwayLineId", "1")
                 .queryParam("category", "검색 카테고리 이름")
                 .queryParam("keyword", "검색 키워드 이름")
@@ -149,7 +148,6 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                 getDocsResponse(),
                 queryParameters(
                     parameterWithName("lostType").description("유실물 카테고리").attributes(getFormatAttribute("LOST(유실물) / ACQUIRE(습득물 + Lost112)")),
-                    parameterWithName("lostOrigin").description("플랫폼").attributes(getFormatAttribute("AHACHUL / LOST112")),
                     parameterWithName("subwayLineId").description("유실물 호선").optional(),
                     parameterWithName("keyword").description("검색 키워드 명칭").optional(),
                     parameterWithName("category").description("검색 카테고리 명칭").optional(),

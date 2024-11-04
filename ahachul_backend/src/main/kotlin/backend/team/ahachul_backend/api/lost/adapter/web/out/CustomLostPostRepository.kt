@@ -10,12 +10,8 @@ import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
-import com.querydsl.core.types.ExpressionUtils.orderBy
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Slice
-import org.springframework.data.domain.SliceImpl
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
@@ -61,23 +57,24 @@ class CustomLostPostRepository(
     }
 
     fun searchLostPosts(command: GetSliceLostPostsCommand): List<LostPostEntity> {
-        val orderSpecifier = if (command.lostOrigin == LostOrigin.LOST112) {
+        /**
+         *   습득물인 경우 앱 자체 데이터와 크롤링 해온 데이터가 섞여 있으니 receivedDate 기준으로 정렬
+         *   유실물인 경우 앱 자체 데이터만 있으니 createdAt 기준으로 정렬
+         */
+        val orderSpecifier = if (command.lostType == LostType.ACQUIRE) {
             listOf(lostPostEntity.receivedDate.desc(), lostPostEntity.id.asc())
         } else {
             listOf(lostPostEntity.createdAt.desc(), lostPostEntity.id.asc())
         }
 
-        val all = queryFactory.selectFrom(lostPostEntity).fetch()
-
         return queryFactory.selectFrom(lostPostEntity)
             .where(
                 subwayLineEq(command.subwayLine),
                 lostTypeEq(command.lostType),
-                lostOriginEq(command.lostOrigin),
                 categoryEq(command.category),
                 titleAndContentLike(command.keyword),
                 createdAtBeforeOrEqual(
-                    command.lostOrigin,
+                    command.lostType,
                     command.date,
                     command.lostPostId
                 )
@@ -117,9 +114,6 @@ class CustomLostPostRepository(
     private fun lostTypeEq(lostType: LostType?) =
         lostType?.let { lostPostEntity.lostType.eq(lostType) }
 
-    private fun lostOriginEq(lostOrigin: LostOrigin?) =
-        lostOrigin?.let { lostPostEntity.origin.eq(lostOrigin) }
-
     private fun categoryEq(category: CategoryEntity?) =
         category?.let { lostPostEntity.category.eq(category) }
 
@@ -132,8 +126,8 @@ class CustomLostPostRepository(
                 .or(lostPostEntity.content.contains(keyword))
         }
 
-    private fun createdAtBeforeOrEqual(lostOrigin: LostOrigin, localDateTime: LocalDateTime?, id: Long?) =
-        if (lostOrigin == LostOrigin.LOST112) {
+    private fun createdAtBeforeOrEqual(lostType: LostType, localDateTime: LocalDateTime?, id: Long?) =
+        if (lostType == LostType.ACQUIRE) {
             localDateTime?.let { date ->
                 id?.let { lostPostId ->
                     lostPostEntity.receivedDate.lt(date).or(
