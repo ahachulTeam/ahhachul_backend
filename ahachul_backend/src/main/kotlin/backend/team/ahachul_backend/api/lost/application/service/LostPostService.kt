@@ -117,7 +117,7 @@ class LostPostService(
                 createdAt = it.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                 subwayLineId = it.subwayLine?.id,
                 status = it.status,
-                image = getFileSource(it),
+                imageUrl = getFileSource(it),
                 categoryName = it.category?.name
             )
         }

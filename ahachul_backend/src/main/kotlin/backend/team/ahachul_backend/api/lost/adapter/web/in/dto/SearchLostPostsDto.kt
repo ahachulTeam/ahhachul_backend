@@ -32,9 +32,9 @@ class SearchLostPostsDto {
         val createdBy: String,
         val createdAt: String,
         val subwayLineId: Long?,
-        val chatCnt: Int = 0,
+        val commentCnt: Int = 0,
         val status: LostStatus,
-        val image: String?,
+        val imageUrl: String?,
         val categoryName: String?
     )
 }
