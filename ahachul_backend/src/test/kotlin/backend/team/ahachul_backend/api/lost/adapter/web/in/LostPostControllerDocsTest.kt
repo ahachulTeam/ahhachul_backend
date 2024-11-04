@@ -2,7 +2,6 @@ package backend.team.ahachul_backend.api.lost.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.lost.application.port.`in`.LostPostUseCase
-import backend.team.ahachul_backend.api.lost.domain.model.LostOrigin
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
 import backend.team.ahachul_backend.common.dto.ImageDto
@@ -118,9 +117,9 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                 createdBy = "1",
                 createdAt = "2023/01/23",
                 subwayLineId = 1,
-                chatCnt = 1,
+                commentCnt = 1,
                 status = LostStatus.PROGRESS,
-                image = "https://img.png",
+                imageUrl = "https://img.png",
                 categoryName = "휴대폰"
             )),
             pageSize=1,
@@ -133,9 +132,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
         val result = mockMvc.perform(
             get("/v1/lost-posts")
                 .queryParam("lostType", LostType.LOST.name)
-                .queryParam("lostOrigin", LostOrigin.LOST112.name)
                 .queryParam("subwayLineId", "1")
-                .queryParam("category", "검색 카테고리 이름")
                 .queryParam("keyword", "검색 키워드 이름")
                 .queryParam("pageToken", "MTIzMTI5MTU6MTI=")
                 .queryParam("pageSize", "10" )
@@ -149,10 +146,8 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                 getDocsResponse(),
                 queryParameters(
                     parameterWithName("lostType").description("유실물 카테고리").attributes(getFormatAttribute("LOST(유실물) / ACQUIRE(습득물 + Lost112)")),
-                    parameterWithName("lostOrigin").description("플랫폼").attributes(getFormatAttribute("AHACHUL / LOST112")),
                     parameterWithName("subwayLineId").description("유실물 호선").optional(),
                     parameterWithName("keyword").description("검색 키워드 명칭").optional(),
-                    parameterWithName("category").description("검색 카테고리 명칭").optional(),
                     parameterWithName("pageToken").description("base64로 인코딩 된 페이지 토큰 문자열").optional(),
                     parameterWithName("pageSize").description("페이지 노출 데이터 수. index 0부터 시작"),
                 ),
@@ -167,10 +162,10 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("result.data[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                     fieldWithPath("result.data[].createdAt").type(JsonFieldType.STRING).description("유실물 작성 날짜"),
                     fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선 ID"),
-                    fieldWithPath("result.data[].chatCnt").type(JsonFieldType.NUMBER).description("유실물 쪽지 개수"),
+                    fieldWithPath("result.data[].commentCnt").type(JsonFieldType.NUMBER).description("유실물 댓글 개수"),
                     fieldWithPath("result.data[].status").type(JsonFieldType.STRING).description("유실물 찾기 완료 여부").attributes(getFormatAttribute( "PROGRESS / COMPLETE")),
                     fieldWithPath("result.data[].categoryName" ).type(JsonFieldType.STRING).description("카테고리 이름").optional(),
-                    fieldWithPath("result.data[].image").type(JsonFieldType.STRING).description("등록된 첫 번째 이미지 URI"),
+                    fieldWithPath("result.data[].imageUrl").type(JsonFieldType.STRING).description("등록된 첫 번째 이미지 URI"),
                 )
             ))
     }

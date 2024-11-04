@@ -7,7 +7,6 @@ import backend.team.ahachul_backend.api.lost.application.service.command.`in`.Cr
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.SearchLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
-import backend.team.ahachul_backend.api.lost.domain.model.LostOrigin
 import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
@@ -348,7 +347,6 @@ class LostPostServiceTest(
     private fun createSearchLostPostCommand(pageToken: String?, subwayLineId:Long, keyword:String?): SearchLostPostCommand {
         return SearchLostPostCommand(
             lostType = LostType.ACQUIRE,
-            lostOrigin = LostOrigin.AHACHUL,
             subwayLineId = subwayLineId,
             keyword = keyword,
             category = "휴대폰",

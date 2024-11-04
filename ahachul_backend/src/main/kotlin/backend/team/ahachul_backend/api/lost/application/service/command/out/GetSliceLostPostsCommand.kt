@@ -2,7 +2,6 @@ package backend.team.ahachul_backend.api.lost.application.service.command.out
 
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.SearchLostPostCommand
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
-import backend.team.ahachul_backend.api.lost.domain.model.LostOrigin
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.utils.PageTokenUtils
@@ -10,7 +9,6 @@ import java.time.LocalDateTime
 
 class GetSliceLostPostsCommand(
     val lostType: LostType,
-    val lostOrigin: LostOrigin,
     val subwayLine: SubwayLineEntity?,
     val category: CategoryEntity?,
     val keyword: String?,
@@ -28,7 +26,6 @@ class GetSliceLostPostsCommand(
 
             return GetSliceLostPostsCommand(
                 lostType = command.lostType,
-                lostOrigin = command.lostOrigin,
                 subwayLine = subwayLine,
                 category = category,
                 keyword = command.keyword,
