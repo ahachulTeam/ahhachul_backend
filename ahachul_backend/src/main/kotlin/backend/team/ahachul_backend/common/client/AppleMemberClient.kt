@@ -1,6 +1,10 @@
 package backend.team.ahachul_backend.common.client
 
-interface AppleMemberClient {
-    fun verifyIdentityToken(identityToken: String, authCode: String): Boolean
+import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
 
+interface AppleMemberClient {
+
+    fun getIdTokenByCodeAndOrigin(code: String, origin: String?): String
+
+    fun getMemberInfoByIdToken(idToken: String): AppleUserInfoDto
 }

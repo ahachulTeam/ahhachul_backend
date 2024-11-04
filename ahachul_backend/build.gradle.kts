@@ -121,6 +121,7 @@ tasks {
         into(file("src/main/resources/static/docs"))
     }
     bootJar {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
         dependsOn("copyDocument")
         from(asciidoctor.get().outputDir) {
             into("BOOT-INF/classes/static/docs")

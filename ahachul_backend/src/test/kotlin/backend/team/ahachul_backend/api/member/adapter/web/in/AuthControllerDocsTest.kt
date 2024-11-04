@@ -7,22 +7,18 @@ import backend.team.ahachul_backend.api.member.application.port.`in`.AuthUseCase
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.properties.OAuthProperties
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
-import io.jsonwebtoken.lang.Maps
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
-import org.mockito.BDDMockito.willDoNothing
-import org.mockito.Mock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post
-import org.springframework.restdocs.operation.preprocess.Preprocessors.*
 import org.springframework.restdocs.payload.JsonFieldType
 import org.springframework.restdocs.payload.PayloadDocumentation.*
-import org.springframework.restdocs.request.RequestDocumentation.*
+import org.springframework.restdocs.request.RequestDocumentation.parameterWithName
+import org.springframework.restdocs.request.RequestDocumentation.queryParameters
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(AuthController::class)
@@ -59,7 +55,7 @@ class AuthControllerDocsTest : CommonDocsTestConfig() {
                     getDocsRequest(),
                     getDocsResponse(),
                     queryParameters(
-                        parameterWithName("providerType").description("플랫폼 타입").attributes(getFormatAttribute("KAKAO, GOOGLE"))
+                        parameterWithName("providerType").description("플랫폼 타입").attributes(getFormatAttribute("KAKAO, GOOGLE, APPLE"))
                     ),
                     responseFields(
                         *commonResponseFields(),
@@ -110,7 +106,7 @@ class AuthControllerDocsTest : CommonDocsTestConfig() {
                     getDocsRequest(),
                     getDocsResponse(),
                     requestFields(
-                        fieldWithPath("providerType").type("ProviderType").description("플랫폼 타입").attributes(getFormatAttribute("KAKAO, GOOGLE")),
+                        fieldWithPath("providerType").type("ProviderType").description("플랫폼 타입").attributes(getFormatAttribute("KAKAO, GOOGLE, APPLE")),
                         fieldWithPath("providerCode").type(JsonFieldType.STRING).description("인가 코드")
                     ),
                     responseFields(

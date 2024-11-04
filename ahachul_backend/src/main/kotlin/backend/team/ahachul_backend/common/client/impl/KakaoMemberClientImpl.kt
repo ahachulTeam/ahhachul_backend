@@ -1,5 +1,6 @@
 package backend.team.ahachul_backend.common.client.impl
 
+import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.client.KakaoMemberClient
 import backend.team.ahachul_backend.common.dto.KakaoAccessTokenDto
 import backend.team.ahachul_backend.common.dto.KakaoMemberInfoDto
@@ -16,27 +17,34 @@ import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
+import java.util.*
 
 @Component
 class KakaoMemberClientImpl(
         private val restTemplate: RestTemplate,
         private val objectMapper: ObjectMapper,
-        private val oAuthProperties: OAuthProperties
+        oAuthProperties: OAuthProperties
 ): KakaoMemberClient {
+    companion object {
+        val PROVIDER = ProviderType.KAKAO.toString().lowercase(Locale.getDefault())
+    }
 
-    override fun getAccessTokenByCode(code: String, redirectUri: String): String {
+    private val client : OAuthProperties.Client = oAuthProperties.client[PROVIDER]!!
+    private val provider : OAuthProperties.Provider = oAuthProperties.provider[PROVIDER]!!
+
+    override fun getAccessTokenByCodeAndOrigin(code: String, origin: String?): String {
         val headers = HttpHeaders().apply {
             contentType = MediaType.APPLICATION_FORM_URLENCODED
         }
 
         val params = LinkedMultiValueMap<String, String>()
         params.add("grant_type", "authorization_code")
-        params.add("client_id", oAuthProperties.client["kakao"]!!.clientId)
-        params.add("redirect_uri", redirectUri)
+        params.add("client_id", client.clientId)
+        params.add("redirect_uri", client.getRedirectUri(origin))
         params.add("code", code)
 
         val request = HttpEntity(params, headers)
-        val url = oAuthProperties.provider["kakao"]!!.tokenUri
+        val url = provider.tokenUri
 
         val response = restTemplate.exchange(url, HttpMethod.POST, request, String::class.java)
         return objectMapper.readValue(response.body, KakaoAccessTokenDto::class.java).accessToken
@@ -50,10 +58,8 @@ class KakaoMemberClientImpl(
 
         val request = HttpEntity<MultiValueMap<String, String>>(params, headers)
 
-        val url = oAuthProperties.provider["kakao"]!!.userInfoUri
-
         val response = restTemplate.exchange(
-                url,
+                provider.userInfoUri!!,
                 HttpMethod.GET,
                 request,
                 String::class.java

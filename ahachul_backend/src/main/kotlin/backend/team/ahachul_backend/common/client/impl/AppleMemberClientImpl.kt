@@ -1,80 +1,109 @@
 package backend.team.ahachul_backend.common.client.impl
 
+import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.client.AppleMemberClient
-import backend.team.ahachul_backend.common.dto.ApplePublicKeyDto
+import backend.team.ahachul_backend.common.dto.AppleAccessTokenDto
+import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
 import backend.team.ahachul_backend.common.exception.CommonException
-import backend.team.ahachul_backend.common.logging.Logger
+import backend.team.ahachul_backend.common.properties.OAuthProperties
 import backend.team.ahachul_backend.common.response.ResponseCode
-import backend.team.ahachul_backend.common.utils.JwtUtils
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.jsonwebtoken.Claims
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.SignatureAlgorithm.ES256
+import org.springframework.core.io.ClassPathResource
+import org.springframework.http.*
 import org.springframework.stereotype.Component
+import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
-import java.math.BigInteger
-import java.security.Key
+import java.nio.file.Files
+import java.nio.file.Path
 import java.security.KeyFactory
-import java.security.spec.RSAPublicKeySpec
+import java.security.PrivateKey
+import java.security.spec.KeySpec
+import java.security.spec.PKCS8EncodedKeySpec
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 
 @Component
 class AppleMemberClientImpl(
         private val restTemplate: RestTemplate,
-        private val jwtUtils: JwtUtils,
+        private val oAuthProperties: OAuthProperties
 ): AppleMemberClient {
-    val logger: Logger = Logger(javaClass)
+    companion object {
+        val PROVIDER = ProviderType.APPLE.toString().lowercase(Locale.getDefault())
+    }
+
+    private val client : OAuthProperties.Client = oAuthProperties.client[PROVIDER]!!
+    private val provider : OAuthProperties.Provider = oAuthProperties.provider[PROVIDER]!!
+    private val properties : OAuthProperties.Properties = oAuthProperties.properties[PROVIDER]!!
+
     val objectMapper: ObjectMapper = ObjectMapper()
 
-    override fun verifyIdentityToken(identityToken: String, authCode: String): Boolean {
-        if (validateIdentityToken(identityToken)) {
-            throw CommonException(ResponseCode.INVALID_APPLE_ID_TOKEN)
+    override fun getIdTokenByCodeAndOrigin(code: String, origin: String?): String {
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_FORM_URLENCODED
         }
-        return true
-    }
+        val httpEntity = HttpEntity(getHttpBodyParams(code, origin), headers)
+        val response = restTemplate.exchange(provider.tokenUri, HttpMethod.POST, httpEntity, String::class.java)
 
-    private fun validateIdentityToken(identityToken: String): Boolean {
-        val url = "https://appleid.apple.com/auth/keys"
-        val response = restTemplate.getForObject(url, String::class.java)
-
-        val key = objectMapper.readValue(response, ApplePublicKeyDto::class.java)
-        val header = getHeaderInfoFromIdentityToken(identityToken)
-        val public = key.getMatchedInfo(header?.get("kid") as String, header["alg"] as String)
-            ?: throw IllegalArgumentException()
-
-        return try {
-            val claim = jwtUtils.verify(identityToken, createPublicKeyByRSA(public)).body
-            validateClaimInfo(claim)
-        } catch (e: Exception) {
-            logger.error(e.message, ResponseCode.BAD_REQUEST, e.stackTraceToString())
-            false
+        if (response.statusCode == HttpStatus.OK) {
+            return objectMapper.readValue(response.body, AppleAccessTokenDto::class.java).idToken
         }
+        throw CommonException(ResponseCode.INVALID_OAUTH_AUTHORIZATION_CODE)
     }
 
-    private fun validateClaimInfo(claim: Claims): Boolean {
-        val curTime = Date(System.currentTimeMillis())
+    override fun getMemberInfoByIdToken(idToken: String): AppleUserInfoDto {
+        val tokenParts: List<String> = idToken.split(".")
 
-        return !(curTime.before(claim["exp"] as Date?)
-                || claim["iss"] == "https://appleid.apple.com"
-                || claim["aud"] == "appleAppId/clientId")
+        val payload = String(Base64.getDecoder().decode(tokenParts[1]))
+
+        return objectMapper.readValue(payload, AppleUserInfoDto::class.java)
     }
 
-    /**
-     * 헤더 부분을 잘라서 토큰 Base64로 복호화
-     */
-    private fun getHeaderInfoFromIdentityToken(token: String): Map<*, *>? {
-        val headerToken = token.substring(0, token.indexOf('.'))
-        return objectMapper.readValue(
-            String(Base64.getDecoder().decode(headerToken.toByteArray()), Charsets.UTF_8), Map::class.java)
+    private fun getHttpBodyParams(code: String, origin: String?): LinkedMultiValueMap<String, String?> {
+        val params = LinkedMultiValueMap<String, String?>()
+
+        params["code"] = code
+        params["client_id"] = client.clientId
+        params["client_secret"] = getClientSecret()
+        params["redirect_uri"] = client.getRedirectUri(origin)
+        params["grant_type"] = "authorization_code"
+
+        return params
     }
 
-    /**
-     * RSA 암호화 방식으로 public key 생성 후 권한 코드 인증
-     */
-    private fun createPublicKeyByRSA(key: ApplePublicKeyDto.Key): Key {
-        val n = BigInteger(1, Base64.getDecoder().decode(key.n))
-        val e = BigInteger(1, Base64.getDecoder().decode(key.e))
+    private fun getClientSecret(): String {
+        val now = LocalDateTime.now()
 
-        val publicKeySpec = RSAPublicKeySpec(n, e)
-        val keyFactory = KeyFactory.getInstance(key.kty)
-        return keyFactory.generatePublic(publicKeySpec)
+        return Jwts.builder()
+            .setHeaderParam("kid", properties.kid)
+            .setIssuer(properties.iss)
+            .setIssuedAt(localDateTimeToDate(now))
+            .setExpiration(localDateTimeToDate(now.plusMonths(6)))
+            .setSubject(properties.sub)
+            .setAudience(properties.aud)
+            .signWith(getKey(), ES256)
+            .compact()
+    }
+
+    private fun localDateTimeToDate(now: LocalDateTime): Date {
+        return Date.from(now.atZone(ZoneId.systemDefault()).toInstant())
+    }
+
+    private fun getKey(): PrivateKey {
+        return KeyFactory.getInstance("EC").generatePrivate(getKeySpec())
+    }
+
+    private fun getKeySpec(): KeySpec {
+        return PKCS8EncodedKeySpec(Base64.getDecoder().decode(getKeyBytes()))
+    }
+
+    private fun getKeyBytes(): ByteArray {
+        return Files.readAllBytes(getKeyFilePath())
+    }
+
+    private fun getKeyFilePath(): Path {
+        return ClassPathResource(properties.kid + ".p8").file.toPath()
     }
 }
