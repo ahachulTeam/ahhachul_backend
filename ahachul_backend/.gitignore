@@ -39,12 +39,15 @@ out/
 ### Custom ###
 
 ### log ###
-logs/*
-error_logs/*
+application-module/logs/*
+application-module/error_logs/*
 
 ### yml, p8, md ###
-application-module/src/main/resources/
-application-module/src/test/resources/
+**/src/main/resources/application-dev.yml
+**/src/main/resources/application-local.yml
+**/src/main/resources/*.md
+**/src/main/resources/*.p8
+**/src/test/resources/
 
 ### restdocs ###
 application-module/src/main/resources/static

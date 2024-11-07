@@ -51,7 +51,7 @@ subprojects {
     java.sourceCompatibility = JavaVersion.VERSION_17
 
     dependencies {
-        implementation("org.springframework.boot:spring-boot-starter")  // api로 분리하면 다른 모듈에서 implementation(project())를 통해 의존성까지 읽어올 수 있음
+        implementation("org.springframework.boot:spring-boot-starter")
         implementation("org.springframework.boot:spring-boot-starter-data-jpa")
         // TODO: infra-module 분리
         implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -74,7 +74,6 @@ subprojects {
 
         runtimeOnly("com.mysql:mysql-connector-j")
         implementation("org.jetbrains.kotlin:kotlin-reflect")
-
     }
 
     // Kotlin compile 설정
@@ -83,6 +82,26 @@ subprojects {
             freeCompilerArgs = listOf("-Xjsr305=strict")
             jvmTarget = "17"
         }
+    }
+
+    // application.yml 파일을 submodule(ahachul_secret) -> resources 경로로 복사
+    tasks.register<Copy>("copySecret") {
+        from("../ahachul_secret") {
+            exclude("application-test.yml")
+        }
+        into("src/main/resources")
+    }
+
+    tasks.register<Copy>("copyTestSecret") {
+        from("../ahachul_secret") {
+            include("application-test.yml")
+        }
+        into("src/test/resources")
+    }
+
+    tasks.named("compileJava") {
+        dependsOn("copySecret")
+        dependsOn("copyTestSecret")
     }
 
     tasks.withType<Test> {
@@ -185,26 +204,6 @@ project(":application-module") {
                 into("BOOT-INF/classes/static/docs")
             }
         }
-    }
-
-    // application.yml 파일을 submodule(ahachul_secret) -> resources 경로로 복사
-    tasks.register<Copy>("copySecret") {
-        from("../ahachul_secret") {
-            exclude("application-test.yml")
-        }
-        into("src/main/resources")
-    }
-
-    tasks.register<Copy>("copyTestSecret") {
-        from("../ahachul_secret") {
-            include("application-test.yml")
-        }
-        into("src/test/resources")
-    }
-
-    tasks.named("compileJava") {
-        dependsOn("copySecret")
-        dependsOn("copyTestSecret")
     }
 
     tasks.getByName<Jar>("bootJar") {
