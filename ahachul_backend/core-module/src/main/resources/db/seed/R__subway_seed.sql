@@ -1,0 +1,17 @@
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (1, '1호선', 'METROPOLITAN', '02-000-0000', 1001);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (2, '2호선', 'METROPOLITAN', '02-000-0000', 1002);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (3, '3호선', 'METROPOLITAN', '02-000-0000', 1003);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (4, '4호선', 'METROPOLITAN', '02-000-0000', 1004);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (5, '5호선', 'METROPOLITAN', '02-000-0000', 1005);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (6, '6호선', 'METROPOLITAN', '02-000-0000', 1006);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (7, '7호선', 'METROPOLITAN', '02-000-0000', 1007);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (8, '8호선', 'METROPOLITAN', '02-000-0000', 1008);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (9, '9호선', 'METROPOLITAN', '02-000-0000', 1009);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (10, '경강선', 'METROPOLITAN', '02-000-0000', 1081);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (11, '경의중앙선', 'METROPOLITAN', '02-000-0000', 1063);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (12, '경춘선', 'METROPOLITAN', '02-000-0000', 1067);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (13, '공항철도', 'METROPOLITAN', '02-000-0000', 1065);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (15, '서해선', 'METROPOLITAN', '02-000-0000', 1093);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (16, '수인분당선', 'METROPOLITAN', '02-000-0000', 1075);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (18, '신분당선', 'METROPOLITAN', '02-000-0000', 1077);
+INSERT INTO tb_subway_line(subway_line_id, name, region_type, phone_number, identity) VALUES (20, '우이신설경전철', 'METROPOLITAN', '02-000-0000', 1092);
