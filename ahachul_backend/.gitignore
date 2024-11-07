@@ -39,8 +39,8 @@ out/
 ### Custom ###
 
 ### log ###
-application-module/logs/*
-application-module/error_logs/*
+**/logs/*
+**/error_logs/*
 
 ### yml, p8, md ###
 **/src/main/resources/application-dev.yml
