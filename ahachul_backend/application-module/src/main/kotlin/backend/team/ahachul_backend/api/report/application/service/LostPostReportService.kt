@@ -11,6 +11,7 @@ import backend.team.ahachul_backend.api.report.application.port.out.ReportWriter
 import backend.team.ahachul_backend.api.report.domain.ReportEntity
 import backend.team.ahachul_backend.common.exception.DomainException
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

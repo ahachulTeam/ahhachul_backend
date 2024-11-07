@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.CreateLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.SearchLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
+import backend.team.ahachul_backend.common.dto.PageInfoDto
 
 interface LostPostUseCase {
 

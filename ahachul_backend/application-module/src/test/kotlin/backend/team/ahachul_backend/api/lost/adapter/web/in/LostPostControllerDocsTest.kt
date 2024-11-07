@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.dto.PageInfoDto
+import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.anyLong

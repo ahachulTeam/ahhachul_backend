@@ -5,8 +5,10 @@ import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostFileEntity
 import backend.team.ahachul_backend.common.client.AwsS3Client
 import backend.team.ahachul_backend.common.domain.entity.FileEntity
+import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.persistence.FileReader
 import backend.team.ahachul_backend.common.persistence.FileWriter
+import backend.team.ahachul_backend.common.utils.AwsS3Utils
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 

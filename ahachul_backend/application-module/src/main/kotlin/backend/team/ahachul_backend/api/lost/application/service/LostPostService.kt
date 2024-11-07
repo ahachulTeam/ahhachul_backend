@@ -17,7 +17,10 @@ import backend.team.ahachul_backend.api.lost.domain.entity.LostPostFileEntity
 import backend.team.ahachul_backend.api.lost.domain.model.LostOrigin
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
+import backend.team.ahachul_backend.common.dto.ImageDto
+import backend.team.ahachul_backend.common.dto.PageInfoDto
 import backend.team.ahachul_backend.common.persistence.SubwayLineReader
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.format.DateTimeFormatter

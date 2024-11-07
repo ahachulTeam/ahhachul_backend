@@ -1,5 +1,9 @@
 package backend.team.ahachul_backend.api.community.application.service
 
+import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.comment.CreateCommunityCommentCommand
+import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.comment.DeleteCommunityCommentCommand
+import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.comment.GetCommunityCommentsCommand
+import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.comment.UpdateCommunityCommentCommand
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityCommentRepository
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostRepository
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityCommentUseCase
@@ -14,6 +18,7 @@ import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

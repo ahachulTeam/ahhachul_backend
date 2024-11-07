@@ -14,8 +14,12 @@ import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.client.AppleMemberClient
 import backend.team.ahachul_backend.common.client.GoogleMemberClient
 import backend.team.ahachul_backend.common.client.KakaoMemberClient
+import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
+import backend.team.ahachul_backend.common.dto.GoogleUserInfoDto
+import backend.team.ahachul_backend.common.dto.KakaoMemberInfoDto
 import backend.team.ahachul_backend.common.properties.JwtProperties
 import backend.team.ahachul_backend.common.properties.OAuthProperties
+import backend.team.ahachul_backend.common.utils.JwtUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.util.UriComponentsBuilder
@@ -24,14 +28,14 @@ import java.util.*
 @Service
 @Transactional(readOnly = true)
 class AuthService(
-        private val memberWriter: MemberWriter,
-        private val memberReader: MemberReader,
-        private val kakaoMemberClient: KakaoMemberClient,
-        private val googleMemberClient: GoogleMemberClient,
-        private val appleMemberClient: AppleMemberClient,
-        private val jwtUtils: JwtUtils,
-        private val jwtProperties: JwtProperties,
-        private val oAuthProperties: OAuthProperties,
+    private val memberWriter: MemberWriter,
+    private val memberReader: MemberReader,
+    private val kakaoMemberClient: KakaoMemberClient,
+    private val googleMemberClient: GoogleMemberClient,
+    private val appleMemberClient: AppleMemberClient,
+    private val jwtUtils: JwtUtils,
+    private val jwtProperties: JwtProperties,
+    private val oAuthProperties: OAuthProperties,
 ): AuthUseCase {
 
     companion object {

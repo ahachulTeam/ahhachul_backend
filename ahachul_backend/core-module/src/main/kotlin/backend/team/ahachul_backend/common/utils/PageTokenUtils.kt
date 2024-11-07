@@ -1,7 +1,7 @@
 package backend.team.ahachul_backend.common.utils
 
 import backend.team.ahachul_backend.common.constant.CommonConstant
-import org.apache.commons.codec.binary.Base64
+import org.apache.tomcat.util.codec.binary.Base64
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 

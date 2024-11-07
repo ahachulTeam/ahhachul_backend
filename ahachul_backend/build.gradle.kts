@@ -15,7 +15,7 @@ plugins {
     kotlin("jvm") version "1.7.22"
     kotlin("plugin.spring") version "1.7.22"
     kotlin("plugin.jpa") version "1.7.22"
-    kotlin("kapt") version "1.7.22"      // Kotlin Annotation Processor
+    kotlin("kapt") version "1.7.22"
 }
 
 allprojects {
@@ -50,6 +50,33 @@ subprojects {
 
     java.sourceCompatibility = JavaVersion.VERSION_17
 
+    dependencies {
+        implementation("org.springframework.boot:spring-boot-starter")  // api로 분리하면 다른 모듈에서 implementation(project())를 통해 의존성까지 읽어올 수 있음
+        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+        // TODO: infra-module 분리
+        implementation("org.springframework.boot:spring-boot-starter-data-redis")
+        implementation("org.springframework.boot:spring-boot-starter-web")
+        testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+        // https://mvnrepository.com/artifact/io.github.microutils/kotlin-logging/3.0.5
+        implementation("io.github.microutils:kotlin-logging:3.0.5")
+
+        // https://mvnrepository.com/artifact/com.h2database/h2
+        runtimeOnly("com.h2database:h2:2.1.214")
+
+        // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api/5.9.2
+        testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+
+        // https://www.testcontainers.org/
+        testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+        testImplementation("org.testcontainers:testcontainers:1.18.1")
+        testImplementation("org.testcontainers:junit-jupiter:1.18.1")
+
+        runtimeOnly("com.mysql:mysql-connector-j")
+        implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    }
+
     // Kotlin compile 설정
     tasks.withType<KotlinCompile> {
         kotlinOptions {
@@ -63,7 +90,6 @@ subprojects {
     }
 }
 
-// Root 엔
 tasks.getByName<Jar>("bootJar") {
     enabled = false
 }
@@ -76,68 +102,13 @@ project(":core-module") {
     val kapt by configurations
 
     dependencies {
-        // spring boot
-        implementation("org.springframework.boot:spring-boot-starter-web")
-        implementation("org.springframework.boot:spring-boot-starter-aop")
-        testImplementation("org.springframework.boot:spring-boot-starter-test")
-
-        implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-
-        // https://mvnrepository.com/artifact/io.github.microutils/kotlin-logging/3.0.5
-        implementation("io.github.microutils:kotlin-logging:3.0.5")
-
-        // https://mvnrepository.com/artifact/com.h2database/h2
-        runtimeOnly("com.h2database:h2:2.1.214")
-
         // flyway
         implementation("org.flywaydb:flyway-core:9.17.0")
         implementation("org.flywaydb:flyway-mysql:9.17.0")
 
-        // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api/5.9.2
-        testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
-
-        // https://www.testcontainers.org/
-        testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
-        testImplementation("org.testcontainers:testcontainers:1.18.1")
-        testImplementation("org.testcontainers:junit-jupiter:1.18.1")
-
-        implementation("org.jetbrains.kotlin:kotlin-reflect")
-        runtimeOnly("com.mysql:mysql-connector-j")
-
-        // TODO: infra-module 분리
-        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-        implementation("org.springframework.boot:spring-boot-starter-data-redis")
-
         // QueryDSL
         implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
         kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")
-
-        // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-aws
-        implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
-
-        // https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-spring-boot3
-        implementation("io.github.resilience4j:resilience4j-spring-boot3:2.0.2")
-        implementation("org.springframework.boot:spring-boot-starter-actuator")
-    }
-
-    // application.yml 파일을 submodule(ahachul_secret) -> resources 경로로 복사
-    tasks.register<Copy>("copySecret") {
-        from("./ahachul_secret") {
-            exclude("application-test.yml")
-        }
-        into("core-module/src/main/resources")
-    }
-
-    tasks.register<Copy>("copyTestSecret") {
-        from("./ahachul_secret") {
-            include("application-test.yml")
-        }
-        into("core-module/src/test/resources")
-    }
-
-    tasks.named("compileJava") {
-        dependsOn("copySecret")
-        dependsOn("copyTestSecret")
     }
 
     // QueryDSL QClass 파일 생성 경로 지정
@@ -159,12 +130,15 @@ project(":core-module") {
 
 /**
  * Application 모듈
- * 스프링 부트 어플리케이션이 실행되는 곳
  */
 project(":application-module") {
     val asciidoctorExt: Configuration by configurations.creating
     dependencies {
         implementation(project(":core-module"))
+
+        // spring boot
+        implementation("org.springframework.boot:spring-boot-starter-aop")
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
         // https://mvnrepository.com/artifact/org.springframework.restdocs/spring-restdocs-mockmvc/3.0.0
         testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
@@ -179,6 +153,13 @@ project(":application-module") {
 
         // https://mvnrepository.com/artifact/org.springframework/spring-webflux
         implementation("org.springframework:spring-webflux:6.0.7")
+
+        // https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-spring-boot3
+        implementation("io.github.resilience4j:resilience4j-spring-boot3:2.0.2")
+        implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+        // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-aws
+        implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
     }
 
     val snippetsDir by extra {
@@ -195,7 +176,7 @@ project(":application-module") {
         register<Copy>("copyDocument") {
             dependsOn(asciidoctor)
             from(file("build/docs/asciidoc"))
-            into(file("core-module/src/main/resources/static/docs"))
+            into(file("src/main/resources/static/docs"))
         }
         bootJar {
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
@@ -204,6 +185,26 @@ project(":application-module") {
                 into("BOOT-INF/classes/static/docs")
             }
         }
+    }
+
+    // application.yml 파일을 submodule(ahachul_secret) -> resources 경로로 복사
+    tasks.register<Copy>("copySecret") {
+        from("../ahachul_secret") {
+            exclude("application-test.yml")
+        }
+        into("src/main/resources")
+    }
+
+    tasks.register<Copy>("copyTestSecret") {
+        from("../ahachul_secret") {
+            include("application-test.yml")
+        }
+        into("src/test/resources")
+    }
+
+    tasks.named("compileJava") {
+        dependsOn("copySecret")
+        dependsOn("copyTestSecret")
     }
 
     tasks.getByName<Jar>("bootJar") {
@@ -216,8 +217,7 @@ project(":application-module") {
 }
 
 /**
- * 스케줄러 모듈
- * 스케줄러 어플리케이션이 실행되는 곳
+ * 스케줄러(배치) 모듈
  */
 project(":schedule-module") {
     dependencies {

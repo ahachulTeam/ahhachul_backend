@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.LoginMemberD
 import backend.team.ahachul_backend.api.member.application.port.`in`.AuthUseCase
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.properties.OAuthProperties
+import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest

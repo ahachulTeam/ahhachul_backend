@@ -3,6 +3,7 @@ package backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.common.domain.model.RegionType
+import backend.team.ahachul_backend.common.dto.ImageDto
 import org.springframework.web.multipart.MultipartFile
 
 class CreateCommunityPostDto {

@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.community.domain.GetCommunityPost
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.domain.model.YNType
+import backend.team.ahachul_backend.common.dto.ImageDto
 import java.time.LocalDateTime
 
 class GetCommunityPostDto {

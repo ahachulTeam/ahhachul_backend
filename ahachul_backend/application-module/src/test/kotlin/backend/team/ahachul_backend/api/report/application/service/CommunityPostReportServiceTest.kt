@@ -1,5 +1,6 @@
 package backend.team.ahachul_backend.api.report.application.service
 
+import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.CreateCommunityPostCommand
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostRepository
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
@@ -15,6 +16,7 @@ import backend.team.ahachul_backend.common.exception.DomainException
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach

@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintMessageS
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintType
 import backend.team.ahachul_backend.api.complaint.domain.model.ShortContentType
 import backend.team.ahachul_backend.common.dto.ImageDto
+import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.mockito.BDDMockito.willDoNothing

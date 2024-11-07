@@ -2,6 +2,7 @@ package backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto
 
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
+import backend.team.ahachul_backend.common.dto.ImageDto
 import java.time.format.DateTimeFormatter
 
 class GetLostPostDto {

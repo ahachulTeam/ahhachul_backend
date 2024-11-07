@@ -13,6 +13,7 @@ import backend.team.ahachul_backend.api.member.application.port.out.MemberStatio
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationWriter
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberStationEntity
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

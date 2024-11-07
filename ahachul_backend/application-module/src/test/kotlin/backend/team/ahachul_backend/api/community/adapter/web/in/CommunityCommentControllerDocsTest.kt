@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.comment.G
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.comment.UpdateCommunityCommentDto
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityCommentUseCase
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCommentType
+import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest

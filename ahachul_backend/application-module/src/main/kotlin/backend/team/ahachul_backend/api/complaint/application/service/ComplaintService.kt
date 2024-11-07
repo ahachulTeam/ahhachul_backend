@@ -8,7 +8,9 @@ import backend.team.ahachul_backend.api.complaint.application.port.out.Complaint
 import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintMessageWriter
 import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintMessageHistoryFileEntity
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
+import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.persistence.SubwayLineReader
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

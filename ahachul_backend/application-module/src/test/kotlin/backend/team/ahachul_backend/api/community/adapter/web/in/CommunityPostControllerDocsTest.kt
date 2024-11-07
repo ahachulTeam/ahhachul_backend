@@ -7,6 +7,7 @@ import backend.team.ahachul_backend.api.community.domain.model.CommunityCategory
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.domain.model.YNType
+import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest

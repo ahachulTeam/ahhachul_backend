@@ -1,6 +1,7 @@
 package backend.team.ahachul_backend.api.community.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostLikeUseCase
+import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.*

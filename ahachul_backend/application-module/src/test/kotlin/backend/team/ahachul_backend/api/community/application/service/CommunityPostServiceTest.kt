@@ -16,6 +16,7 @@ import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.persistence.HashTagRepository
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

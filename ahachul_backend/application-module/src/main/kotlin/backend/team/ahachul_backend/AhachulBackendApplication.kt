@@ -10,11 +10,6 @@ import org.springframework.scheduling.annotation.EnableAsync
 @EnableConfigurationProperties
 @EnableCaching
 @EnableAsync
-@ComponentScan(
-    basePackages = {
-        "ahachul_backend.core-module"
-    }
-)
 class AhachulBackendApplication
 
 fun main(args: Array<String>) {

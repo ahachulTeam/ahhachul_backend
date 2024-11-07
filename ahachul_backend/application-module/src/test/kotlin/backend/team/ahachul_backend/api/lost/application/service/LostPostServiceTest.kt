@@ -20,6 +20,7 @@ import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

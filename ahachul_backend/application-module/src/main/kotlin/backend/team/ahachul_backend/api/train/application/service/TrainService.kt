@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesDto
 import backend.team.ahachul_backend.api.train.application.port.`in`.TrainUseCase
 import backend.team.ahachul_backend.api.train.application.port.`in`.command.GetCongestionCommand
+import backend.team.ahachul_backend.api.train.application.port.out.TrainReader
 import backend.team.ahachul_backend.api.train.domain.entity.TrainEntity
 import backend.team.ahachul_backend.api.train.domain.model.UpDownType
 import backend.team.ahachul_backend.common.client.SeoulTrainClient
