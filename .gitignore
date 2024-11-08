@@ -53,3 +53,4 @@ out/
 application/src/main/resources/static
 
 *.yml
+ahachul_secret
