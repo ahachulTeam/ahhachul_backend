@@ -1,19 +1,22 @@
-name: CI/CD Pipeline for Spring Boot
+name: CI/CD Pipeline for Dev API
 
 on:
   push:
     branches:
       - develop
+      - feature/242
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      MODULE_NAME: application-module
     steps:
       - name: Parse combined secrets
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -31,7 +34,7 @@ jobs:
         shell: bash
 
       - name: Build with Gradle
-        run: cd ./ahachul_backend && SPRING_PROFILES_ACTIVE=test ./gradlew clean copyDocument jar build
+        run: cd ./ahachul_backend && SPRING_PROFILES_ACTIVE=test ./gradlew :${{ env.MODULE_NAME }}:clean :${{ env.MODULE_NAME }}:copyDocument :${{ env.MODULE_NAME }}:jar :${{ env.MODULE_NAME }}:build
         shell: bash
 
       - name: Upload build artifact (JAR and Dockerfile)
@@ -39,8 +42,8 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            ./ahachul_backend/build/libs/*.jar
-            ./ahachul_backend/Dockerfile
+            ./ahachul_backend/${{ env.MODULE_NAME }}/build/libs/*.jar
+            ./ahachul_backend/${{ env.MODULE_NAME }}/Dockerfile
 
   dockerize:
     runs-on: ubuntu-latest
@@ -51,7 +54,7 @@ jobs:
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Download build artifact (JAR and Dockerfile)
         uses: actions/download-artifact@v3
@@ -83,7 +86,7 @@ jobs:
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -134,7 +137,7 @@ jobs:
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Download appspec artifact
         uses: actions/download-artifact@v3
