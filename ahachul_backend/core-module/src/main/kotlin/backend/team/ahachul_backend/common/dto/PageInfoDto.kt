@@ -17,7 +17,7 @@ data class PageInfoDto<T>(
                 return PageInfoDto(null, data, false)
             }
 
-            val lastValue = data[pageSize - 1]
+            val lastValue = data[data.size - 1]
             val pageTokenValues = tokenFunctions.map { it(lastValue) }
             val pageToken = PageTokenUtils.encodePageToken(*pageTokenValues.toTypedArray())
 
