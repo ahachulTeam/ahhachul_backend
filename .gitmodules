@@ -1,3 +1,6 @@
 [submodule "ahachul_backend/ahachul_secret"]
 	path = ahachul_backend/ahachul_secret
 	url = https://github.com/ahachulTeam/ahachul_secret.git
+[submodule "ahachul_secret"]
+	path = ahachul_secret
+	url = https://github.com/ahachulTeam/ahachul_secret.git
