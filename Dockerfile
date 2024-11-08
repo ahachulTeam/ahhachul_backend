@@ -1,4 +1,8 @@
-FROM openjdk:17.0.1-jdk-slim
-ARG JAR_FILE=ahachul_backend/build/libs/ahachul_backend-0.0.1-SNAPSHOT.jar
+FROM eclipse-temurin:17-jdk-jammy
+
+ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=dev", "/app.jar"]
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app.jar", "--spring.profiles.active=dev"]

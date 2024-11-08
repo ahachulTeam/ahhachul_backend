@@ -50,4 +50,6 @@ out/
 **/src/test/resources/
 
 ### restdocs ###
-application-module/src/main/resources/static
+application/src/main/resources/static
+
+*.yml
