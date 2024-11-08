@@ -1,4 +1,4 @@
-rootProject.name = "ahachul_backend"
+rootProject.name = "ahhachul_backend"
 
 include("core")
 include("scheduler")
