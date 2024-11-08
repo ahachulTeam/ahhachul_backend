@@ -117,7 +117,7 @@ tasks.getByName<Jar>("jar") {
     enabled = true
 }
 
-project(":core-module") {
+project(":core") {
     val kapt by configurations
 
     dependencies {
@@ -150,10 +150,10 @@ project(":core-module") {
 /**
  * Application 모듈
  */
-project(":application-module") {
+project(":application") {
     val asciidoctorExt: Configuration by configurations.creating
     dependencies {
-        implementation(project(":core-module"))
+        implementation(project(":core"))
 
         // spring boot
         implementation("org.springframework.boot:spring-boot-starter-aop")
@@ -218,9 +218,9 @@ project(":application-module") {
 /**
  * 스케줄러(배치) 모듈
  */
-project(":schedule-module") {
+project(":scheduler") {
     dependencies {
-        implementation(project(":core-module"))
+        implementation(project(":core"))
 
         // https://mvnrepository.com/artifact/org.reflections/reflections
         implementation("org.reflections:reflections:0.10.2")
