@@ -131,7 +131,7 @@ class CustomLostPostRepository(
             localDateTime?.let { date ->
                 id?.let { lostPostId ->
                     lostPostEntity.receivedDate.lt(date).or(
-                        lostPostEntity.receivedDate.eq(date).and(lostPostEntity.id.gt(lostPostId))
+                        lostPostEntity.receivedDate.eq(date).and(lostPostEntity.id.lt(lostPostId))
                     )
                 }
             }
@@ -139,7 +139,7 @@ class CustomLostPostRepository(
             localDateTime?.let { date ->
                 id?.let { lostPostId ->
                     lostPostEntity.createdAt.lt(date).or(
-                        lostPostEntity.createdAt.eq(date).and(lostPostEntity.id.gt(lostPostId))
+                        lostPostEntity.createdAt.eq(date).and(lostPostEntity.id.lt(lostPostId))
                     )
                 }
             }
