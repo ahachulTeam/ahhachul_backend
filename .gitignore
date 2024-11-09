@@ -52,4 +52,5 @@ out/
 ### restdocs ###
 application/src/main/resources/static
 
-*.yml
+application-dev.yml
+application-local.yml
