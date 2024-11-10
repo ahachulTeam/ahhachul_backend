@@ -1,0 +1,36 @@
+=== /oauth
+
+==== 리다이렉트 조회
+
+.Request
+include::{snippets}/get-redirect-url/http-request.adoc[]
+.Query Parameteres
+include::{snippets}/get-redirect-url/query-parameters.adoc[]
+.Response
+include::{snippets}/get-redirect-url/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-redirect-url/response-fields.adoc[]
+
+==== 로그인
+
+.Request
+include::{snippets}/login/http-request.adoc[]
+.Request Fields
+include::{snippets}/login/request-fields.adoc[]
+.Response
+include::{snippets}/login/http-response.adoc[]
+.Response Fields
+include::{snippets}/login/response-fields.adoc[]
+
+==== 토큰 재발급
+
+- 리프레쉬 토큰 만료 기간이 7일보다 적게 남았을 경우 리프레쉬 토큰 또한 재발급
+
+.Request
+include::{snippets}/get-token/http-request.adoc[]
+.Request Fields
+include::{snippets}/get-token/request-fields.adoc[]
+.Response
+include::{snippets}/get-token/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-token/response-fields.adoc[]
