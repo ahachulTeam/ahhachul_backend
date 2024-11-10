@@ -49,7 +49,7 @@ class MemberEntity(
         companion object {
                 fun ofKakao(command: LoginMemberCommand, userInfo: KakaoMemberInfoDto): MemberEntity {
                         return MemberEntity(
-                                nickname = userInfo.kakaoAccount.profile?.nickname,
+                                nickname = null,
                                 providerUserId = userInfo.id,
                                 provider = command.providerType,
                                 email = userInfo.kakaoAccount.email,
@@ -61,7 +61,7 @@ class MemberEntity(
 
                 fun ofGoogle(command: LoginMemberCommand, userInfo: GoogleUserInfoDto): MemberEntity {
                         return MemberEntity(
-                                nickname = userInfo.name,
+                                nickname = null,
                                 providerUserId = userInfo.id,
                                 provider = command.providerType,
                                 email = userInfo.email,
@@ -97,7 +97,7 @@ class MemberEntity(
         }
 
         fun isNeedAdditionalUserInfo(): Boolean {
-                return nickname == null || gender == null || ageRange == null
+                return nickname == null
         }
 
         fun isConditionsMetToBlock(reportedCount: Int): Boolean {
