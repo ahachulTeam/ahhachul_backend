@@ -1,0 +1,62 @@
+=== /lost-posts
+
+==== 유실물 조회
+
+.Request
+include::{snippets}/search-lost-posts/http-request.adoc[]
+.Query Parameters
+include::{snippets}/search-lost-posts/query-parameters.adoc[]
+.Response
+include::{snippets}/search-lost-posts/http-response.adoc[]
+.Response Fields
+include::{snippets}/search-lost-posts/response-fields.adoc[]
+
+==== 유실물 상세 조회
+
+.Request
+include::{snippets}/get-lost-post/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-lost-post/path-parameters.adoc[]
+.Response
+include::{snippets}/get-lost-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-lost-post/response-fields.adoc[]
+
+==== 유실물 생성
+
+.Request
+include::{snippets}/create-lost-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-lost-post/request-headers.adoc[]
+.Request Fields
+include::{snippets}/create-lost-post/request-fields.adoc[]
+.Response
+include::{snippets}/create-lost-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-lost-post/response-fields.adoc[]
+
+==== 유실물 업데이트
+
+.Request
+include::{snippets}/update-lost-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/update-lost-post/request-headers.adoc[]
+.Request Fields
+include::{snippets}/update-lost-post/request-fields.adoc[]
+.Response
+include::{snippets}/update-lost-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/update-lost-post/response-fields.adoc[]
+
+==== 유실물 삭제
+
+.Request
+include::{snippets}/delete-lost-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/delete-lost-post/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/delete-lost-post/path-parameters.adoc[]
+.Response
+include::{snippets}/delete-lost-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/delete-lost-post/response-fields.adoc[]

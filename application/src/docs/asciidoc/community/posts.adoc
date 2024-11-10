@@ -1,0 +1,68 @@
+=== /community-posts
+
+==== 게시글 조회
+
+.Request
+include::{snippets}/search-community-posts/http-request.adoc[]
+.Query Parameters
+include::{snippets}/search-community-posts/query-parameters.adoc[]
+.Response
+include::{snippets}/search-community-posts/http-response.adoc[]
+.Response Fields
+include::{snippets}/search-community-posts/response-fields.adoc[]
+
+==== 게시글 상세 조회
+
+- `likeYn`, `hateYn` 는 동시에 true 일 수 없다.
+
+.Request
+include::{snippets}/get-community-post/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-community-post/path-parameters.adoc[]
+.Response
+include::{snippets}/get-community-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-community-post/response-fields.adoc[]
+
+==== 게시글 작성
+- 문서 오류로 인해서 query param 으로 넣어놨는데 multipart/form-data 형태로 보내시면 됩니다.
+
+.Request
+include::{snippets}/create-community-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-community-post/request-headers.adoc[]
+.Request Map Value
+include::{snippets}/create-community-post/query-parameters.adoc[]
+include::{snippets}/create-community-post/request-parts.adoc[]
+.Response
+include::{snippets}/create-community-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-community-post/response-fields.adoc[]
+
+==== 게시글 수정
+- 문서 오류로 인해서 query param 으로 넣어놨는데 multipart/form-data 형태로 보내시면 됩니다.
+
+.Request
+include::{snippets}/update-community-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/update-community-post/request-headers.adoc[]
+.Request Map Value
+include::{snippets}/update-community-post/query-parameters.adoc[]
+include::{snippets}/update-community-post/request-parts.adoc[]
+.Response
+include::{snippets}/update-community-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/update-community-post/response-fields.adoc[]
+
+==== 게시글 삭제
+
+.Request
+include::{snippets}/delete-community-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/delete-community-post/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/delete-community-post/path-parameters.adoc[]
+.Response
+include::{snippets}/delete-community-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/delete-community-post/response-fields.adoc[]

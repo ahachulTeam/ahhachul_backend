@@ -47,9 +47,5 @@ out/
 **/src/main/resources/application-local.yml
 **/src/main/resources/*.md
 **/src/main/resources/*.p8
-**/src/test/resources/
-
-### restdocs ###
-application/src/main/resources/static
 
 *.yml
