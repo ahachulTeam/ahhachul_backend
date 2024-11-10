@@ -126,8 +126,8 @@ class LostPostEntity(
     }
 
     val date: LocalDateTime
-        get() = when (origin) {
-            LostOrigin.LOST112 -> receivedDate
+        get() = when (lostType) {
+            LostType.ACQUIRE -> receivedDate
             else -> createdAt
         }
 }
