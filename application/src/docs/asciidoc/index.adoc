@@ -1,0 +1,58 @@
+= AH! Hachul REST
+:toc: left
+:toc-title: Contents
+:toclevels: 3
+:source-highlighter: highlightjs
+
+== 공통 에러 코드
+
+[%header%autowidth]
+|===
+|Code|Message|HttpStatus
+|100|SUCCESS|200
+|101|BAD_REQUEST|400
+|102|INTERNAL_SERVER_ERROR|400
+|103|유효하지 않은 도메인입니다.|400
+|===
+
+== Member
+
+include::member/oauth.adoc[]
+
+include::member/members.adoc[]
+
+include::member/error.adoc[]
+
+== Community
+
+include::community/posts.adoc[]
+
+include::community/posts-like.adoc[]
+
+include::community/comments.adoc[]
+
+== Lost
+
+include::lost/posts.adoc[]
+
+== Report
+
+include::report/reports.adoc[]
+
+== SubwayLine
+
+include::subway/subways.adoc[]
+
+== Train
+
+include::train/trains.adoc[]
+
+include::train/error.adoc[]
+
+== Complaint
+
+include::complaint/complaints.adoc[]
+
+== Rank
+
+include::rank/ranks.adoc[]

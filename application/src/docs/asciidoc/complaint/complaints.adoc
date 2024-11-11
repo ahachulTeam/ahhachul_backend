@@ -1,0 +1,12 @@
+=== /complaints
+
+==== 민원 메시지 보내기
+
+.Request
+include::{snippets}/send-complaint-message/http-request.adoc[]
+.Request Headers
+include::{snippets}/send-complaint-message/request-headers.adoc[]
+.Request Fields
+include::{snippets}/send-complaint-message/request-fields.adoc[]
+.Response
+include::{snippets}/send-complaint-message/http-response.adoc[]
