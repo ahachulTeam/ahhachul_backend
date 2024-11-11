@@ -166,7 +166,7 @@ class LostPostService(
         val entity = lostPostReader.getLostPost(command.id)
         entity.checkMe(memberId)
 
-        val subwayLine = command.subwayLine?.let {
+        val subwayLine = command.subwayLineId?.let {
             subwayLineReader.getById(it)
         }
 
