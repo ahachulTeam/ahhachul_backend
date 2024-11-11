@@ -28,8 +28,10 @@ include::{snippets}/get-lost-post/response-fields.adoc[]
 include::{snippets}/create-lost-post/http-request.adoc[]
 .Request Headers
 include::{snippets}/create-lost-post/request-headers.adoc[]
-.Request Fields
-include::{snippets}/create-lost-post/request-fields.adoc[]
+.Request Parts
+include::{snippets}/create-lost-post/request-parts.adoc[]
+.Request Parts - content
+include::{snippets}/create-lost-post/request-part-content-fields.adoc[]
 .Response
 include::{snippets}/create-lost-post/http-response.adoc[]
 .Response Fields
@@ -41,8 +43,10 @@ include::{snippets}/create-lost-post/response-fields.adoc[]
 include::{snippets}/update-lost-post/http-request.adoc[]
 .Request Headers
 include::{snippets}/update-lost-post/request-headers.adoc[]
-.Request Fields
-include::{snippets}/update-lost-post/request-fields.adoc[]
+.Request Parts
+include::{snippets}/create-lost-post/request-parts.adoc[]
+.Request Parts - content
+include::{snippets}/create-lost-post/request-part-content-fields.adoc[]
 .Response
 include::{snippets}/update-lost-post/http-response.adoc[]
 .Response Fields
