@@ -48,4 +48,7 @@ out/
 **/src/main/resources/*.md
 **/src/main/resources/*.p8
 
-*.yml
+application/src/main/resources/static
+
+application-dev.yml
+application-local.yml
