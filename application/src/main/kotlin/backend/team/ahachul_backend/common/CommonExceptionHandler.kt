@@ -19,7 +19,7 @@ class CommonExceptionHandler {
         logger.error(
                 message = e.message,
                 code = ResponseCode.INTERNAL_SERVER_ERROR,
-                stackTrace = e.stackTrace.contentToString()
+                ex = e
         )
         return ResponseEntity(CommonResponse.fail(), HttpStatus.INTERNAL_SERVER_ERROR)
     }
@@ -29,7 +29,7 @@ class CommonExceptionHandler {
         logger.error(
                 message = e.message,
                 code = e.code,
-                stackTrace = e.stackTrace.contentToString()
+                ex = e
         )
         return ResponseEntity(CommonResponse.fail(e.code), e.code.httpStatus)
     }
@@ -39,7 +39,7 @@ class CommonExceptionHandler {
         logger.error(
                 message = e.message,
                 code = e.code,
-                stackTrace = e.stackTrace.contentToString()
+                ex = e
         )
         return ResponseEntity(CommonResponse.fail(e.code), e.code.httpStatus)
     }
@@ -49,7 +49,7 @@ class CommonExceptionHandler {
         logger.error(
                 message = e.message,
                 code = e.code,
-                stackTrace = e.stackTrace.contentToString()
+                ex = e
         )
         return ResponseEntity(CommonResponse.fail(e.code), e.code.httpStatus)
     }
@@ -59,7 +59,7 @@ class CommonExceptionHandler {
         logger.error(
                 message = e.message,
                 code = e.code,
-                stackTrace = e.stackTrace.contentToString()
+                ex = e
         )
         return ResponseEntity(CommonResponse.fail(e.code), e.code.httpStatus)
     }
@@ -69,7 +69,7 @@ class CommonExceptionHandler {
         logger.error(
                 message = e.message,
                 code = e.code,
-                stackTrace = e.stackTrace.contentToString()
+                ex = e
         )
         return ResponseEntity(CommonResponse.fail(e.code), e.code.httpStatus)
     }
