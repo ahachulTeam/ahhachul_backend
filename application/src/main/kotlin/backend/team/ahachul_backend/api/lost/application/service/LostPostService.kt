@@ -82,7 +82,7 @@ class LostPostService(
                 title = post.title,
                 writer = post.createdBy,
                 imageUrl = getFileSource(post),
-                date = post.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                createdAt = post.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
             )
         }
         return recommendPostsDto
