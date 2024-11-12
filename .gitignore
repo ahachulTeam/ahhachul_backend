@@ -52,3 +52,4 @@ application/src/main/resources/static
 
 application-dev.yml
 application-local.yml
+application-test.yml

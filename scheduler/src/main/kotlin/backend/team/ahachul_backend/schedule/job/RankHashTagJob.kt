@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.common.client.RedisClient
 import backend.team.ahachul_backend.common.constant.CommonConstant.Companion.HASHTAG_LOG_DATETIME_FORMATTER
 import backend.team.ahachul_backend.common.constant.CommonConstant.Companion.HASHTAG_REDIS_KEY
 import backend.team.ahachul_backend.common.logging.Logger
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.LogAnalyzeUtils
 import org.quartz.JobExecutionContext
 import org.springframework.scheduling.quartz.QuartzJobBean
@@ -70,8 +71,10 @@ class RankHashTagJob(
                     pointer -= 1
                 }
             }
-        } catch (ex: FileNotFoundException) {
-            logger.error("invalid file to read : $fileUrl")
+        } catch (e: FileNotFoundException) {
+            logger.error("file not found to read : $fileUrl")
+        } catch (e: Exception) {
+            logger.error("failed to read hash tag file : $fileUrl", ResponseCode.INTERNAL_SERVER_ERROR, e)
         }
 
         return sortByTop(map)
