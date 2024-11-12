@@ -74,7 +74,7 @@ class RankHashTagJob(
         } catch (e: FileNotFoundException) {
             logger.error("file not found to read : $fileUrl")
         } catch (e: Exception) {
-            logger.error("failed to read hash tag file : $fileUrl", ResponseCode.INTERNAL_SERVER_ERROR, e.stackTraceToString())
+            logger.error("failed to read hash tag file : $fileUrl", ResponseCode.INTERNAL_SERVER_ERROR, e)
         }
 
         return sortByTop(map)

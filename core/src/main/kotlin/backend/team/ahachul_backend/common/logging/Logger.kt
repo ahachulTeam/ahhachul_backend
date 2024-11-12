@@ -17,19 +17,19 @@ class Logger(
         logger.debug { message }
     }
 
-    fun warn(message: String?, code: ResponseCode, stackTrace: String) {
-        logger.warn { printLog(message, code, stackTrace) }
+    fun warn(message: String?, code: ResponseCode, ex: Exception) {
+        logger.warn(ex) { makeMessage(message, code) }
     }
 
     fun error(message: String?) {
         logger.error { message }
     }
 
-    fun error(message: String?, code: ResponseCode, stackTrace: String) {
-        logger.error { printLog(message, code, stackTrace) }
+    fun error(message: String?, code: ResponseCode, ex: Exception) {
+        logger.error(ex) { makeMessage(message, code) }
     }
 
-    private fun printLog(message: String?, code: ResponseCode, stackTrace: String): String {
-        return "$message - Code: ${code.code}, Message : ${code.message}, StackTrace : $stackTrace"
+    private fun makeMessage(message: String?, code: ResponseCode): String {
+        return "$message - Code: ${code.code}, Message : ${code.message}"
     }
 }

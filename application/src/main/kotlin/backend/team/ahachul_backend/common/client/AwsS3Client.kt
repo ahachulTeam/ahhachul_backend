@@ -31,7 +31,7 @@ class AwsS3Client(
                 ).withCannedAcl(CannedAccessControlList.PublicRead)
             )
         } catch (e: CommonException) {
-            logger.error(e.message, ResponseCode.BAD_REQUEST, e.stackTraceToString())
+            logger.error(e.message, ResponseCode.BAD_REQUEST, e)
         }
         return uuid
     }
