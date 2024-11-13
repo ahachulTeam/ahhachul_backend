@@ -74,7 +74,7 @@ class LostPostServiceTest(
         assertThat(response.title).isEqualTo("지갑 주인 찾아요")
         assertThat(response.content).isEqualTo("내용")
         assertThat(response.writer).isEqualTo("nickname")
-        assertThat(response.subwayLine).isEqualTo(subwayLine.id)
+        assertThat(response.subwayLineId).isEqualTo(subwayLine.id)
         assertThat(response.status).isEqualTo(LostStatus.PROGRESS)
     }
 
