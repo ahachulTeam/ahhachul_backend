@@ -70,7 +70,7 @@ class LostPostEntity(
         const val MIN_BLOCK_REPORT_COUNT = 5
 
         fun of(command: CreateLostPostCommand, member: MemberEntity,
-               subwayLine: SubwayLineEntity?, category: CategoryEntity
+               subwayLine: SubwayLineEntity?, category: CategoryEntity?
         ): LostPostEntity {
             return LostPostEntity(
                 title = command.title,
