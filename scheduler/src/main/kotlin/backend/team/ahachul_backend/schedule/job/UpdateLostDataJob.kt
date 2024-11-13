@@ -86,11 +86,11 @@ class UpdateLostDataJob(
                 }
             }
         } catch (e: JsonSyntaxException) {
-            logger.error("invalid json format : $readPath")
+            logger.error("invalid json format : $readPath", ResponseCode.INTERNAL_SERVER_ERROR, e)
         } catch (e: IOException) {
-            logger.error("no data to read from file : $readPath")
+            logger.error("i/o exception occurred from file : $readPath", ResponseCode.INTERNAL_SERVER_ERROR, e)
         } catch (e: Exception) {
-            logger.error("failed to read lost112 crawling file : $readPath")
+            logger.error("failed to read lost112 crawling file : $readPath", ResponseCode.INTERNAL_SERVER_ERROR, e)
         }
     }
 
