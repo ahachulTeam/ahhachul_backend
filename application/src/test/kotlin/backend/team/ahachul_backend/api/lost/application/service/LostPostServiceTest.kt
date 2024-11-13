@@ -169,7 +169,7 @@ class LostPostServiceTest(
             id = entity.id,
             title = null,
             content = "수정한 내용",
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             status = LostStatus.COMPLETE,
             categoryName = "지갑"
         )
@@ -196,7 +196,7 @@ class LostPostServiceTest(
             id = entity.id,
             title = null,
             content = "수정한 내용",
-            subwayLine = null,
+            subwayLineId = null,
             status = LostStatus.COMPLETE,
             categoryName = null
         )

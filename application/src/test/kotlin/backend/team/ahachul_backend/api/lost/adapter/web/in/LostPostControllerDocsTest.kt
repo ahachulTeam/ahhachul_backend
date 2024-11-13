@@ -229,9 +229,9 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                         "content",
                         fieldWithPath("title").type(JsonFieldType.STRING).description("유실물 제목"),
                         fieldWithPath("content").type(JsonFieldType.STRING).description("유실물 내용"),
-                        fieldWithPath("subwayLine").type(JsonFieldType.NUMBER).description("유실 호선 ID"),
+                        fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선 ID"),
                         fieldWithPath("lostType").type(JsonFieldType.STRING).description("유실물 타입").attributes(getFormatAttribute("LOST(유실) / ACQUIRE(습득)")),
-                        fieldWithPath("categoryName").type(JsonFieldType.STRING).description("카테고리 이름").optional(),
+//                        fieldWithPath("categoryName").type(JsonFieldType.STRING).description("카테고리 이름").optional(), // deprecated
                     ),
                     responseFields(
                         *commonResponseFields(),
@@ -261,7 +261,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
             id = 1,
             title = "title",
             content = "content",
-            subwayLine = 1,
+            subwayLineId = 1,
             status = LostStatus.COMPLETE,
             removeFileIds = arrayListOf(1, 2, 3),
             categoryName = "휴대폰"
@@ -311,11 +311,11 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("title").type(JsonFieldType.STRING).description("유실물 제목").optional(),
                     fieldWithPath("content").type(JsonFieldType.STRING).description("유실물 내용").optional(),
                     fieldWithPath("imgUrls").type(JsonFieldType.ARRAY).description("유실물 이미지 리스트").optional(),
-                    fieldWithPath("subwayLine").type(JsonFieldType.NUMBER).description("유실 호선 ID").optional(),
+                    fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선 ID").optional(),
                     fieldWithPath("status").type(JsonFieldType.STRING).description("유실물 찾기 완료 상태")
                         .attributes(getFormatAttribute( "PROGRESS / COMPLETE")).optional(),
                     fieldWithPath("removeFileIds").type(JsonFieldType.ARRAY).description("삭제할 유실물 이미지 번호 리스트"),
-                    fieldWithPath("categoryName").type(JsonFieldType.STRING).description("카테고리 이름").optional()
+//                    fieldWithPath("categoryName").type(JsonFieldType.STRING).description("카테고리 이름").optional() // deprecated
                 ),
                 responseFields(
                     *commonResponseFields(),

@@ -143,7 +143,7 @@ class LostPostService(
         val memberId = RequestUtils.getAttribute("memberId")!!
         val member = memberReader.getMember(memberId.toLong())
         val subwayLine = subwayLineReader.getById(command.subwayLine)
-        val category = categoryReader.getCategoryByName(command.categoryName)
+        val category = command.categoryName?.let { categoryReader.getCategoryByName(it) }
 
         val entity = lostPostWriter.save(
             LostPostEntity.of(
@@ -166,7 +166,7 @@ class LostPostService(
         val entity = lostPostReader.getLostPost(command.id)
         entity.checkMe(memberId)
 
-        val subwayLine = command.subwayLine?.let {
+        val subwayLine = command.subwayLineId?.let {
             subwayLineReader.getById(it)
         }
 
