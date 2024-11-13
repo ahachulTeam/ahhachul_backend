@@ -13,9 +13,9 @@ class GetLostPostDto {
         val content: String,
         val writer: String?,
         val createdBy: String?,
-        val date: String,
-        val subwayLine: Long?,
-        val chats: Int = 0,
+        val createdAt: String,
+        val subwayLineId: Long?,
+        val commentCnt: Int = 0,
         val status: LostStatus,
         val storage: String?,
         val storageNumber: String?,
@@ -23,7 +23,8 @@ class GetLostPostDto {
         val images: List<ImageDto>?,
         val categoryName: String?,
         val externalSourceImageUrl: String?,
-        val recommendPosts: List<RecommendResponse>
+        val recommendPosts: List<RecommendResponse>,
+        val isFromLost112: Boolean
     ) {
         companion object {
             fun of(entity: LostPostEntity, images: List<ImageDto>, recommendPosts: List<RecommendResponse>): Response {
@@ -33,8 +34,8 @@ class GetLostPostDto {
                     content = entity.content,
                     writer = entity.member?.nickname,
                     createdBy = entity.member?.createdBy,
-                    date = entity.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                    subwayLine = entity.subwayLine?.id,
+                    createdAt = entity.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                    subwayLineId = entity.subwayLine?.id,
                     status = entity.status,
                     storage = entity.storage,
                     storageNumber = entity.storageNumber,
@@ -42,7 +43,8 @@ class GetLostPostDto {
                     images = images,
                     categoryName = entity.category?.name,
                     externalSourceImageUrl = entity.externalSourceFileUrl,
-                    recommendPosts = recommendPosts
+                    recommendPosts = recommendPosts,
+                    isFromLost112 = entity.isFromLost112()
                 )
             }
         }
@@ -53,6 +55,6 @@ class GetLostPostDto {
         val title: String,
         val writer: String,
         val imageUrl: String?,
-        val date: String
+        val createdAt: String
     )
 }
