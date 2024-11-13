@@ -121,6 +121,10 @@ class LostPostEntity(
         return lostPostReports.size >= MIN_BLOCK_REPORT_COUNT
     }
 
+    fun isFromLost112(): Boolean {
+        return origin == LostOrigin.LOST112
+    }
+
     fun block() {
         type = LostPostType.BLOCKED
     }
