@@ -12,7 +12,7 @@ CreateLostPostDto{
     data class Request(
         @NotNull val title: String,
         @NotNull val content: String,
-        @NotNull val subwayLine: Long,
+        @NotNull val subwayLineId: Long,
         @NotNull val lostType: LostType,
         val categoryName: String?
     ) {
@@ -20,7 +20,7 @@ CreateLostPostDto{
             return CreateLostPostCommand(
                 title = title,
                 content = content,
-                subwayLine = subwayLine,
+                subwayLine = subwayLineId,
                 lostType = lostType,
                 imageFiles = imageFiles,
                 categoryName = categoryName
