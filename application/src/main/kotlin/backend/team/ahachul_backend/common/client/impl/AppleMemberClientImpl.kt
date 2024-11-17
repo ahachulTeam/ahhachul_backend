@@ -15,8 +15,6 @@ import org.springframework.http.*
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
-import java.nio.file.Files
-import java.nio.file.Path
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.spec.KeySpec
@@ -100,10 +98,6 @@ class AppleMemberClientImpl(
     }
 
     private fun getKeyBytes(): ByteArray {
-        return Files.readAllBytes(getKeyFilePath())
-    }
-
-    private fun getKeyFilePath(): Path {
-        return ClassPathResource(properties.kid + ".p8").file.toPath()
+        return ClassPathResource(properties.kid + ".p8").inputStream.readAllBytes()
     }
 }
