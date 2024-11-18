@@ -1,0 +1,2 @@
+ALTER TABLE tb_member
+    MODIFY COLUMN nickname VARCHAR(100) NULL;
