@@ -1,5 +1,6 @@
 package backend.team.ahachul_backend.api.community.application.service
 
+import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostFileReader

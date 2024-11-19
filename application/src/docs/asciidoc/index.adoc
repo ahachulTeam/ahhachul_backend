@@ -23,13 +23,15 @@ include::member/members.adoc[]
 
 include::member/error.adoc[]
 
+== Comment
+
+include::comment/comments.adoc[]
+
 == Community
 
 include::community/posts.adoc[]
 
 include::community/posts-like.adoc[]
-
-include::community/comments.adoc[]
 
 == Lost
 
