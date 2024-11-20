@@ -27,6 +27,10 @@ include::member/error.adoc[]
 
 include::comment/comments.adoc[]
 
+include::comment/community-comments.adoc[]
+
+include::comment/lost-comments.adoc[]
+
 == Community
 
 include::community/posts.adoc[]

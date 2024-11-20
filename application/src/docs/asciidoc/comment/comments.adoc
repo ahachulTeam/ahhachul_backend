@@ -1,29 +1,5 @@
 === /comments
 
-==== 코멘트 조회
-
-.Request
-include::{snippets}/get-comments/http-request.adoc[]
-.Query Parameters
-include::{snippets}/get-comments/query-parameters.adoc[]
-.Response
-include::{snippets}/get-comments/http-response.adoc[]
-.Response Fields
-include::{snippets}/get-comments/response-fields.adoc[]
-
-==== 코멘트 작성
-
-.Request
-include::{snippets}/create-comment/http-request.adoc[]
-.Request Headers
-include::{snippets}/create-comment/request-headers.adoc[]
-.Request Fields
-include::{snippets}/create-comment/request-fields.adoc[]
-.Response
-include::{snippets}/create-comment/http-response.adoc[]
-.Response Fields
-include::{snippets}/create-comment/response-fields.adoc[]
-
 ==== 코멘트 수정
 
 .Request
