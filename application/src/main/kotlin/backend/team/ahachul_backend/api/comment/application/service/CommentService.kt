@@ -12,7 +12,9 @@ import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUse
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentWriter
 import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity
+import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostReader
+import backend.team.ahachul_backend.api.lost.application.port.out.LostPostReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
@@ -24,6 +26,7 @@ class CommentService(
     private val commentWriter: CommentWriter,
     private val commentReader: CommentReader,
     private val communityPostReader: CommunityPostReader,
+    private val lostPostReader: LostPostReader,
     private val memberReader: MemberReader,
 ): CommentUseCase {
 
@@ -67,9 +70,10 @@ class CommentService(
     override fun createComment(command: CreateCommentCommand): CreateCommentDto.Response {
         val memberId = RequestUtils.getAttribute("memberId")!!
         val upperComment = command.upperCommentId?.let { commentReader.findById(it) }
-        val communityPost = communityPostReader.getCommunityPost(command.postId)
         val member = memberReader.getMember(memberId.toLong())
-        val entity = commentWriter.save(CommentEntity.of(command, upperComment, communityPost, member))
+        val post = getPost(command.postType, command.postId)
+
+        val entity = commentWriter.save(CommentEntity.of(command, upperComment, post, member))
         return CreateCommentDto.Response.from(entity)
     }
 
@@ -89,5 +93,12 @@ class CommentService(
         comment.checkMe(memberId)
         comment.delete()
         return DeleteCommentDto.Response(comment.id)
+    }
+
+    private fun getPost(postType: PostType, postId: Long): Any {
+        return when (postType) {
+            PostType.COMMUNITY -> communityPostReader.getCommunityPost(postId)
+            PostType.LOST -> lostPostReader.getLostPost(postId)
+        }
     }
 }

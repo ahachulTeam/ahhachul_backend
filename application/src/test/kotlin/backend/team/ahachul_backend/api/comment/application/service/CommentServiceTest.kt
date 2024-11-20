@@ -5,11 +5,18 @@ import backend.team.ahachul_backend.api.comment.application.command.CreateCommen
 import backend.team.ahachul_backend.api.comment.application.command.DeleteCommentCommand
 import backend.team.ahachul_backend.api.comment.application.command.GetCommentsCommand
 import backend.team.ahachul_backend.api.comment.application.command.UpdateCommentCommand
-import backend.team.ahachul_backend.api.comment.domain.model.CommentType
-import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostRepository
 import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
+import backend.team.ahachul_backend.api.comment.domain.model.CommentType
+import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
+import backend.team.ahachul_backend.api.comment.domain.model.PostType
+import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostRepository
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
+import backend.team.ahachul_backend.api.lost.adapter.web.out.CategoryRepository
+import backend.team.ahachul_backend.api.lost.adapter.web.out.LostPostRepository
+import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
+import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
+import backend.team.ahachul_backend.api.lost.domain.model.LostType
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
@@ -33,35 +40,35 @@ import org.springframework.transaction.annotation.Transactional
 class CommentServiceTest(
     @Autowired val commentRepository: CommentRepository,
     @Autowired val commentUseCase: CommentUseCase,
-    @Autowired val communityPostRepository: CommunityPostRepository,
     @Autowired val memberRepository: MemberRepository,
-    @Autowired val subwayLineRepository: SubwayLineRepository
-): CommonServiceTestConfig() {
+    @Autowired val subwayLineRepository: SubwayLineRepository,
+    @Autowired val categoryRepository: CategoryRepository,
+    @Autowired val communityPostRepository: CommunityPostRepository,
+    @Autowired val lostPostRepository: LostPostRepository,
+) : CommonServiceTestConfig() {
 
     private lateinit var subwayLine: SubwayLineEntity
+    private lateinit var category: CategoryEntity
+    private lateinit var communityPost: CommunityPostEntity
+    private lateinit var lostPost: LostPostEntity
 
     @BeforeEach
     fun setup() {
         val member = memberRepository.save(
             MemberEntity(
-            nickname = "nickname",
-            provider = ProviderType.KAKAO,
-            providerUserId = "providerUserId",
-            email = "email",
-            gender = GenderType.MALE,
-            ageRange = "20",
-            status = MemberStatusType.ACTIVE
-        )
+                nickname = "nickname",
+                provider = ProviderType.KAKAO,
+                providerUserId = "providerUserId",
+                email = "email",
+                gender = GenderType.MALE,
+                ageRange = "20",
+                status = MemberStatusType.ACTIVE
+            )
         )
         member.id.let { RequestUtils.setAttribute("memberId", it) }
         subwayLine = subwayLineRepository.save(SubwayLineEntity(name = "1호선", regionType = RegionType.METROPOLITAN))
-    }
-
-    @Test
-    @DisplayName("코멘트 생성")
-    fun 코멘트_생성() {
-        // given
-        val post = communityPostRepository.save(
+        category = categoryRepository.save(CategoryEntity(name = "휴대폰"))
+        communityPost = communityPostRepository.save(
             CommunityPostEntity(
                 title = "제목",
                 content = "내용",
@@ -69,11 +76,27 @@ class CommentServiceTest(
                 subwayLineEntity = subwayLine
             )
         )
+        lostPost = lostPostRepository.save(
+            LostPostEntity(
+                title = "제목",
+                content = "내용",
+                subwayLine = subwayLine,
+                lostType = LostType.LOST,
+                category = category
+            )
+        )
+    }
 
+    @Test
+    @DisplayName("커뮤니티 코멘트 생성")
+    fun 커뮤니티_코멘트_생성() {
+        // given
         val createCommentCommand = CreateCommentCommand(
-            postId = post.id,
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
             upperCommentId = null,
-            content = "내용"
+            content = "내용",
+            visibility = CommentVisibility.PUBLIC
         )
 
         // when
@@ -88,24 +111,50 @@ class CommentServiceTest(
 
         assertThat(comment.id).isEqualTo(result.id)
         assertThat(comment.status).isEqualTo(CommentType.CREATED)
+        assertThat(comment.communityPost).isEqualTo(communityPost)
+        assertThat(comment.lostPost).isNull()
+        assertThat(comment.visibility).isEqualTo(CommentVisibility.PUBLIC)
+    }
+
+    @Test
+    @DisplayName("유실물 코멘트 생성")
+    fun 유실물_코멘트_생성() {
+        // given
+        val createCommentCommand = CreateCommentCommand(
+            postId = lostPost.id,
+            postType = PostType.LOST,
+            upperCommentId = null,
+            content = "내용",
+            visibility = CommentVisibility.PRIVATE
+        )
+
+        // when
+        val result = commentUseCase.createComment(createCommentCommand)
+
+        // then
+        assertThat(result.id).isNotNull()
+        assertThat(result.content).isEqualTo("내용")
+        assertThat(result.upperCommentId).isNull()
+
+        val comment = commentRepository.findById(result.id).get()
+
+        assertThat(comment.id).isEqualTo(result.id)
+        assertThat(comment.status).isEqualTo(CommentType.CREATED)
+        assertThat(comment.lostPost).isEqualTo(lostPost)
+        assertThat(comment.communityPost).isNull()
+        assertThat(comment.visibility).isEqualTo(CommentVisibility.PRIVATE)
     }
 
     @Test
     @DisplayName("코멘트 수정")
     fun 코멘트_수정() {
         // given
-        val post = communityPostRepository.save(
-            CommunityPostEntity(
-                title = "제목",
-                content = "내용",
-                categoryType = CommunityCategoryType.FREE,
-                subwayLineEntity = subwayLine
-            )
-        )
         val createCommentCommand = CreateCommentCommand(
-            postId = post.id,
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
             upperCommentId = null,
-            content = "내용"
+            content = "내용",
+            visibility = CommentVisibility.PUBLIC
         )
         val comment = commentUseCase.createComment(createCommentCommand)
 
@@ -126,18 +175,12 @@ class CommentServiceTest(
     @DisplayName("코멘트 삭제")
     fun 코멘트_삭제() {
         // given
-        val post = communityPostRepository.save(
-            CommunityPostEntity(
-                title = "제목",
-                content = "내용",
-                categoryType = CommunityCategoryType.FREE,
-                subwayLineEntity = subwayLine
-            )
-        )
         val createCommentCommand = CreateCommentCommand(
-            postId = post.id,
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
             upperCommentId = null,
-            content = "내용"
+            content = "내용",
+            visibility = CommentVisibility.PUBLIC
         )
         val commentRes = commentUseCase.createComment(createCommentCommand)
 
@@ -160,25 +203,19 @@ class CommentServiceTest(
     @DisplayName("코멘트 조회")
     fun 코멘트_조회() {
         // given
-        val post = communityPostRepository.save(
-            CommunityPostEntity(
-                title = "제목",
-                content = "내용",
-                categoryType = CommunityCategoryType.FREE,
-                subwayLineEntity = subwayLine
-            )
-        )
         for (i in 1..10) {
             val createCommentCommand = CreateCommentCommand(
-                postId = post.id,
+                postId = communityPost.id,
+                postType = PostType.COMMUNITY,
                 upperCommentId = null,
-                content = "내용${i}"
+                content = "내용${i}",
+                visibility = CommentVisibility.PUBLIC
             )
             commentUseCase.createComment(createCommentCommand)
         }
 
         val getCommentsCommand = GetCommentsCommand(
-            postId = post.id
+            postId = communityPost.id
         )
 
         // when
@@ -196,33 +233,28 @@ class CommentServiceTest(
     @DisplayName("자식 코멘트 조회")
     fun 자식_코멘트_조회() {
         // given
-        val post = communityPostRepository.save(
-            CommunityPostEntity(
-                title = "제목",
-                content = "내용",
-                categoryType = CommunityCategoryType.FREE,
-                subwayLineEntity = subwayLine
-            )
-        )
-
         val createCommentCommand = CreateCommentCommand(
-            postId = post.id,
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
             upperCommentId = null,
-            content = "내용"
+            content = "내용",
+            visibility = CommentVisibility.PUBLIC
         )
         val (upper_comment_id, _, _) = commentUseCase.createComment(createCommentCommand)
 
         val createChildCommentCommand = CreateCommentCommand(
-            postId = post.id,
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
             upperCommentId = upper_comment_id,
-            content = "내용"
+            content = "내용",
+            visibility = CommentVisibility.PUBLIC
         )
         for (i in 1..4) {
             commentUseCase.createComment(createChildCommentCommand)
         }
 
         val getCommentsCommand = GetCommentsCommand(
-            postId = post.id
+            postId = communityPost.id
         )
 
         // when
