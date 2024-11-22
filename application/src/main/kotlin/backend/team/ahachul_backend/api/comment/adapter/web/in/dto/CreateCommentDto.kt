@@ -18,7 +18,7 @@ class CreateCommentDto {
                 postType = postType,
                 upperCommentId = upperCommentId,
                 content = content,
-                visibility = CommentVisibility.fromIsPrivate(isPrivate)
+                visibility = CommentVisibility.from(isPrivate)
             )
         }
     }
