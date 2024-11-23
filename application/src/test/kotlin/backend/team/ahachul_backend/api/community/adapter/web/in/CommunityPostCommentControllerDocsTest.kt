@@ -113,7 +113,7 @@ class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
         val request = CreateCommentDto.Request(
             upperCommentId = 1,
             content = "생성할 커뮤니티 코멘트 내용",
-            isPrivate = false,
+            isPrivate = null,
         )
 
         // when

@@ -113,7 +113,7 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
         val request = CreateCommentDto.Request(
             upperCommentId = 2,
             content = "생성할 유실물 코멘트 내용",
-            isPrivate = true,
+            isPrivate = null,
         )
 
         // when
