@@ -76,7 +76,7 @@ class MemberEntity(
                                 nickname = null,
                                 providerUserId = userInfo.sub,
                                 provider = command.providerType,
-                                email = userInfo.email,
+                                email = null,
                                 gender = null,
                                 ageRange = null,
                                 status = MemberStatusType.ACTIVE
