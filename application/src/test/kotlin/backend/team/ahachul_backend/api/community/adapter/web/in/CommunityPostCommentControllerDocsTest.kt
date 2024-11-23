@@ -1,4 +1,4 @@
-package backend.team.ahachul_backend.api.comment.adapter.web.`in`
+package backend.team.ahachul_backend.api.community.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.CreateCommentDto
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.GetCommentsDto
@@ -18,19 +18,18 @@ import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.pos
 import org.springframework.restdocs.payload.JsonFieldType
 import org.springframework.restdocs.payload.PayloadDocumentation
 import org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath
-import org.springframework.restdocs.request.RequestDocumentation.parameterWithName
-import org.springframework.restdocs.request.RequestDocumentation.queryParameters
+import org.springframework.restdocs.request.RequestDocumentation.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 
-@WebMvcTest(LostCommentController::class)
-class LostCommentControllerDocsTest : CommonDocsTestConfig() {
+@WebMvcTest(CommunityPostCommentController::class)
+class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
 
     @MockBean
     lateinit var commentUseCase: CommentUseCase
 
     @Test
-    fun getCommentsTest() {
+    fun getCommunityPostCommentsTest() {
         // given
         val response = GetCommentsDto.Response(
             listOf(
@@ -64,8 +63,7 @@ class LostCommentControllerDocsTest : CommonDocsTestConfig() {
 
         // when
         val result = mockMvc.perform(
-            get("/v1/lost-comments")
-                .param("postId", "1")
+            get("/v1/community-posts/{postId}/comments", 1L)
                 .accept(MediaType.APPLICATION_JSON)
         )
 
@@ -73,10 +71,10 @@ class LostCommentControllerDocsTest : CommonDocsTestConfig() {
         result.andExpect(status().isOk)
             .andDo(
                 document(
-                    "get-lost-comments",
+                    "get-community-post-comments",
                     getDocsRequest(),
                     getDocsResponse(),
-                    queryParameters(
+                    pathParameters(
                         parameterWithName("postId").description("코멘트 조회할 게시글 아이디")
                     ),
                     PayloadDocumentation.responseFields(
@@ -101,27 +99,26 @@ class LostCommentControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
-    fun createLostCommentTest() {
+    fun createCommunityPostCommentTest() {
         // given
         val response = CreateCommentDto.Response(
-            id = 3,
-            upperCommentId = 2,
-            content = "생성된 유실물 코멘트 내용"
+            id = 2,
+            upperCommentId = 1,
+            content = "생성된 커뮤니티 코멘트 내용"
         )
 
         given(commentUseCase.createComment(any()))
             .willReturn(response)
 
         val request = CreateCommentDto.Request(
-            postId = 4,
-            upperCommentId = 2,
-            content = "생성할 유실물 코멘트 내용",
-            isPrivate = true,
+            upperCommentId = 1,
+            content = "생성할 커뮤니티 코멘트 내용",
+            isPrivate = false,
         )
 
         // when
         val result = mockMvc.perform(
-            post("/v1/lost-comments")
+            post("/v1/community-posts/{postId}/comments", 1L)
                 .header("Authorization", "Bearer <Access Token>")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
@@ -132,17 +129,19 @@ class LostCommentControllerDocsTest : CommonDocsTestConfig() {
         result.andExpect(status().isOk)
             .andDo(
                 document(
-                    "create-lost-comment",
+                    "create-community-post-comment",
                     getDocsRequest(),
                     getDocsResponse(),
+                    pathParameters(
+                        parameterWithName("postId").description("코멘트 생성할 게시글 아이디")
+                    ),
                     requestHeaders(
                         headerWithName("Authorization").description("엑세스 토큰")
                     ),
                     PayloadDocumentation.requestFields(
-                        fieldWithPath("postId").description("코멘트 생성할 유실물 게시글 아이디"),
                         fieldWithPath("upperCommentId").description("상위 코멘트 아이디").optional(),
                         fieldWithPath("content").description("생성할 내용"),
-                        fieldWithPath("isPrivate").description("비공개 여부")
+                        fieldWithPath("isPrivate").description("비공개 여부").optional(),
                     ),
                     PayloadDocumentation.responseFields(
                         *commonResponseFields(),

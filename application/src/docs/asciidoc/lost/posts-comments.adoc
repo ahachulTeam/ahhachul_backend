@@ -1,0 +1,26 @@
+==== 유실물 코멘트 조회
+
+.Request
+include::{snippets}/get-lost-post-comments/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-lost-post-comments/path-parameters.adoc[]
+.Response
+include::{snippets}/get-lost-post-comments/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-lost-post-comments/response-fields.adoc[]
+
+==== 유실물 코멘트 작성
+
+.Request
+include::{snippets}/create-lost-post-comment/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-lost-post-comment/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/create-lost-post-comment/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/create-lost-post-comment/request-fields.adoc[]
+.Response
+include::{snippets}/create-lost-post-comment/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-lost-post-comment/response-fields.adoc[]
+

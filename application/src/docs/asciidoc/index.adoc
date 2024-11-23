@@ -27,19 +27,19 @@ include::member/error.adoc[]
 
 include::comment/comments.adoc[]
 
-include::comment/community-comments.adoc[]
-
-include::comment/lost-comments.adoc[]
-
 == Community
 
 include::community/posts.adoc[]
+
+include::community/posts-comments.adoc[]
 
 include::community/posts-like.adoc[]
 
 == Lost
 
 include::lost/posts.adoc[]
+
+include::lost/posts-comments.adoc[]
 
 == Report
 
