@@ -47,7 +47,7 @@ class CommentEntity(
         fun of(command: CreateCommentCommand, commentEntity: CommentEntity?, post: Any, memberEntity: MemberEntity): CommentEntity {
             return CommentEntity(
                 content = command.content,
-                visibility = command.visibility,
+                visibility = commentEntity?.visibility ?: command.visibility,
                 upperComment = commentEntity,
                 communityPost = post as? CommunityPostEntity,
                 lostPost = post as? LostPostEntity,
