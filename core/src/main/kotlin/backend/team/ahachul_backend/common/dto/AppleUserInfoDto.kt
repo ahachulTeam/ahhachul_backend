@@ -5,6 +5,5 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AppleUserInfoDto(
-    @JsonProperty("sub") val sub: String,
-    @JsonProperty("email") val email: String,
+    @JsonProperty("sub") val sub: String
 )
