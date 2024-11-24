@@ -1,0 +1,27 @@
+=== /comments
+
+==== 코멘트 수정
+
+.Request
+include::{snippets}/update-comment/http-request.adoc[]
+.Request Headers
+include::{snippets}/update-comment/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/update-comment/path-parameters.adoc[]
+.Response
+include::{snippets}/update-comment/http-response.adoc[]
+.Response Fields
+include::{snippets}/update-comment/response-fields.adoc[]
+
+==== 코멘트 삭제
+
+.Request
+include::{snippets}/delete-comment/http-request.adoc[]
+.Request Headers
+include::{snippets}/delete-comment/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/delete-comment/path-parameters.adoc[]
+.Response
+include::{snippets}/delete-comment/http-response.adoc[]
+.Response Fields
+include::{snippets}/delete-comment/response-fields.adoc[]

@@ -3,7 +3,7 @@ package backend.team.ahachul_backend.api.community.adapter.web.out
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.SearchCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.GetCommunityPost
 import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
-import backend.team.ahachul_backend.api.community.domain.entity.QCommunityCommentEntity.communityCommentEntity
+import backend.team.ahachul_backend.api.comment.domain.entity.QCommentEntity.commentEntity
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostEntity.communityPostEntity
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostHashTagEntity.communityPostHashTagEntity
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostLikeEntity.communityPostLikeEntity
@@ -126,10 +126,10 @@ class CustomCommunityPostRepository(
                         ),
                     "likeCnt"
                 ),
-                JPAExpressions.select(communityCommentEntity.id.count())
-                    .from(communityCommentEntity)
+                JPAExpressions.select(commentEntity.id.count())
+                    .from(commentEntity)
                     .where(
-                        communityCommentEntity.communityPost.id.eq(communityPostEntity.id)
+                        commentEntity.communityPost.id.eq(communityPostEntity.id)
                     ),
                 communityPostEntity.hotPostYn,
                 communityPostEntity.createdAt,

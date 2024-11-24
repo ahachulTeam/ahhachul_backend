@@ -1,0 +1,26 @@
+==== 게시글 코멘트 조회
+
+.Request
+include::{snippets}/get-community-post-comments/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-community-post-comments/path-parameters.adoc[]
+.Response
+include::{snippets}/get-community-post-comments/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-community-post-comments/response-fields.adoc[]
+
+==== 게시글 코멘트 작성
+
+.Request
+include::{snippets}/create-community-post-comment/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-community-post-comment/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/create-community-post-comment/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/create-community-post-comment/request-fields.adoc[]
+.Response
+include::{snippets}/create-community-post-comment/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-community-post-comment/response-fields.adoc[]
+
