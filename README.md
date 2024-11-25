@@ -19,18 +19,27 @@
 - Mysql, JPA, Data JPA, QueryDSL
 - Spring REST Docs, Junit5, Mockito
 
-
-## ERD 
-[ERDCloud 링크](https://www.erdcloud.com/d/6dKc9AeJrWc2ZQRNv)
-
-## 배포 파이프라인 구성
-- Github Action, AWS, Docker
-<img width="777" alt="스크린샷 2024-01-19 오후 2 21 34" src="https://github.com/ahachulTeam/ahachul_backend/assets/71436576/b5337394-21b6-4d01-a89b-3ececbcd6eae">
-
-
 ## 패키지 구조
 
+헥사고날 아키텍처를 바탕으로 한 멀티 모듈 구조
+
+> core
+
+엔티티, 레포지토리(영속성 계층) 관련 로직이 담긴 모듈입니다. <br>
+`flyway` 의존성은 해당 모듈에만 존재합니다.
+
+> application
+
+컨트롤러(뷰 계층)와 서비스 관련 로직이 담긴 모듈입니다.  <br>
+코어 패키지를 공유하고 있으며, `RestDocs` 관련 의존성과 패키지는 해당 모듈에 존재합니다.
+
+> scheduler
+
+스케줄러 관련 의존성, 패키지가 담긴 모듈입니다.  <br>
+코어 패키지를 공유하고 있습니다.
+
 ```javascript
+// 멀티 모듈 분리 이전 기본 헥사고날 구조
 |-- ahachul_backend
     |-- <도메인>
         |-- adapter
@@ -55,6 +64,16 @@
         |-- feature/<#issue number>
     |-- hotfix
 ```
+
+
+## 배포 파이프라인 구성
+- Github Action, AWS, Docker
+<img width="777" alt="스크린샷 2024-01-19 오후 2 21 34" src="https://github.com/ahachulTeam/ahachul_backend/assets/71436576/b5337394-21b6-4d01-a89b-3ececbcd6eae">
+
+## ERD 
+[ERDCloud 링크](https://www.erdcloud.com/d/6dKc9AeJrWc2ZQRNv)
+
+<img width="946" alt="image" src="https://github.com/user-attachments/assets/1aefa163-0845-463c-a50d-c448bbfadb5d">
 
 ## 협업 규칙
 
