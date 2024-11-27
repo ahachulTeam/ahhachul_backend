@@ -14,6 +14,8 @@
 
     <property name="HASHTAG_LOG_PATH" value="${log.config.hashtag.path}"/>
     <property name="HASHTAG_LOG_FILE_NAME" value="${log.config.hashtag.filename}"/>
+    <property name="HASHTAG_LOG_HOST_NAME" value="${log.config.hashtag.hostname}"/>
+    <property name="HASHTAG_LOG_PORT" value="${log.config.hashtag.port}"/>
 
     <property name="LOG_PATTERN" value="%-5level %d{yy-MM-dd HH:mm:ss}[%thread] [%logger{0}:%line] - %msg%n"/>
     <property name="HASHTAG_LOG_PATTERN" value="%d{yy-MM-dd HH:mm:ss} [%logger{0}:%line] %msg%n"/>
@@ -76,7 +78,21 @@
             </timeBasedFileNamingAndTriggeringPolicy>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
+    </appender>
 
+    <appender name="HASHTAG_SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
+        <remoteHost>${HASHTAG_LOG_HOST_NAME}</remoteHost>
+        <port>${HASHTAG_LOG_PORT}</port>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${HASHTAG_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="HASHTAG_ASYNC_SOCKET" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize> <!-- 로그 버퍼 크기 -->
+        <discardingThreshold>0</discardingThreshold> <!-- 큐가 가득 찼을 때 버릴 로그 수준 설정 -->
+        <neverBlock>true</neverBlock> <!-- 큐가 가득 차도 메인 스레드가 차단되지 않도록 설정 -->
+        <appender-ref ref="HASHTAG_SOCKET"/>
     </appender>
 
     <root level="{LOG_LEVEL}">
@@ -86,7 +102,7 @@
     </root>
 
     <logger name="HASHTAG_LOGGER" LEVEL="INFO">
-        <appender-ref ref="HASHTAG_FILE"/>
+        <appender-ref ref="HASHTAG_ASYNC_SOCKET"/>
     </logger>
 
 </configuration>
