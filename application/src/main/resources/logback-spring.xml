@@ -14,7 +14,15 @@
 
     <property name="HASHTAG_LOG_PATH" value="${log.config.hashtag.path}"/>
     <property name="HASHTAG_LOG_FILE_NAME" value="${log.config.hashtag.filename}"/>
-    <property name="HASHTAG_LOG_HOST_NAME" value="${log.config.hashtag.hostname}"/>
+
+    <springProfile name="dev">
+        <property name="HASHTAG_LOG_HOST_NAME" value="${log.config.hashtag.hostname}"/>
+    </springProfile>
+
+    <springProfile name="local">
+        <property name="HASHTAG_LOG_HOST_NAME" value="${log.config.hashtag.hostname.local}"/>
+    </springProfile>
+
     <property name="HASHTAG_LOG_PORT" value="${log.config.hashtag.port}"/>
 
     <property name="LOG_PATTERN" value="%-5level %d{yy-MM-dd HH:mm:ss}[%thread] [%logger{0}:%line] - %msg%n"/>

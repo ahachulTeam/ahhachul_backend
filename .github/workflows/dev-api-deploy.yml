@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - feature/254
     paths-ignore:
       - 'scheduler/**'
       - '.github/**'
