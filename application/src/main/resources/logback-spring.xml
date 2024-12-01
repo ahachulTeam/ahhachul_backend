@@ -19,7 +19,7 @@
         <property name="HASHTAG_LOG_HOST_NAME" value="${log.config.hashtag.hostname}"/>
     </springProfile>
 
-    <springProfile name="local">
+    <springProfile name="local, test">
         <property name="HASHTAG_LOG_HOST_NAME" value="${log.config.hashtag.hostname.local}"/>
     </springProfile>
 
@@ -91,7 +91,6 @@
     <appender name="HASHTAG_SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
         <remoteHost>${HASHTAG_LOG_HOST_NAME}</remoteHost>
         <port>${HASHTAG_LOG_PORT}</port>
-<!--        <includeCallerData>true</includeCallerData>-->
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${HASHTAG_LOG_PATTERN}</pattern>
         </encoder>
