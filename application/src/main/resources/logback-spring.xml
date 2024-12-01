@@ -110,7 +110,7 @@
     </root>
 
     <logger name="HASHTAG_LOGGER" LEVEL="INFO">
-        <appender-ref ref="HASHTAG_ASYNC_SOCKET"/>
+        <appender-ref ref="HASHTAG_SOCKET"/>
     </logger>
 
 </configuration>
