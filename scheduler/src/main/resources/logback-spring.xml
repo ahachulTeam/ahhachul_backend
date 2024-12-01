@@ -78,6 +78,12 @@
         </rollingPolicy>
     </appender>
 
+    <root level="{LOG_LEVEL}">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
     <logger name="HASHTAG_LOGGER" LEVEL="INFO">
         <appender-ref ref="HASHTAG_FILE"/>
     </logger>

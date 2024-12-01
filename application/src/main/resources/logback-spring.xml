@@ -91,15 +91,16 @@
     <appender name="HASHTAG_SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
         <remoteHost>${HASHTAG_LOG_HOST_NAME}</remoteHost>
         <port>${HASHTAG_LOG_PORT}</port>
+<!--        <includeCallerData>true</includeCallerData>-->
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${HASHTAG_LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
     <appender name="HASHTAG_ASYNC_SOCKET" class="ch.qos.logback.classic.AsyncAppender">
-        <queueSize>512</queueSize> <!-- 로그 버퍼 크기 -->
-        <discardingThreshold>0</discardingThreshold> <!-- 큐가 가득 찼을 때 버릴 로그 수준 설정 -->
-        <neverBlock>true</neverBlock> <!-- 큐가 가득 차도 메인 스레드가 차단되지 않도록 설정 -->
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
         <appender-ref ref="HASHTAG_SOCKET"/>
     </appender>
 
