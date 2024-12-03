@@ -31,8 +31,12 @@ class CommentService(
 ): CommentUseCase {
 
     override fun getComments(command: GetCommentsCommand): GetCommentsDto.Response {
-        val comments = commentReader.findAllByPostId(command.postId)
-            .map {
+
+
+        val comments = when (command.postType) {
+            PostType.COMMUNITY -> commentReader.findAllByCommunityPostId(command.postId)
+            PostType.LOST -> commentReader.findAllByLostPostId(command.postId)
+        }.map {
                 GetCommentsDto.Comment(
                     it.id,
                     it.upperComment?.id,

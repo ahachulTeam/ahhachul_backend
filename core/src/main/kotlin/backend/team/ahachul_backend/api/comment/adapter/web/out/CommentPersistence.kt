@@ -25,8 +25,12 @@ class CommentPersistence(
         return repository.findById(id).orElse(null)
     }
 
-    override fun findAllByPostId(postId: Long): List<CommentEntity> {
+    override fun findAllByCommunityPostId(postId: Long): List<CommentEntity> {
         return repository.findAllByCommunityPostId(postId)
+    }
+
+    override fun findAllByLostPostId(postId: Long): List<CommentEntity> {
+        return repository.findAllByLostPostId(postId)
     }
 
     override fun count(postId: Long): Int {

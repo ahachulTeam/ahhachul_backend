@@ -13,5 +13,12 @@ interface CommentRepository: JpaRepository<CommentEntity, Long> {
             "ORDER BY cc.createdAt ASC")
     fun findAllByCommunityPostId(postId: Long): List<CommentEntity>
 
+    @Query("SELECT cc " +
+            "FROM CommentEntity cc " +
+            "JOIN FETCH cc.member m " +
+            "WHERE cc.lostPost.id = :postId " +
+            "ORDER BY cc.createdAt ASC")
+    fun findAllByLostPostId(postId: Long): List<CommentEntity>
+
     fun countByCommunityPostId(postId: Long): Int
 }

@@ -200,8 +200,8 @@ class CommentServiceTest(
     }
 
     @Test
-    @DisplayName("코멘트 조회")
-    fun 코멘트_조회() {
+    @DisplayName("커뮤니티 코멘트 조회")
+    fun 커뮤니티_코멘트_조회() {
         // given
         for (i in 1..10) {
             val createCommentCommand = CreateCommentCommand(
@@ -215,7 +215,39 @@ class CommentServiceTest(
         }
 
         val getCommentsCommand = GetCommentsCommand(
-            postId = communityPost.id
+            postId = communityPost.id,
+            PostType.COMMUNITY
+        )
+
+        // when
+        val result = commentUseCase.getComments(getCommentsCommand)
+
+        // then
+        assertThat(result.comments).hasSize(10)
+        for (i: Int in 0..9) {
+            assertThat(result.comments[i].parentComment).isNotNull
+            assertThat(result.comments[i].childComments).isEmpty()
+        }
+    }
+
+    @Test
+    @DisplayName("유실물 코멘트 조회")
+    fun 유실물_코멘트_조회() {
+        // given
+        for (i in 1..10) {
+            val createCommentCommand = CreateCommentCommand(
+                postId = lostPost.id,
+                postType = PostType.LOST,
+                upperCommentId = null,
+                content = "내용${i}",
+                visibility = CommentVisibility.PUBLIC
+            )
+            commentUseCase.createComment(createCommentCommand)
+        }
+
+        val getCommentsCommand = GetCommentsCommand(
+            postId = lostPost.id,
+            PostType.LOST
         )
 
         // when
@@ -254,7 +286,8 @@ class CommentServiceTest(
         }
 
         val getCommentsCommand = GetCommentsCommand(
-            postId = communityPost.id
+            postId = communityPost.id,
+            PostType.COMMUNITY
         )
 
         // when

@@ -8,7 +8,8 @@ interface CommentReader {
 
     fun findById(id: Long): CommentEntity?
 
-    fun findAllByPostId(postId: Long): List<CommentEntity>
+    fun findAllByCommunityPostId(postId: Long): List<CommentEntity>
 
+    fun findAllByLostPostId(postId: Long): List<CommentEntity>
     fun count(postId: Long): Int
 }
