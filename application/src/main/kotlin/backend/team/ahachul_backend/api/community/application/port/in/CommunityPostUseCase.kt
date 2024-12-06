@@ -2,10 +2,11 @@ package backend.team.ahachul_backend.api.community.application.port.`in`
 
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
+import backend.team.ahachul_backend.common.dto.PageInfoDto
 
 interface CommunityPostUseCase {
 
-    fun searchCommunityPosts(command: SearchCommunityPostCommand): SearchCommunityPostDto.Response
+    fun searchCommunityPosts(command: SearchCommunityPostCommand): PageInfoDto<SearchCommunityPostDto.Response>
 
     fun getCommunityPost(command: GetCommunityPostCommand): GetCommunityPostDto.Response
 

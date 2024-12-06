@@ -2,6 +2,7 @@ package backend.team.ahachul_backend.api.community.application.service
 
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
+import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityPostCommand
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostFileReader
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostHashTagReader
@@ -11,12 +12,14 @@ import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEnt
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostFileEntity
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.common.dto.ImageDto
+import backend.team.ahachul_backend.common.dto.PageInfoDto
 import backend.team.ahachul_backend.common.logging.NamedLogger
 import backend.team.ahachul_backend.common.persistence.SubwayLineReader
 import backend.team.ahachul_backend.common.support.ViewsSupport
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.format.DateTimeFormatter
 
 @Service
 @Transactional(readOnly = true)
@@ -37,17 +40,36 @@ class CommunityPostService(
 
     private val logger = NamedLogger("HASHTAG_LOGGER")
 
-    override fun searchCommunityPosts(command: SearchCommunityPostCommand): SearchCommunityPostDto.Response {
+    override fun searchCommunityPosts(command: SearchCommunityPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
         val userId: String? = RequestUtils.getAttribute("memberId")
-        val searchCommunityPosts = communityPostReader.searchCommunityPosts(command)
+        val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
+
+        val searchCommunityPosts = communityPostReader.searchCommunityPosts(
+            GetSliceCommunityPostCommand.from(
+                command = command,
+                subwayLine = subwayLine
+            )
+        )
+
         val posts = searchCommunityPosts
             .map {
                 val file = communityPostFileReader.findByPostId(it.id)?.file
-                SearchCommunityPostDto.CommunityPost.of(
-                    searchCommunityPost = it,
-                    image = file?.let { it1 -> ImageDto.of(it1.id, file.filePath) },
-                    views = viewsSupport.get(it.id),
-                    hashTags = communityPostHashTagReader.findAllByPostId(it.id).map { it.hashTag.name }
+                SearchCommunityPostDto.Response(
+                    id = it.id,
+                    title = it.title,
+                    content = it.content,
+                    categoryType = it.categoryType,
+                    hashTags = communityPostHashTagReader.findAllByPostId(it.id).map { it.hashTag.name },
+                    commentCnt = it.commentCnt,
+                    viewCnt = viewsSupport.get(it.id),
+                    likeCnt = it.likeCnt,
+                    hotPostYn = it.hotPostYn,
+                    regionType = it.regionType,
+                    subwayLineId = it.subwayLineId,
+                    createdAt = it.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
+                    createdBy = it.createdBy,
+                    writer = it.writer,
+                    image = file?.let { it1 -> ImageDto.of(it1.id, file.filePath) }
                 )
             }.toList()
 
@@ -55,10 +77,10 @@ class CommunityPostService(
             logger.info("userId = $userId hashtag = ${command.hashTag}")
         }
 
-        return SearchCommunityPostDto.Response.of(
-            hasNext = searchCommunityPosts.hasNext(),
-            posts = posts,
-            command.pageable.pageNumber,
+        return PageInfoDto.of(
+            data=posts,
+            pageSize=command.pageSize,
+            arrayOf(SearchCommunityPostDto.Response::createdAt, SearchCommunityPostDto.Response::id)
         )
     }
 

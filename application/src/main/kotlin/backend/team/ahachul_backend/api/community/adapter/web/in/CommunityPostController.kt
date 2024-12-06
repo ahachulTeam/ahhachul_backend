@@ -4,8 +4,8 @@ import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.common.annotation.Authentication
+import backend.team.ahachul_backend.common.dto.PageInfoDto
 import backend.team.ahachul_backend.common.response.CommonResponse
-import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -16,10 +16,11 @@ class CommunityPostController(
     @Authentication(required = false)
     @GetMapping("/v1/community-posts")
     fun searchCommunityPosts(
-        pageable: Pageable,
+        @RequestParam(required = false) pageToken: String?,
+        @RequestParam pageSize: Int,
         request: SearchCommunityPostDto.Request
-    ): CommonResponse<SearchCommunityPostDto.Response> {
-        return CommonResponse.success(communityPostUseCase.searchCommunityPosts(request.toCommand(pageable)))
+    ): CommonResponse<PageInfoDto<SearchCommunityPostDto.Response>> {
+        return CommonResponse.success(communityPostUseCase.searchCommunityPosts(request.toCommand(pageToken, pageSize)))
     }
 
     @Authentication(required = false)

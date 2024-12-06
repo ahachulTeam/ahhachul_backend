@@ -1,13 +1,11 @@
 package backend.team.ahachul_backend.api.community.adapter.web.`in`.dto
 
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.SearchCommunityPostCommand
-import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.dto.ImageDto
-import org.springframework.data.domain.Pageable
-import java.time.LocalDateTime
+import org.springframework.data.domain.Sort
 
 class SearchCommunityPostDto {
 
@@ -17,36 +15,30 @@ class SearchCommunityPostDto {
         val content: String?,
         val hashTag: String?,
         val hotPostYn: YNType?,
+        val writer: String?,
+        val sort: String
     ) {
-        fun toCommand(pageable: Pageable): SearchCommunityPostCommand {
+        fun toCommand(pageToken: String?, pageSize: Int): SearchCommunityPostCommand {
             return SearchCommunityPostCommand(
                 categoryType = categoryType,
                 subwayLineId = subwayLineId,
                 content = content,
                 hashTag = hashTag,
                 hotPostYn = hotPostYn,
-                pageable = pageable
+                writer = writer,
+                sort = toSort(),
+                pageToken = pageToken,
+                pageSize = pageSize
             )
+        }
+
+        private fun toSort(): Sort {
+            val parts = sort.split(",")
+            return Sort.by(Sort.Direction.fromString(parts[1]), parts[0])
         }
     }
 
     data class Response(
-        val hasNext: Boolean,
-        val nextPageNum: Int?,
-        val posts: List<CommunityPost>,
-    ) {
-        companion object {
-            fun of(hasNext: Boolean, posts: List<CommunityPost>, currentPageNum: Int): Response {
-                return Response(
-                    hasNext = hasNext,
-                    nextPageNum = if (hasNext) currentPageNum + 1 else null,
-                    posts = posts
-                )
-            }
-        }
-    }
-
-    data class CommunityPost(
         val id: Long,
         val title: String,
         val content: String,
@@ -58,31 +50,9 @@ class SearchCommunityPostDto {
         val hotPostYn: YNType,
         val regionType: RegionType,
         val subwayLineId: Long,
-        val createdAt: LocalDateTime,
+        val createdAt: String,
         val createdBy: String,
         val writer: String,
         val image: ImageDto?,
-    ) {
-        companion object {
-            fun of(searchCommunityPost: SearchCommunityPost, image: ImageDto?, views: Int, hashTags: List<String>): CommunityPost {
-                return CommunityPost(
-                    id = searchCommunityPost.id,
-                    title = searchCommunityPost.title,
-                    content = searchCommunityPost.content,
-                    categoryType = searchCommunityPost.categoryType,
-                    hashTags = hashTags,
-                    commentCnt = searchCommunityPost.commentCnt,
-                    viewCnt = views,
-                    likeCnt = searchCommunityPost.likeCnt,
-                    hotPostYn = searchCommunityPost.hotPostYn,
-                    regionType = searchCommunityPost.regionType,
-                    subwayLineId = searchCommunityPost.subwayLineId,
-                    createdAt = searchCommunityPost.createdAt,
-                    createdBy = searchCommunityPost.createdBy,
-                    writer = searchCommunityPost.writer,
-                    image = image,
-                )
-            }
-        }
-    }
+    )
 }
