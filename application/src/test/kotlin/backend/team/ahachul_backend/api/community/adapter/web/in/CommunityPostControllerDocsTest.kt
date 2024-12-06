@@ -1,12 +1,12 @@
 package backend.team.ahachul_backend.api.community.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.domain.model.YNType
+import backend.team.ahachul_backend.common.dto.PageInfoDto
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
@@ -23,6 +23,7 @@ import org.springframework.restdocs.payload.PayloadDocumentation.*
 import org.springframework.restdocs.request.RequestDocumentation.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @WebMvcTest(CommunityPostController::class)
 class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
@@ -33,11 +34,9 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
     @Test
     fun searchCommunityPostsTest() {
         // given
-        val response = SearchCommunityPostDto.Response(
-            true,
-            1,
-            listOf(
-                SearchCommunityPostDto.CommunityPost(
+        val response = PageInfoDto.of(
+            data=listOf(
+                SearchCommunityPostDto.Response(
                     id = 1,
                     title = "제목",
                     content = "내용",
@@ -49,12 +48,14 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     hotPostYn = YNType.Y,
                     regionType = RegionType.METROPOLITAN,
                     subwayLineId = 1L,
-                    createdAt = LocalDateTime.now(),
+                    createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                     createdBy = "작성자 ID",
                     writer = "작성자 닉네임",
                     image = ImageDto.of(1L, "url1")
                 )
-            )
+            ),
+            pageSize=1,
+            arrayOf(SearchCommunityPostDto.Response::createdAt, SearchCommunityPostDto.Response::id)
         )
 
         given(communityPostUseCase.searchCommunityPosts(any()))
@@ -63,14 +64,15 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
         // when
         val result = mockMvc.perform(
             get("/v1/community-posts")
-                .param("categoryType", "ISSUE")
-                .param("subwayLineId", "1")
-                .param("content", "내용")
-                .param("hashTag", "여행")
-                .param("hotPostYn", "Y")
-                .param("page", "1")
-                .param("size", "10")
-                .param("sort", "createdAt,desc")
+                .queryParam("categoryType", "ISSUE")
+                .queryParam("subwayLineId", "1")
+                .queryParam("content", "내용")
+                .queryParam("hashTag", "여행")
+                .queryParam("hotPostYn", "Y")
+                .queryParam("writer", "작성자")
+                .queryParam("sort", "createdAt,desc")
+                .queryParam("pageToken", "MTIzMTI5MTU6MTI=")
+                .queryParam("pageSize", "10" )
                 .header("Authorization", "Bearer <Access Token>")
                 .accept(MediaType.APPLICATION_JSON)
         )
@@ -88,31 +90,32 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         parameterWithName("content").description("검색하고자 하는 내용").optional(),
                         parameterWithName("hashTag").description("검색하고자 하는 해시 태그").optional(),
                         parameterWithName("hotPostYn").description("검색하고자 하는 핫 게시글 여부").optional(),
-                        parameterWithName("page").description("현재 페이지"),
-                        parameterWithName("size").description("페이지 노출 데이터 수. index 0부터 시작"),
+                        parameterWithName("writer").description("검색하고자 하는 작성자 닉네임").optional(),
                         parameterWithName("sort").description("정렬 조건").attributes(getFormatAttribute("(likes|createdAt|views),(asc|desc)")),
+                        parameterWithName("pageToken").description("base64로 인코딩 된 페이지 토큰 문자열").optional(),
+                        parameterWithName("pageSize").description("페이지 노출 데이터 수. index 0부터 시작"),
                     ),
                     responseFields(
                         *commonResponseFields(),
                         fieldWithPath("result.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
-                        fieldWithPath("result.nextPageNum").type(JsonFieldType.NUMBER).description("다음 페이지 인덱스"),
-                        fieldWithPath("result.posts[].id").type(JsonFieldType.NUMBER).description("게시글 아이디"),
-                        fieldWithPath("result.posts[].title").type(JsonFieldType.STRING).description("게시글 제목"),
-                        fieldWithPath("result.posts[].content").type(JsonFieldType.STRING).description("게시글 내용"),
-                        fieldWithPath("result.posts[].categoryType").type("CategoryType").description("카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")),
-                        fieldWithPath("result.posts[].hashTags").type(JsonFieldType.ARRAY).description("해시 태그 목록"),
-                        fieldWithPath("result.posts[].commentCnt").type(JsonFieldType.NUMBER).description("댓글 수"),
-                        fieldWithPath("result.posts[].viewCnt").type(JsonFieldType.NUMBER).description("조회수"),
-                        fieldWithPath("result.posts[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
-                        fieldWithPath("result.posts[].hotPostYn").type("YNType").description("핫 게시글 여부").attributes(getFormatAttribute("Y, N")),
-                        fieldWithPath("result.posts[].regionType").type("RegionType").description("지역").attributes(getFormatAttribute("METROPOLITAN")),
-                        fieldWithPath("result.posts[].subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
-                        fieldWithPath("result.posts[].createdAt").type("LocalDateTime").description("작성일자"),
-                        fieldWithPath("result.posts[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
-                        fieldWithPath("result.posts[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
-                        fieldWithPath("result.posts[].image").type(JsonFieldType.OBJECT).description("등록된 이미지"),
-                        fieldWithPath("result.posts[].image.imageId").type(JsonFieldType.NUMBER).description("등록된 첫 번쨰 이미지 ID"),
-                        fieldWithPath("result.posts[].image.imageUrl").type(JsonFieldType.STRING).description("등록된 첫 번째 이미지 URI"),
+                        fieldWithPath("result.pageToken").type(JsonFieldType.STRING).description("다음 게시글을 가져오기 위한 base64로 인코딩 된 페이지 토큰 문자열").optional(),
+                        fieldWithPath("result.data[].id").type(JsonFieldType.NUMBER).description("게시글 아이디"),
+                        fieldWithPath("result.data[].title").type(JsonFieldType.STRING).description("게시글 제목"),
+                        fieldWithPath("result.data[].content").type(JsonFieldType.STRING).description("게시글 내용"),
+                        fieldWithPath("result.data[].categoryType").type("CategoryType").description("카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")),
+                        fieldWithPath("result.data[].hashTags").type(JsonFieldType.ARRAY).description("해시 태그 목록"),
+                        fieldWithPath("result.data[].commentCnt").type(JsonFieldType.NUMBER).description("댓글 수"),
+                        fieldWithPath("result.data[].viewCnt").type(JsonFieldType.NUMBER).description("조회수"),
+                        fieldWithPath("result.data[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
+                        fieldWithPath("result.data[].hotPostYn").type("YNType").description("핫 게시글 여부").attributes(getFormatAttribute("Y, N")),
+                        fieldWithPath("result.data[].regionType").type("RegionType").description("지역").attributes(getFormatAttribute("METROPOLITAN")),
+                        fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.data[].createdAt").type("LocalDateTime").description("작성일자"),
+                        fieldWithPath("result.data[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
+                        fieldWithPath("result.data[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
+                        fieldWithPath("result.data[].image").type(JsonFieldType.OBJECT).description("등록된 이미지"),
+                        fieldWithPath("result.data[].image.imageId").type(JsonFieldType.NUMBER).description("등록된 첫 번쨰 이미지 ID"),
+                        fieldWithPath("result.data[].image.imageUrl").type(JsonFieldType.STRING).description("등록된 첫 번째 이미지 URI"),
                     )
                 )
             )
