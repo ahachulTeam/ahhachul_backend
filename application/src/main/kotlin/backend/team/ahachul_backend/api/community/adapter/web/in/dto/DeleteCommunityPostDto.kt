@@ -1,6 +1,6 @@
 package backend.team.ahachul_backend.api.community.adapter.web.`in`.dto
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.DeleteCommunityPostCommand
+import backend.team.ahachul_backend.api.community.application.command.`in`.DeleteCommunityPostCommand
 
 class DeleteCommunityPostDto {
 

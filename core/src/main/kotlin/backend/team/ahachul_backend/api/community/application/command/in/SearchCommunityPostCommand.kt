@@ -1,4 +1,4 @@
-package backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post
+package backend.team.ahachul_backend.api.community.application.command.`in`
 
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.common.domain.model.YNType

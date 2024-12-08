@@ -1,8 +1,8 @@
 package backend.team.ahachul_backend.api.community.application.service
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostHashTagRepository
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostRepository
+import backend.team.ahachul_backend.api.community.application.command.`in`.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository

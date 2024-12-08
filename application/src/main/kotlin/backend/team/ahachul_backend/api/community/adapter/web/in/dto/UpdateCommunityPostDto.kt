@@ -1,6 +1,6 @@
 package backend.team.ahachul_backend.api.community.adapter.web.`in`.dto
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.UpdateCommunityPostCommand
+import backend.team.ahachul_backend.api.community.application.command.`in`.UpdateCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.common.dto.ImageDto

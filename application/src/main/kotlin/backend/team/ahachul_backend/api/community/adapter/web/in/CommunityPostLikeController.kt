@@ -1,7 +1,5 @@
 package backend.team.ahachul_backend.api.community.adapter.web.`in`
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostLikeUseCase
 import backend.team.ahachul_backend.common.annotation.Authentication
 import backend.team.ahachul_backend.common.response.CommonResponse

@@ -1,6 +1,6 @@
 package backend.team.ahachul_backend.api.community.application.command.out
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.SearchCommunityPostCommand
+import backend.team.ahachul_backend.api.community.application.command.`in`.SearchCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.YNType
