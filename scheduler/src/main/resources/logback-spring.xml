@@ -76,7 +76,6 @@
             </timeBasedFileNamingAndTriggeringPolicy>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
-
     </appender>
 
     <root level="{LOG_LEVEL}">
