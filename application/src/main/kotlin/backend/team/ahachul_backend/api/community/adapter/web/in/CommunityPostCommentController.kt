@@ -16,7 +16,7 @@ class CommunityPostCommentController(
 
     @GetMapping("/v1/community-posts/{postId}/comments")
     fun getCommunityPostComments(@PathVariable postId: Long): CommonResponse<GetCommentsDto.Response> {
-        return CommonResponse.success(commentUseCase.getComments(GetCommentsCommand(postId)))
+        return CommonResponse.success(commentUseCase.getComments(GetCommentsCommand(postId, PostType.COMMUNITY)))
     }
 
     @Authentication
