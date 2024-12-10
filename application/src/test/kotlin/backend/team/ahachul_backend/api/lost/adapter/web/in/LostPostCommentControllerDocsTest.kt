@@ -41,7 +41,8 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         status = CommentType.CREATED,
                         LocalDateTime.now(),
                         "작성자 ID",
-                        "작성자 닉네임"
+                        "작성자 닉네임",
+                        true
                     ),
                     childComments = listOf(
                         GetCommentsDto.Comment(
@@ -51,7 +52,8 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                             status = CommentType.CREATED,
                             LocalDateTime.now(),
                             "작성자 ID",
-                            "작성자 닉네임"
+                            "작성자 닉네임",
+                            false
                         )
                     )
                 )
@@ -86,6 +88,7 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].parentComment.createdAt").type("LocalDateTime").description("작성일자"),
                         fieldWithPath("result.comments[].parentComment.createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.comments[].parentComment.writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
+                        fieldWithPath("result.comments[].parentComment.isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional(),
                         fieldWithPath("result.comments[].childComments[].id").type(JsonFieldType.NUMBER).description("코멘트 아이디"),
                         fieldWithPath("result.comments[].childComments[].upperCommentId").type(JsonFieldType.NUMBER).description("상위 코멘트 아이디").optional(),
                         fieldWithPath("result.comments[].childComments[].content").type(JsonFieldType.STRING).description("코멘트 내용"),
@@ -93,7 +96,8 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].childComments[].createdAt").type("LocalDateTime").description("작성일자"),
                         fieldWithPath("result.comments[].childComments[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.comments[].childComments[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
-                    )
+                        fieldWithPath("result.comments[].childComments[].isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional(),
+                        )
                 )
             )
     }
