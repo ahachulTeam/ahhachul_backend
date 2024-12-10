@@ -44,7 +44,8 @@ class CommentService(
                     it.status,
                     it.createdAt,
                     it.createdBy,
-                    it.member.nickname!!
+                    it.member.nickname!!,
+                    it.isPrivate
                 )
             }
 

@@ -18,6 +18,8 @@ class CommentEntity(
 
     var content: String,
 
+    var isPrivate: Boolean,
+
     @Enumerated(EnumType.STRING)
     var status: CommentType = CommentType.CREATED,
 
@@ -51,7 +53,8 @@ class CommentEntity(
                 upperComment = commentEntity,
                 communityPost = post as? CommunityPostEntity,
                 lostPost = post as? LostPostEntity,
-                member = memberEntity
+                member = memberEntity,
+                isPrivate = command.isPrivate
             )
         }
     }
