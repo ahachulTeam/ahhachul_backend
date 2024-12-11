@@ -45,7 +45,7 @@ class CommentService(
                     it.createdAt,
                     it.createdBy,
                     it.member.nickname!!,
-                    it.isPrivate
+                    it.visibility.isPrivate
                 )
             }
 

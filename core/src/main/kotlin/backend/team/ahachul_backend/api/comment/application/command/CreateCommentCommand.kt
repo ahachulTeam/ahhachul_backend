@@ -9,6 +9,5 @@ class CreateCommentCommand(
     val upperCommentId: Long?,
     val content: String,
     val visibility: CommentVisibility,
-    val isPrivate: Boolean
 ) {
 }

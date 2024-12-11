@@ -96,8 +96,7 @@ class CommentServiceTest(
             postType = PostType.COMMUNITY,
             upperCommentId = null,
             content = "내용",
-            visibility = CommentVisibility.PUBLIC,
-            true
+            visibility = CommentVisibility.PUBLIC
         )
 
         // when
@@ -115,7 +114,6 @@ class CommentServiceTest(
         assertThat(comment.communityPost).isEqualTo(communityPost)
         assertThat(comment.lostPost).isNull()
         assertThat(comment.visibility).isEqualTo(CommentVisibility.PUBLIC)
-        assertThat(comment.isPrivate).isEqualTo(true)
     }
 
     @Test
@@ -127,8 +125,7 @@ class CommentServiceTest(
             postType = PostType.LOST,
             upperCommentId = null,
             content = "내용",
-            visibility = CommentVisibility.PRIVATE,
-            true
+            visibility = CommentVisibility.PRIVATE
         )
 
         // when
@@ -146,7 +143,6 @@ class CommentServiceTest(
         assertThat(comment.lostPost).isEqualTo(lostPost)
         assertThat(comment.communityPost).isNull()
         assertThat(comment.visibility).isEqualTo(CommentVisibility.PRIVATE)
-        assertThat(comment.isPrivate).isEqualTo(true)
     }
 
     @Test
@@ -158,8 +154,7 @@ class CommentServiceTest(
             postType = PostType.COMMUNITY,
             upperCommentId = null,
             content = "내용",
-            visibility = CommentVisibility.PUBLIC,
-            isPrivate = true
+            visibility = CommentVisibility.PUBLIC
         )
         val comment = commentUseCase.createComment(createCommentCommand)
 
@@ -185,8 +180,7 @@ class CommentServiceTest(
             postType = PostType.COMMUNITY,
             upperCommentId = null,
             content = "내용",
-            visibility = CommentVisibility.PUBLIC,
-            isPrivate = true
+            visibility = CommentVisibility.PUBLIC
         )
         val commentRes = commentUseCase.createComment(createCommentCommand)
 
@@ -215,8 +209,7 @@ class CommentServiceTest(
                 postType = PostType.COMMUNITY,
                 upperCommentId = null,
                 content = "내용${i}",
-                visibility = CommentVisibility.PUBLIC,
-                isPrivate = true
+                visibility = CommentVisibility.PUBLIC
             )
             commentUseCase.createComment(createCommentCommand)
         }
@@ -247,8 +240,7 @@ class CommentServiceTest(
                 postType = PostType.LOST,
                 upperCommentId = null,
                 content = "내용${i}",
-                visibility = CommentVisibility.PUBLIC,
-                isPrivate = true
+                visibility = CommentVisibility.PUBLIC
             )
             commentUseCase.createComment(createCommentCommand)
         }
@@ -278,8 +270,7 @@ class CommentServiceTest(
             postType = PostType.COMMUNITY,
             upperCommentId = null,
             content = "내용",
-            visibility = CommentVisibility.PUBLIC,
-            isPrivate = true
+            visibility = CommentVisibility.PUBLIC
         )
         val (upper_comment_id, _, _) = commentUseCase.createComment(createCommentCommand)
 
@@ -288,8 +279,7 @@ class CommentServiceTest(
             postType = PostType.COMMUNITY,
             upperCommentId = upper_comment_id,
             content = "내용",
-            visibility = CommentVisibility.PUBLIC,
-            isPrivate = true
+            visibility = CommentVisibility.PUBLIC
         )
         for (i in 1..4) {
             commentUseCase.createComment(createChildCommentCommand)
