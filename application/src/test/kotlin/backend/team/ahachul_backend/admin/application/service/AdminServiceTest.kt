@@ -1,6 +1,6 @@
 package backend.team.ahachul_backend.admin.application.service
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.CreateCommunityPostCommand
+import backend.team.ahachul_backend.api.community.application.command.`in`.CreateCommunityPostCommand
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostRepository
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType

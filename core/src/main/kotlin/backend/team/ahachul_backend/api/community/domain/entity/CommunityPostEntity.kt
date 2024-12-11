@@ -1,7 +1,7 @@
 package backend.team.ahachul_backend.api.community.domain.entity
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.CreateCommunityPostCommand
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.UpdateCommunityPostCommand
+import backend.team.ahachul_backend.api.community.application.command.`in`.CreateCommunityPostCommand
+import backend.team.ahachul_backend.api.community.application.command.`in`.UpdateCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity

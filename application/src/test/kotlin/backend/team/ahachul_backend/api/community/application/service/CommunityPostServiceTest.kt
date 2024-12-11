@@ -1,8 +1,8 @@
 package backend.team.ahachul_backend.api.community.application.service
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.*
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostHashTagRepository
 import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostRepository
+import backend.team.ahachul_backend.api.community.application.command.`in`.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
@@ -20,12 +20,11 @@ import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 
 class CommunityPostServiceTest(
     @Autowired val communityPostRepository: CommunityPostRepository,
@@ -247,40 +246,69 @@ class CommunityPostServiceTest(
         val communityPost2 = communityPostUseCase.createCommunityPost(createCommand2)
 
         val verifyNameCommand = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
             content = "제",
-            pageable = Pageable.ofSize(2)
+            hashTag = null,
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 2
         )
         val verifyNameCommand2 = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
             content = "지하철",
-            pageable = Pageable.ofSize(1)
+            hashTag = null,
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 1
         )
         val verifyNameCommand3 = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
             content = "지하철",
-            pageable = Pageable.ofSize(2)
+            hashTag = null,
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 2
         )
         val verifyOrderCommand = SearchCommunityPostCommand(
-            pageable = Pageable.ofSize(2)
+            categoryType = null,
+            subwayLineId = null,
+            content = null,
+            hashTag = null,
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 2
         )
 
         // when, then
         var result = communityPostUseCase.searchCommunityPosts(verifyNameCommand)
         assertThat(result.hasNext).isFalse()
-        assertThat(result.posts).hasSize(1)
-        assertThat(result.posts.first().id).isEqualTo(communityPost.id)
+        assertThat(result.data).hasSize(1)
+        assertThat(result.data.first().id).isEqualTo(communityPost.id)
 
         result = communityPostUseCase.searchCommunityPosts(verifyNameCommand2)
         assertThat(result.hasNext).isTrue()
-        assertThat(result.posts).hasSize(1)
-        assertThat(result.posts.first().id).isEqualTo(communityPost2.id)
+        assertThat(result.data).hasSize(1)
+        assertThat(result.data.first().id).isEqualTo(communityPost2.id)
 
         result = communityPostUseCase.searchCommunityPosts(verifyNameCommand3)
         assertThat(result.hasNext).isFalse()
-        assertThat(result.posts).hasSize(2)
+        assertThat(result.data).hasSize(2)
 
         result = communityPostUseCase.searchCommunityPosts(verifyOrderCommand)
-        assertThat(result.posts).hasSize(2)
-        assertThat(result.posts.map { it.createdAt })
-            .isEqualTo(result.posts.map { it.createdAt }.sortedDescending())
+        assertThat(result.data).hasSize(2)
+        assertThat(result.data.map { it.createdAt })
+            .isEqualTo(result.data.map { it.createdAt }.sortedDescending())
 
     }
 
@@ -306,21 +334,35 @@ class CommunityPostServiceTest(
 
          val verifyCategoryCommand = SearchCommunityPostCommand(
              categoryType = CommunityCategoryType.FREE,
-             pageable = Pageable.ofSize(2)
+             subwayLineId = null,
+             content = null,
+             hashTag = null,
+             hotPostYn = null,
+             writer = null,
+             sort = Sort.unsorted(),
+             pageToken = null,
+             pageSize = 2
          )
          val verifyCategoryCommand2 = SearchCommunityPostCommand(
              categoryType = CommunityCategoryType.ISSUE,
-             pageable = Pageable.ofSize(2)
+             subwayLineId = null,
+             content = null,
+             hashTag = null,
+             hotPostYn = null,
+             writer = null,
+             sort = Sort.unsorted(),
+             pageToken = null,
+             pageSize = 2
          )
 
          // when, then
          var result = communityPostUseCase.searchCommunityPosts(verifyCategoryCommand)
-         assertThat(result.posts).hasSize(1)
-         assertThat(result.posts.first().id).isEqualTo(communityPost.id)
+         assertThat(result.data).hasSize(1)
+         assertThat(result.data.first().id).isEqualTo(communityPost.id)
 
          result = communityPostUseCase.searchCommunityPosts(verifyCategoryCommand2)
-         assertThat(result.posts).hasSize(1)
-         assertThat(result.posts.first().id).isEqualTo(communityPost2.id)
+         assertThat(result.data).hasSize(1)
+         assertThat(result.data.first().id).isEqualTo(communityPost2.id)
      }
 
     @Test
@@ -345,20 +387,131 @@ class CommunityPostServiceTest(
         communityPostUseCase.createCommunityPost(createCommand2)
 
         val verifyHashTagCommand = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
+            content = null,
             hashTag = "여행",
-            pageable = Pageable.ofSize(2)
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 2
         )
         val verifyHashTagCommand2 = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
+            content = null,
             hashTag = "취미",
-            pageable = Pageable.ofSize(2)
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 2
         )
 
         // when, then
         var result = communityPostUseCase.searchCommunityPosts(verifyHashTagCommand)
-        assertThat(result.posts).hasSize(1)
-        assertThat(result.posts.first().id).isEqualTo(communityPost.id)
+        assertThat(result.data).hasSize(1)
+        assertThat(result.data.first().id).isEqualTo(communityPost.id)
 
         result = communityPostUseCase.searchCommunityPosts(verifyHashTagCommand2)
-        assertThat(result.posts).hasSize(2)
+        assertThat(result.data).hasSize(2)
+    }
+
+    @Test
+    @DisplayName("커뮤니티 게시글 작성자 조회")
+    fun 커뮤니티_게시글_작성자_조회() {
+        // given
+        val createCommand = CreateCommunityPostCommand(
+            title = "제목",
+            content = "내용",
+            categoryType = CommunityCategoryType.FREE,
+            subwayLineId = subwayLine.id
+        )
+        val createCommand2 = CreateCommunityPostCommand(
+            title = "제목",
+            content = "내용",
+            categoryType = CommunityCategoryType.FREE,
+            subwayLineId = subwayLine.id
+        )
+
+        communityPostUseCase.createCommunityPost(createCommand)
+        communityPostUseCase.createCommunityPost(createCommand2)
+
+        val verifyWriterCommand = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
+            content = null,
+            hashTag = null,
+            hotPostYn = null,
+            writer = "nickname",
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 2
+        )
+
+        // when, then
+        val result = communityPostUseCase.searchCommunityPosts(verifyWriterCommand)
+        assertThat(result.data).hasSize(2)
+    }
+
+    @Test
+    @DisplayName("커뮤니티_게시글_조회_페이징")
+    fun 커뮤니티_게시글_조회_페이징() {
+        // given
+        for(i: Int in 1.. 5) {
+            val createCommand = CreateCommunityPostCommand(
+                title = "제목$i",
+                content = "내용$i",
+                categoryType = CommunityCategoryType.FREE,
+                subwayLineId = subwayLine.id
+            )
+
+            communityPostUseCase.createCommunityPost(createCommand)
+        }
+
+        // when
+        val searchCommand1 = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
+            content = null,
+            hashTag = null,
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 3
+        )
+
+        val response1 = communityPostUseCase.searchCommunityPosts(searchCommand1)
+
+        val searchCommand2 = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineId = null,
+            content = null,
+            hashTag = null,
+            hotPostYn = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = response1.pageToken,
+            pageSize = 3
+        )
+
+        val response2 = communityPostUseCase.searchCommunityPosts(searchCommand2)
+
+        // then
+        assertThat(response1.hasNext).isEqualTo(true)
+        assertThat(response1.data.size).isEqualTo(3)
+        assertThat(response1.data)
+            .extracting("content")
+            .usingRecursiveComparison()
+            .isEqualTo((5 downTo 3).map { "내용$it" })
+
+        assertThat(response2.hasNext).isEqualTo(false)
+        assertThat(response2.data.size).isEqualTo(2)
+        assertThat(response2.data)
+            .extracting("content")
+            .usingRecursiveComparison()
+            .isEqualTo((2 downTo 1).map { "내용$it" })
     }
 }

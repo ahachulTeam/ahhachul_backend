@@ -1,9 +1,9 @@
 package backend.team.ahachul_backend.api.community.adapter.web.out
 
-import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.post.SearchCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.GetCommunityPost
 import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.comment.domain.entity.QCommentEntity.commentEntity
+import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostEntity.communityPostEntity
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostHashTagEntity.communityPostHashTagEntity
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostLikeEntity.communityPostLikeEntity
@@ -11,6 +11,7 @@ import backend.team.ahachul_backend.api.community.domain.model.CommunityCategory
 import backend.team.ahachul_backend.api.member.domain.entity.QMemberEntity.memberEntity
 import backend.team.ahachul_backend.common.domain.entity.QHashTagEntity.hashTagEntity
 import backend.team.ahachul_backend.common.domain.entity.QSubwayLineEntity.subwayLineEntity
+import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.YNType
 import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.ExpressionUtils.count
@@ -19,9 +20,7 @@ import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.JPAExpressions
 import com.querydsl.jpa.impl.JPAQueryFactory
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Slice
-import org.springframework.data.domain.SliceImpl
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 
@@ -105,10 +104,10 @@ class CustomCommunityPostRepository(
             .fetchOne()
     }
 
-    fun searchCommunityPosts(command: SearchCommunityPostCommand): Slice<SearchCommunityPost> {
-        val pageable = command.pageable
+    fun searchCommunityPosts(command: GetSliceCommunityPostCommand): List<SearchCommunityPost> {
+        val orderSpecifier = getOrder(command.sort)
 
-        var result = queryFactory.select(
+        return queryFactory.select(
             Projections.constructor(
                 SearchCommunityPost::class.java,
                 communityPostEntity.id,
@@ -142,27 +141,26 @@ class CustomCommunityPostRepository(
             .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
             .where(
                 categoryTypeEq(command.categoryType),
-                subwayLineIdEq(command.subwayLineId),
+                subwayLineEq(command.subwayLine),
                 hashTagEqWithSubQuery(command.hashTag),
                 titleOrContentContains(command.content),
-                hotPostYnEq(command.hotPostYn)
+                hotPostYnEq(command.hotPostYn),
+                writerEq(command.writer),
+                createdAtBeforeOrEqual(
+                    command.date,
+                    command.communityPostId
+                )
             )
-            .orderBy(getOrder(pageable))
-            .offset(getOffset(pageable).toLong())
-            .limit(pageable.pageSize + 1L)
+            .orderBy(orderSpecifier)
+            .limit((command.pageSize + 1).toLong())
             .fetch()
-
-        val hasNext = hasNext(result, pageable)
-        result = if (hasNext) result.dropLast(1) else result
-
-        return SliceImpl(result, pageable, hasNext)
     }
 
-    private fun getOrder(pageable: Pageable): OrderSpecifier<*>? {
-        if (pageable.sort.isUnsorted) return communityPostEntity.createdAt.desc()
+    private fun getOrder(sort: Sort): OrderSpecifier<*>? {
+        if (sort.isUnsorted) return communityPostEntity.createdAt.desc()
 
-        val property = pageable.sort.toList()[0].property
-        val direction = pageable.sort.toList()[0].direction
+        val property = sort.toList()[0].property
+        val direction = sort.toList()[0].direction
         val path = when (property) {
             "likes" -> Expressions.numberPath(Long::class.java, "likeCnt")
             "createdAt" -> communityPostEntity.createdAt
@@ -172,22 +170,11 @@ class CustomCommunityPostRepository(
         return if (direction.isAscending) path.asc() else path.desc()
     }
 
-    private fun getOffset(pageable: Pageable): Int {
-        return when {
-            pageable.pageNumber != 0 -> (pageable.pageNumber * pageable.pageSize) + 1
-            else -> pageable.pageNumber
-        }
-    }
-
-    private fun hasNext(result: MutableList<SearchCommunityPost>, pageable: Pageable): Boolean {
-        return result.size > pageable.pageSize
-    }
-
     private fun categoryTypeEq(categoryType: CommunityCategoryType?) =
         categoryType?.let { communityPostEntity.categoryType.eq(categoryType) }
 
-    private fun subwayLineIdEq(subwayLineId: Long?) =
-        subwayLineId?.let { communityPostEntity.subwayLineEntity.id.eq(subwayLineId) }
+    private fun subwayLineEq(subwayLine: SubwayLineEntity?) =
+        subwayLine?.let { communityPostEntity.subwayLineEntity.eq(subwayLine) }
 
     private fun hotPostYnEq(hotPostYn: YNType?) =
         hotPostYn?.let { communityPostEntity.hotPostYn.eq(hotPostYn)
@@ -205,4 +192,16 @@ class CustomCommunityPostRepository(
 
     private fun titleOrContentContains(content: String?) =
         content?.let { communityPostEntity.title.contains(content).or(communityPostEntity.content.contains(content)) }
+
+    private fun writerEq(writer: String?) =
+        writer?.let { communityPostEntity.member.nickname.eq(writer) }
+
+    private fun createdAtBeforeOrEqual(localDateTime: LocalDateTime?, id: Long?) =
+        localDateTime?.let { date ->
+            id?.let { communityPostId ->
+                communityPostEntity.createdAt.lt(date).or(
+                    communityPostEntity.createdAt.eq(date).and(communityPostEntity.id.lt(communityPostId))
+                )
+            }
+        }
 }
