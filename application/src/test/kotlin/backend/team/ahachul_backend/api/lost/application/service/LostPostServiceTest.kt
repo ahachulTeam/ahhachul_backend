@@ -76,6 +76,7 @@ class LostPostServiceTest(
         assertThat(response.writer).isEqualTo("nickname")
         assertThat(response.subwayLineId).isEqualTo(subwayLine.id)
         assertThat(response.status).isEqualTo(LostStatus.PROGRESS)
+        assertThat(response.lostType).isEqualTo(LostType.ACQUIRE)
     }
 
     @Test
