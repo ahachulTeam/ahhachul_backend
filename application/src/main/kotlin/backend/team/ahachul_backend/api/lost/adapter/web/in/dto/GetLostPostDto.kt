@@ -33,7 +33,7 @@ class GetLostPostDto {
                     title = entity.title,
                     content = entity.content,
                     writer = entity.member?.nickname,
-                    createdBy = entity.member?.createdBy,
+                    createdBy = entity.createdBy,
                     createdAt = entity.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                     subwayLineId = entity.subwayLine?.id,
                     status = entity.status,
