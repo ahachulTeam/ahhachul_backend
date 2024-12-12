@@ -22,5 +22,6 @@ class GetCommentsDto {
         val createdAt: LocalDateTime,
         val createdBy: String,
         val writer: String,
+        val isPrivate: Boolean,
     )
 }
