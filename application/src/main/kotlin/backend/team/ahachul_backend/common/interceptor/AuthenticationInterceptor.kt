@@ -44,16 +44,16 @@ class AuthenticationInterceptor(
             }
             when (e) {
                 is SignatureException, is UnsupportedJwtException, is IllegalArgumentException, is MalformedJwtException -> {
-                    throw CommonException(ResponseCode.INVALID_ACCESS_TOKEN)
+                    throw CommonException(ResponseCode.INVALID_ACCESS_TOKEN, e)
                 }
 
                 is ExpiredJwtException -> {
-                    throw CommonException(ResponseCode.EXPIRED_ACCESS_TOKEN)
+                    throw CommonException(ResponseCode.EXPIRED_ACCESS_TOKEN, e)
                 }
 
                 else -> {
                     if (e.message == ResponseCode.BLOCKED_MEMBER.message) throw e
-                    throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR)
+                    throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
                 }
             }
         }
