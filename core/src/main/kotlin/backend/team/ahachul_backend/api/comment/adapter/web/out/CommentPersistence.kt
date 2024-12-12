@@ -33,7 +33,11 @@ class CommentPersistence(
         return repository.findAllByLostPostId(postId)
     }
 
-    override fun count(postId: Long): Int {
+    override fun countCommunity(postId: Long): Int {
         return repository.countByCommunityPostId(postId)
+    }
+
+    override fun countLost(postId: Long): Int {
+        return repository.countByLostPostId(postId)
     }
 }

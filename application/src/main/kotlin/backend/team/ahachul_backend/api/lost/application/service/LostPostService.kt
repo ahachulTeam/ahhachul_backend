@@ -1,5 +1,6 @@
 package backend.team.ahachul_backend.api.lost.application.service
 
+import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
 import backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.lost.application.port.`in`.LostPostUseCase
 import backend.team.ahachul_backend.api.lost.application.port.out.CategoryReader
@@ -34,20 +35,22 @@ class LostPostService(
     private val lostPostFileService: LostPostFileService,
     private val subwayLineReader: SubwayLineReader,
     private val memberReader: MemberReader,
-    private val categoryReader: CategoryReader
+    private val categoryReader: CategoryReader,
+    private val commentReader: CommentReader,
 ): LostPostUseCase {
 
     override fun getLostPost(id: Long): GetLostPostDto.Response {
         val entity = lostPostReader.getLostPost(id)
         val recommendPosts = getRecommendPosts(entity.subwayLine, entity.category)
         val recommendPostsDto = mapRecommendPostsDto(recommendPosts)
+        val commentCnt = commentReader.countLost(id)
 
         if (entity.origin == LostOrigin.LOST112) {
-            return GetLostPostDto.Response.of(entity, listOf(), recommendPostsDto)
+            return GetLostPostDto.Response.of(entity, commentCnt, listOf(), recommendPostsDto)
         }
 
         val files = lostPostFileReader.findAllByPostId(id)
-        return GetLostPostDto.Response.of(entity, convertToImageDto(files), recommendPostsDto)
+        return GetLostPostDto.Response.of(entity, commentCnt, convertToImageDto(files), recommendPostsDto)
     }
 
     private fun getRecommendPosts(subwayLine: SubwayLineEntity?, category:CategoryEntity?): List<LostPostEntity> {
@@ -116,6 +119,7 @@ class LostPostService(
                 createdBy = it.createdBy,
                 createdAt = it.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                 subwayLineId = it.subwayLine?.id,
+                commentCnt = commentReader.countLost(it.id),
                 status = it.status,
                 imageUrl = getFileSource(it),
                 categoryName = it.category?.name

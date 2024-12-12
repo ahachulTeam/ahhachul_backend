@@ -11,5 +11,8 @@ interface CommentReader {
     fun findAllByCommunityPostId(postId: Long): List<CommentEntity>
 
     fun findAllByLostPostId(postId: Long): List<CommentEntity>
-    fun count(postId: Long): Int
+
+    fun countCommunity(postId: Long): Int
+
+    fun countLost(postId: Long): Int
 }
