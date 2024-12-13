@@ -58,6 +58,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
             externalSourceImageUrl = "http://lost112/image.png",
             recommendPosts = listOf(recommendPost),
             isFromLost112 = true,
+            lostType = LostType.LOST,
         )
 
         given(lostPostUseCase.getLostPost(anyLong()))
@@ -88,6 +89,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선"),
                     fieldWithPath("result.commentCnt").type(JsonFieldType.NUMBER).description("유실물 쪽지 개수"),
                     fieldWithPath("result.isFromLost112").type(JsonFieldType.BOOLEAN).description("Lost112 여부"),
+                    fieldWithPath("result.lostType").type(JsonFieldType.STRING).description("유실물 타입").attributes(getFormatAttribute("LOST(유실) / ACQUIRE(습득)")),
                     fieldWithPath("result.status").type(JsonFieldType.STRING).description("유실물 찾기 완료 여부").attributes(getFormatAttribute( "PROGRESS / COMPLETE")),
                     fieldWithPath("result.storage" ).type(JsonFieldType.STRING).description("보관 장소").attributes(getFormatAttribute("Lost112 데이터")),
                     fieldWithPath("result.storageNumber").type(JsonFieldType.STRING).description("보관 장소 전화번호").attributes(getFormatAttribute("Lost112 데이터")),
