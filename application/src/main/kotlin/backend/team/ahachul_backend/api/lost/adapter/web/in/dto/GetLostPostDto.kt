@@ -15,7 +15,7 @@ class GetLostPostDto {
         val createdBy: String?,
         val createdAt: String,
         val subwayLineId: Long?,
-        val commentCnt: Int = 0,
+        val commentCnt: Int,
         val status: LostStatus,
         val storage: String?,
         val storageNumber: String?,
@@ -27,7 +27,7 @@ class GetLostPostDto {
         val isFromLost112: Boolean
     ) {
         companion object {
-            fun of(entity: LostPostEntity, images: List<ImageDto>, recommendPosts: List<RecommendResponse>): Response {
+            fun of(entity: LostPostEntity, commentCnt: Int, images: List<ImageDto>, recommendPosts: List<RecommendResponse>): Response {
                 return Response(
                     id = entity.id,
                     title = entity.title,
@@ -36,6 +36,7 @@ class GetLostPostDto {
                     createdBy = entity.createdBy,
                     createdAt = entity.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                     subwayLineId = entity.subwayLine?.id,
+                    commentCnt = commentCnt,
                     status = entity.status,
                     storage = entity.storage,
                     storageNumber = entity.storageNumber,

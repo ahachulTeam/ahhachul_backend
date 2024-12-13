@@ -21,4 +21,6 @@ interface CommentRepository: JpaRepository<CommentEntity, Long> {
     fun findAllByLostPostId(postId: Long): List<CommentEntity>
 
     fun countByCommunityPostId(postId: Long): Int
+
+    fun countByLostPostId(postId: Long): Int
 }
