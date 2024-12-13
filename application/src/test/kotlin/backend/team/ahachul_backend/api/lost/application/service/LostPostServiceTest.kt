@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.lost.application.port.`in`.LostPostUseCa
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.CreateLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.SearchLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
+import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostStatusCommand
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
@@ -210,6 +211,25 @@ class LostPostServiceTest(
         }
             .isExactlyInstanceOf(CommonException::class.java)
             .hasMessage(ResponseCode.INVALID_AUTH.message)
+    }
+
+    @Test
+    @DisplayName("유실물 상태 수정 테스트")
+    fun updateLostPostStatus() {
+        // given
+        val createCommand = createLostPostCommand(subwayLine.id, "내용", "휴대폰")
+        val entity = lostPostUseCase.createLostPost(createCommand)
+
+        val updateCommand = UpdateLostPostStatusCommand(
+            id = entity.id,
+            status = LostStatus.COMPLETE
+        )
+
+        // when
+        val response = lostPostUseCase.updateLostPostStatus(updateCommand)
+
+        // then
+        assertThat(response.id).isEqualTo(entity.id)
     }
 
     @Test

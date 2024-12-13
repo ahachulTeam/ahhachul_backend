@@ -2,6 +2,7 @@ package backend.team.ahachul_backend.api.lost.domain.entity
 
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.CreateLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
+import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostStatusCommand
 import backend.team.ahachul_backend.api.lost.domain.model.*
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.report.domain.ReportEntity
@@ -106,6 +107,10 @@ class LostPostEntity(
         command.status?.let { this.status= it }
         subwayLine?.let { this.subwayLine = subwayLine }
         category?.let { this.category = category }
+    }
+
+    fun updateStatus(command: UpdateLostPostStatusCommand) {
+        this.status = command.status
     }
 
     fun delete() {

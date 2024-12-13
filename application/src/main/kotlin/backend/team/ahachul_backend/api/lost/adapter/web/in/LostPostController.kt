@@ -48,6 +48,15 @@ class LostPostController(
     }
 
     @Authentication
+    @PatchMapping("/v1/lost-posts/{lostId}/status")
+    fun updateLostPostStatus(
+        @PathVariable("lostId") lostId: Long,
+        @RequestBody request: UpdateLostPostStatusDto.Request
+    ): CommonResponse<UpdateLostPostStatusDto.Response> {
+        return CommonResponse.success(lostPostService.updateLostPostStatus(request.toCommand(lostId)))
+    }
+
+    @Authentication
     @DeleteMapping("/v1/lost-posts/{lostId}")
     fun deleteLostPost(@PathVariable("lostId") lostId: Long): CommonResponse<DeleteLostPostDto.Response> {
         return CommonResponse.success(lostPostService.deleteLostPost(lostId))

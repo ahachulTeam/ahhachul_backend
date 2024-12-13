@@ -10,6 +10,7 @@ import backend.team.ahachul_backend.api.lost.application.port.out.LostPostWriter
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.CreateLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.SearchLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
+import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostStatusCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetRecommendLostPostsCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetSliceLostPostsCommand
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
@@ -191,6 +192,16 @@ class LostPostService(
         command.removeFileIds?.let {
             lostPostFileService.deleteLostPostFiles(it)
         }
+    }
+
+    @Transactional
+    override fun updateLostPostStatus(command: UpdateLostPostStatusCommand): UpdateLostPostStatusDto.Response {
+        val memberId = RequestUtils.getAttribute("memberId")!!
+        val entity = lostPostReader.getLostPost(command.id)
+        entity.checkMe(memberId)
+
+        entity.updateStatus(command)
+        return UpdateLostPostStatusDto.Response.from(entity)
     }
 
     @Transactional
