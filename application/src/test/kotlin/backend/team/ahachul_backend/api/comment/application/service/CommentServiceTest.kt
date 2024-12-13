@@ -65,7 +65,7 @@ class CommentServiceTest(
                 status = MemberStatusType.ACTIVE
             )
         )
-        member.id.let { RequestUtils.setAttribute("memberId", it) }
+        member.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
         subwayLine = subwayLineRepository.save(SubwayLineEntity(name = "1호선", regionType = RegionType.METROPOLITAN))
         category = categoryRepository.save(CategoryEntity(name = "휴대폰"))
         communityPost = communityPostRepository.save(

@@ -43,7 +43,7 @@ class AdminServiceTest(
         member = memberRepository.save(createMember("닉네임1"))
         otherMember = memberRepository.save(createMember("닉네임2"))
         manager = memberRepository.save(createMember("관리자"))
-        member!!.id.let { RequestUtils.setAttribute("memberId", it) }
+        member!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
         subwayLine = createSubwayLine()
     }
 
@@ -74,10 +74,10 @@ class AdminServiceTest(
         // when
         communityPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember2.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember2.id)
         communityPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember3.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember3.id)
         communityPostReportService.save(target.id)
 
         val command = ActionReportCommand(target.member!!.id, "post")

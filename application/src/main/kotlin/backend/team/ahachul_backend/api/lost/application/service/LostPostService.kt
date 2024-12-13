@@ -144,7 +144,7 @@ class LostPostService(
 
     @Transactional
     override fun createLostPost(command: CreateLostPostCommand): CreateLostPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val member = memberReader.getMember(memberId.toLong())
         val subwayLine = subwayLineReader.getById(command.subwayLine)
         val category = command.categoryName?.let { categoryReader.getCategoryByName(it) }
@@ -166,7 +166,7 @@ class LostPostService(
 
     @Transactional
     override fun updateLostPost(command: UpdateLostPostCommand): UpdateLostPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val entity = lostPostReader.getLostPost(command.id)
         entity.checkMe(memberId)
 
@@ -195,7 +195,7 @@ class LostPostService(
 
     @Transactional
     override fun deleteLostPost(id: Long): DeleteLostPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val entity = lostPostReader.getLostPost(id)
         entity.checkMe(memberId)
         entity.delete()

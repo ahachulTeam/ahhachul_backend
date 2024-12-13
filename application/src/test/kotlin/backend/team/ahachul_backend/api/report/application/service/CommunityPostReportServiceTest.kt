@@ -38,7 +38,7 @@ class CommunityPostReportServiceTest(
     @BeforeEach
     fun setup() {
         member = memberRepository.save(createMember("닉네임1"))
-        member!!.id.let { RequestUtils.setAttribute("memberId", it) }
+        member!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
         otherMember = memberRepository.save(createMember("닉네임2"))
         subwayLine = createSubwayLine()
     }
@@ -65,7 +65,7 @@ class CommunityPostReportServiceTest(
         val target = communityPostRepository.save(createCommunityPost())
 
         // when, then
-        otherMember!!.id.let { RequestUtils.setAttribute("memberId", it) }
+        otherMember!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
 
         Assertions.assertThatThrownBy {
             communityPostReportService.save(target.id)
@@ -102,16 +102,16 @@ class CommunityPostReportServiceTest(
         // when
         communityPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember2.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember2.id)
         communityPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember3.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember3.id)
         communityPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember4.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember4.id)
         communityPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember5.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember5.id)
         communityPostReportService.save(target.id)
 
         // then

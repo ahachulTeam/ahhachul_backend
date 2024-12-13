@@ -52,7 +52,7 @@ class CommunityPostServiceTest(
             status = MemberStatusType.ACTIVE
             )
         )
-        member!!.id.let { RequestUtils.setAttribute("memberId", it) }
+        member!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
         subwayLine = subwayLineRepository.save(SubwayLineEntity(name = "1호선", regionType = RegionType.METROPOLITAN))
     }
 
@@ -129,7 +129,7 @@ class CommunityPostServiceTest(
         )
         val (postId, _, _, _, _) = communityPostUseCase.createCommunityPost(createCommand)
 
-        RequestUtils.setAttribute("memberId", 2)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, 2)
 
         val updateCommand = UpdateCommunityPostCommand(
             id = postId,
