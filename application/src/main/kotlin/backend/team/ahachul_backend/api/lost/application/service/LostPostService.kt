@@ -200,7 +200,7 @@ class LostPostService(
         val entity = lostPostReader.getLostPost(command.id)
         entity.checkMe(memberId)
 
-        entity.updateStatus(command)
+        entity.updateStatus(command.status)
         return UpdateLostPostStatusDto.Response.from(entity)
     }
 
