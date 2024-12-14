@@ -8,9 +8,8 @@ import backend.team.ahachul_backend.api.lost.application.service.command.`in`.Se
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostStatusCommand
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
-import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
-import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
-import backend.team.ahachul_backend.api.lost.domain.model.LostType
+import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
+import backend.team.ahachul_backend.api.lost.domain.model.*
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
@@ -230,6 +229,34 @@ class LostPostServiceTest(
 
         // then
         assertThat(response.id).isEqualTo(entity.id)
+    }
+
+    @Test
+    @DisplayName("유실물 상태 수정 Lost112 에러")
+    fun updateLostPostStatusError() {
+        // given
+        val entity = lostPostRepository.save(
+            LostPostEntity(
+                title = "제목",
+                content = "내용",
+                subwayLine = subwayLine,
+                lostType = LostType.LOST,
+                category = category,
+                origin = LostOrigin.LOST112
+            )
+        )
+
+        val updateCommand = UpdateLostPostStatusCommand(
+            id = entity.id,
+            status = LostStatus.COMPLETE
+        )
+
+        // when & then
+        assertThatThrownBy {
+            lostPostUseCase.updateLostPostStatus(updateCommand)
+        }
+            .isExactlyInstanceOf(CommonException::class.java)
+            .hasMessage(ResponseCode.BAD_REQUEST.message)
     }
 
     @Test
