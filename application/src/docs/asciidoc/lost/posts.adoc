@@ -44,9 +44,9 @@ include::{snippets}/update-lost-post/http-request.adoc[]
 .Request Headers
 include::{snippets}/update-lost-post/request-headers.adoc[]
 .Request Parts
-include::{snippets}/create-lost-post/request-parts.adoc[]
+include::{snippets}/update-lost-post/request-parts.adoc[]
 .Request Parts - content
-include::{snippets}/create-lost-post/request-part-content-fields.adoc[]
+include::{snippets}/update-lost-post/request-part-content-fields.adoc[]
 .Response
 include::{snippets}/update-lost-post/http-response.adoc[]
 .Response Fields
