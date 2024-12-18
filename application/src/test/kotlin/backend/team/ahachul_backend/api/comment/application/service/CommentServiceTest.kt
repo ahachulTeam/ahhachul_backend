@@ -51,7 +51,12 @@ class CommentServiceTest(
     private lateinit var category: CategoryEntity
     private lateinit var communityPost: CommunityPostEntity
     private lateinit var lostPost: LostPostEntity
+    private val memberIds: MutableList<Long> = ArrayList()
+    private val membersCount: Int = 5
 
+    private fun loginWithMemberId(memberId: Long) {
+        RequestUtils.setAttribute("memberId", memberId)
+    }
     @BeforeEach
     fun setup() {
         val member = memberRepository.save(
@@ -66,20 +71,45 @@ class CommentServiceTest(
             )
         )
         member.id.let { RequestUtils.setAttribute("memberId", it) }
+        lateinit var postWriter: MemberEntity
+
+        for (i in 1..membersCount) {
+            val member = memberRepository.save(
+                MemberEntity(
+                    nickname = "nickname${i}",
+                    provider = ProviderType.KAKAO,
+                    providerUserId = "providerUserId${i}",
+                    email = "email${i}",
+                    gender = GenderType.MALE,
+                    ageRange = "20",
+                    status = MemberStatusType.ACTIVE
+                )
+            )
+
+            if (i == 1) {
+                postWriter = member
+            }
+
+            memberIds.add(member.id)
+        }
+        loginWithMemberId(memberIds[0])
+
         subwayLine = subwayLineRepository.save(SubwayLineEntity(name = "1호선", regionType = RegionType.METROPOLITAN))
         category = categoryRepository.save(CategoryEntity(name = "휴대폰"))
         communityPost = communityPostRepository.save(
             CommunityPostEntity(
                 title = "제목",
                 content = "내용",
+                member = postWriter,
                 categoryType = CommunityCategoryType.FREE,
-                subwayLineEntity = subwayLine
+                subwayLineEntity = subwayLine,
             )
         )
         lostPost = lostPostRepository.save(
             LostPostEntity(
                 title = "제목",
                 content = "내용",
+                member = postWriter,
                 subwayLine = subwayLine,
                 lostType = LostType.LOST,
                 category = category
@@ -260,6 +290,103 @@ class CommentServiceTest(
             assertThat(result.comments[i].childComments).isEmpty()
         }
     }
+
+    @Test
+    @DisplayName("커뮤니티 코멘트 조회 - 비밀댓글")
+    fun 커뮤니티_코멘트_조회_비밀댓글() {
+        // given
+        val content = "content"
+
+        val createParentCommentCommand = CreateCommentCommand(
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
+            upperCommentId = null,
+            content = content,
+            visibility = CommentVisibility.PRIVATE
+        )
+        val createChildCommentCommand = CreateCommentCommand(
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
+            upperCommentId = null,
+            content = content,
+            visibility = CommentVisibility.PRIVATE
+        )
+
+        loginWithMemberId(memberIds[1])
+        commentUseCase.createComment(createParentCommentCommand)
+        loginWithMemberId(memberIds[0])
+        commentUseCase.createComment(createChildCommentCommand)
+
+        val getCommentsCommand = GetCommentsCommand(
+            postId = communityPost.id,
+            PostType.COMMUNITY
+        )
+
+        // when
+        loginWithMemberId(memberIds[0])
+        val postWriterResult = commentUseCase.getComments(getCommentsCommand)
+        loginWithMemberId(memberIds[1])
+        val commentWriterResult = commentUseCase.getComments(getCommentsCommand)
+        loginWithMemberId(memberIds[2])
+        val anotherMemberResult = commentUseCase.getComments(getCommentsCommand)
+
+        // then
+        assertThat(postWriterResult.comments[0].parentComment.isPrivate).isTrue()
+        assertThat(postWriterResult.comments[0].parentComment.content).isEqualTo(content)
+        assertThat(commentWriterResult.comments[0].parentComment.isPrivate).isTrue()
+        assertThat(commentWriterResult.comments[0].parentComment.content).isEqualTo(content)
+        assertThat(anotherMemberResult.comments[0].parentComment.isPrivate).isTrue()
+        assertThat(anotherMemberResult.comments[0].parentComment.content).isEmpty()
+    }
+
+    @Test
+    @DisplayName("유실물 코멘트 조회 - 비밀댓글")
+    fun 유실물_코멘트_조회_비밀댓글() {
+        // given
+        val content = "content"
+
+        val createParentCommentCommand = CreateCommentCommand(
+            postId = lostPost.id,
+            postType = PostType.LOST,
+            upperCommentId = null,
+            content = content,
+            visibility = CommentVisibility.PRIVATE
+        )
+        val createChildCommentCommand = CreateCommentCommand(
+            postId = lostPost.id,
+            postType = PostType.LOST,
+            upperCommentId = null,
+            content = content,
+            visibility = CommentVisibility.PRIVATE
+        )
+
+        loginWithMemberId(memberIds[1])
+        commentUseCase.createComment(createParentCommentCommand)
+        loginWithMemberId(memberIds[0])
+        commentUseCase.createComment(createChildCommentCommand)
+
+        val getCommentsCommand = GetCommentsCommand(
+            postId = lostPost.id,
+            PostType.LOST
+        )
+
+        // when
+        loginWithMemberId(memberIds[0])
+        val postWriterResult = commentUseCase.getComments(getCommentsCommand)
+        loginWithMemberId(memberIds[1])
+        val commentWriterResult = commentUseCase.getComments(getCommentsCommand)
+        loginWithMemberId(memberIds[2])
+        val anotherMemberResult = commentUseCase.getComments(getCommentsCommand)
+
+        // then
+        assertThat(postWriterResult.comments[0].parentComment.isPrivate).isTrue()
+        assertThat(postWriterResult.comments[0].parentComment.content).isEqualTo(content)
+        assertThat(commentWriterResult.comments[0].parentComment.isPrivate).isTrue()
+        assertThat(commentWriterResult.comments[0].parentComment.content).isEqualTo(content)
+        assertThat(anotherMemberResult.comments[0].parentComment.isPrivate).isTrue()
+        assertThat(anotherMemberResult.comments[0].parentComment.content).isEmpty()
+    }
+
 
     @Test
     @DisplayName("자식 코멘트 조회")
