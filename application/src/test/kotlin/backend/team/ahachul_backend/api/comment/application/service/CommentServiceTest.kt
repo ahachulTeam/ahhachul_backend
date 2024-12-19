@@ -102,7 +102,7 @@ class CommentServiceTest(
                 content = "내용",
                 member = postWriter,
                 categoryType = CommunityCategoryType.FREE,
-                subwayLineEntity = subwayLine,
+                subwayLineEntity = subwayLine
             )
         )
         lostPost = lostPostRepository.save(

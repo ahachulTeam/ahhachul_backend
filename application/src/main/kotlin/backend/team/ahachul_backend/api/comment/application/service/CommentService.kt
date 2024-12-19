@@ -30,29 +30,14 @@ class CommentService(
     private val lostPostReader: LostPostReader,
     private val memberReader: MemberReader,
 ): CommentUseCase {
-    private fun canReadComment(loginMemberId: Long, comment: CommentEntity, postWriterId: Long?) : Boolean {
-        if (comment.visibility == CommentVisibility.PUBLIC) {
-            return true
-        }
-
-        if (loginMemberId == postWriterId) {
-            return true
-        }
-
-        return if (comment.upperComment != null) {
-            comment.upperComment!!.member.id == loginMemberId
-        } else {
-            comment.member.id == loginMemberId
-        }
-    }
-
     override fun getComments(command: GetCommentsCommand): GetCommentsDto.Response {
         val postWriterId = when (command.postType) {
-            PostType.COMMUNITY -> communityPostReader.getCommunityPost(command.postId).member?.id
-            PostType.LOST -> lostPostReader.getLostPost(command.postId).member?.id
-        }
+            PostType.COMMUNITY -> communityPostReader.getCommunityPost(command.postId).createdBy
+            PostType.LOST -> lostPostReader.getLostPost(command.postId).createdBy
+        }.toLongOrNull()
 
-        val loginMemberId = RequestUtils.getAttribute("memberId")!!.toLong()
+        val loginMemberId = RequestUtils.getAttribute("memberId")?.toLong()
+        val isPostWriterEqualToLoginMember = postWriterId != null && loginMemberId == postWriterId
 
         val comments = when (command.postType) {
             PostType.COMMUNITY -> commentReader.findAllByCommunityPostId(command.postId)
@@ -61,7 +46,8 @@ class CommentService(
                 GetCommentsDto.Comment(
                     it.id,
                     it.upperComment?.id,
-                    if(canReadComment(loginMemberId, it, postWriterId)) it.content else "",
+                    if(it.validateReadPermission(loginMemberId)
+                        || isPostWriterEqualToLoginMember) it.content else "",
                     it.status,
                     it.createdAt,
                     it.createdBy,
@@ -69,8 +55,6 @@ class CommentService(
                     it.visibility.isPrivate
                 )
             }
-
-
 
         val parentComments = mutableListOf<GetCommentsDto.Comment>()
         val childCommentMap = HashMap<Long, MutableList<GetCommentsDto.Comment>>()
