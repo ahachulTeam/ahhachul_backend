@@ -30,22 +30,6 @@ class CommentService(
     private val lostPostReader: LostPostReader,
     private val memberReader: MemberReader,
 ): CommentUseCase {
-    private fun canReadComment(loginMemberId: Long, comment: CommentEntity, postWriterId: Long?) : Boolean {
-        if (comment.visibility == CommentVisibility.PUBLIC) {
-            return true
-        }
-
-        if (loginMemberId == postWriterId) {
-            return true
-        }
-
-        return if (comment.upperComment != null) {
-            comment.upperComment!!.member.id == loginMemberId
-        } else {
-            comment.member.id == loginMemberId
-        }
-    }
-
     override fun getComments(command: GetCommentsCommand): GetCommentsDto.Response {
         val postWriterId = when (command.postType) {
             PostType.COMMUNITY -> communityPostReader.getCommunityPost(command.postId).member?.id
@@ -61,7 +45,7 @@ class CommentService(
                 GetCommentsDto.Comment(
                     it.id,
                     it.upperComment?.id,
-                    if(canReadComment(loginMemberId, it, postWriterId)) it.content else "",
+                    it.content,
                     it.status,
                     it.createdAt,
                     it.createdBy,
@@ -69,8 +53,6 @@ class CommentService(
                     it.visibility.isPrivate
                 )
             }
-
-
 
         val parentComments = mutableListOf<GetCommentsDto.Comment>()
         val childCommentMap = HashMap<Long, MutableList<GetCommentsDto.Comment>>()
@@ -82,6 +64,18 @@ class CommentService(
                 return@forEach
             }
             childCommentMap[parentId]?.add(comment)
+        }
+
+        // 로그인한 사용자가 글 작성자 또는 댓글 작성자가 아닌 경우 비밀 댓글 내용 삭제
+        if (postWriterId != loginMemberId) {
+            for (parentComment in parentComments) {
+                if (parentComment.isPrivate && parentComment.createdBy.toLong() != loginMemberId) {
+                    parentComment.content = ""
+                    for (childComment in childCommentMap[parentComment.id]!!) {
+                        childComment.content = ""
+                    }
+                }
+            }
         }
 
         return GetCommentsDto.Response(

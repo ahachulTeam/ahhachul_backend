@@ -17,7 +17,7 @@ class GetCommentsDto {
     data class Comment(
         val id: Long,
         val upperCommentId: Long?,
-        val content: String,
+        var content: String,
         val status: CommentType,
         val createdAt: LocalDateTime,
         val createdBy: String,
