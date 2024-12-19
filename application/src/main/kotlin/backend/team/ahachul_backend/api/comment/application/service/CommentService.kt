@@ -73,7 +73,7 @@ class CommentService(
 
     @Transactional
     override fun createComment(command: CreateCommentCommand): CreateCommentDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val upperComment = command.upperCommentId?.let { commentReader.findById(it) }
         val member = memberReader.getMember(memberId.toLong())
         val post = getPost(command.postType, command.postId)
@@ -84,7 +84,7 @@ class CommentService(
 
     @Transactional
     override fun updateComment(command: UpdateCommentCommand): UpdateCommentDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val comment = commentReader.getById(command.id)
         comment.checkMe(memberId)
         comment.update(command.content)
@@ -93,7 +93,7 @@ class CommentService(
 
     @Transactional
     override fun deleteComment(command: DeleteCommentCommand): DeleteCommentDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val comment = commentReader.getById(command.id)
         comment.checkMe(memberId)
         comment.delete()

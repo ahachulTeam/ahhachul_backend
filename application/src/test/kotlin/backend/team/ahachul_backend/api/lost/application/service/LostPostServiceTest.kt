@@ -55,7 +55,7 @@ class LostPostServiceTest(
                 status = MemberStatusType.ACTIVE
             )
         )
-        member.id.let { RequestUtils.setAttribute("memberId", it)}
+        member.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it)}
         subwayLine = createSubwayLine("1호선")
         category = createCategory("휴대폰")
     }
@@ -203,7 +203,7 @@ class LostPostServiceTest(
         )
 
         // when, then
-        RequestUtils.setAttribute("memberId", member.id + 1)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, member.id + 1)
 
         assertThatThrownBy {
             lostPostUseCase.updateLostPost(updateCommand)
@@ -281,7 +281,7 @@ class LostPostServiceTest(
         val entity = lostPostUseCase.createLostPost(createCommand)
 
         // when, then
-        RequestUtils.setAttribute("memberId", member.id + 1)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, member.id + 1)
 
         assertThatThrownBy {
             lostPostUseCase.deleteLostPost(entity.id)

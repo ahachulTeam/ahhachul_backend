@@ -37,7 +37,7 @@ class AuthenticationInterceptor(
             val verifiedJwtToken = jwtUtils.verify(jwtTokenExcludePrefix)
             val authenticatedMemberId = verifiedJwtToken.body.subject
 
-            RequestUtils.setAttribute("memberId", authenticatedMemberId)
+            RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, authenticatedMemberId)
         } catch (e: Exception) {
             if (!authentication.required) {
                 return true
