@@ -52,6 +52,21 @@ include::{snippets}/update-lost-post/http-response.adoc[]
 .Response Fields
 include::{snippets}/update-lost-post/response-fields.adoc[]
 
+==== 유실물 상태 업데이트
+
+.Request
+include::{snippets}/update-lost-post-status/http-request.adoc[]
+.Request Headers
+include::{snippets}/update-lost-post-status/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/update-lost-post-status/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/update-lost-post-status/request-fields.adoc[]
+.Response
+include::{snippets}/update-lost-post-status/http-response.adoc[]
+.Response Fields
+include::{snippets}/update-lost-post-status/response-fields.adoc[]
+
 ==== 유실물 삭제
 
 .Request

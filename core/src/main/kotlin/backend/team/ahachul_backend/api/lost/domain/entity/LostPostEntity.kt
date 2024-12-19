@@ -108,6 +108,10 @@ class LostPostEntity(
         category?.let { this.category = category }
     }
 
+    fun updateStatus(status: LostStatus) {
+        this.status = status
+    }
+
     fun delete() {
         type = LostPostType.DELETED
     }
