@@ -56,6 +56,18 @@ class CommentEntity(
         }
     }
 
+    fun validateReadPermission(loginMemberId: Long?) : Boolean {
+        if (visibility == CommentVisibility.PUBLIC) {
+            return true
+        }
+
+        return if (upperComment != null) {
+            upperComment!!.id == loginMemberId
+        } else {
+            member.id == loginMemberId
+        }
+    }
+
     fun update(content: String) {
         this.content = content
     }
