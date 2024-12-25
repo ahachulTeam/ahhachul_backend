@@ -14,14 +14,14 @@ class CommentLikeController(
 ) {
 
     @Authentication
-    @PostMapping("/v1/comments/{commentId}/like")
+    @PostMapping("/v1/comments/{commentId}/likes")
     fun like(@PathVariable commentId: Long): CommonResponse<*> {
         commentLikeUseCase.like(commentId)
         return CommonResponse.success()
     }
 
     @Authentication
-    @DeleteMapping("/v1/comments/{commentId}/like")
+    @DeleteMapping("/v1/comments/{commentId}/likes")
     fun notLike(@PathVariable commentId: Long): CommonResponse<*> {
         commentLikeUseCase.notLike(commentId)
         return CommonResponse.success()

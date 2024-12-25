@@ -30,7 +30,7 @@ class CommentLikeControllerDocsTest: CommonDocsTestConfig() {
 
         // when
         val result = mockMvc.perform(
-            RestDocumentationRequestBuilders.post("/v1/comments/{commentId}/like", 1)
+            RestDocumentationRequestBuilders.post("/v1/comments/{commentId}/likes", 1)
                 .header("Authorization", "Bearer <Access Token>")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
@@ -64,7 +64,7 @@ class CommentLikeControllerDocsTest: CommonDocsTestConfig() {
 
         // when
         val result = mockMvc.perform(
-            RestDocumentationRequestBuilders.delete("/v1/comments/{commentId}/like", 1)
+            RestDocumentationRequestBuilders.delete("/v1/comments/{commentId}/likes", 1)
                 .header("Authorization", "Bearer <Access Token>")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
