@@ -107,7 +107,7 @@ class CommentLikeServiceTest(
             commentLikeUseCase.like(commentId)
         }
             .isExactlyInstanceOf(CommonException::class.java)
-            .hasMessage(ResponseCode.BAD_REQUEST.message)
+            .hasMessage(ResponseCode.INVALID_DOMAIN.message)
     }
 
     @Test
@@ -136,6 +136,6 @@ class CommentLikeServiceTest(
             commentLikeUseCase.notLike(commentId)
         }
             .isExactlyInstanceOf(CommonException::class.java)
-            .hasMessage(ResponseCode.BAD_REQUEST.message)
+            .hasMessage(ResponseCode.INVALID_DOMAIN.message)
     }
 }

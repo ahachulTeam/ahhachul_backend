@@ -26,8 +26,8 @@ class CommentLikeService(
     override fun like(commentId: Long) {
         val memberId = RequestUtils.getAttribute("memberId")!!.toLong()
 
-        commentLikeReader.find(commentId, memberId)?.let {
-            throw CommonException(ResponseCode.BAD_REQUEST)
+        if (existCommentLike(commentId, memberId)) {
+            throw CommonException(ResponseCode.INVALID_DOMAIN)
         }
 
         commentLikeWriter.save(
@@ -43,8 +43,18 @@ class CommentLikeService(
     override fun notLike(commentId: Long) {
         val memberId = RequestUtils.getAttribute("memberId")!!.toLong()
 
-        commentLikeReader.find(commentId, memberId) ?: throw CommonException(ResponseCode.BAD_REQUEST)
+        if (notExistCommentLike(commentId, memberId)) {
+            throw CommonException(ResponseCode.INVALID_DOMAIN)
+        }
 
         commentLikeWriter.delete(commentId, memberId)
+    }
+
+    private fun notExistCommentLike(commentId: Long, memberId: Long): Boolean {
+        return !existCommentLike(commentId, memberId)
+    }
+
+    private fun existCommentLike(commentId: Long, memberId: Long): Boolean {
+        return commentLikeReader.find(commentId, memberId) != null
     }
 }
