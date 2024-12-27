@@ -324,7 +324,8 @@ class CommentServiceTest(
 
         val getCommentsCommand = GetCommentsCommand(
             postId = communityPost.id,
-            PostType.COMMUNITY
+            PostType.COMMUNITY,
+            Sort.unsorted()
         )
 
         // when
@@ -372,7 +373,8 @@ class CommentServiceTest(
 
         val getCommentsCommand = GetCommentsCommand(
             postId = lostPost.id,
-            PostType.LOST
+            PostType.LOST,
+            Sort.unsorted()
         )
 
         // when

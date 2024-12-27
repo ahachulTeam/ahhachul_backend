@@ -1,6 +1,5 @@
 package backend.team.ahachul_backend.api.comment.domain
 
-import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity
 import backend.team.ahachul_backend.api.comment.domain.model.CommentType
 import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
@@ -8,7 +7,7 @@ import java.time.LocalDateTime
 
 data class SearchComment(
     val id: Long,
-    val upperComment: CommentEntity?,
+    val upperCommentId: Long?,
     val content: String,
     val status: CommentType,
     val createdAt: LocalDateTime,
@@ -23,8 +22,8 @@ data class SearchComment(
             return true
         }
 
-        return if (upperComment != null) {
-            upperComment.id == loginMemberId
+        return if (upperCommentId != null) {
+            upperCommentId == loginMemberId
         } else {
             member.id == loginMemberId
         }

@@ -29,7 +29,7 @@ class CustomCommentRepository(
             Projections.constructor(
                 SearchComment::class.java,
                 commentEntity.id,
-                commentEntity.upperComment,
+                commentEntity.upperComment?.id,
                 commentEntity.content,
                 commentEntity.status,
                 commentEntity.createdAt,
