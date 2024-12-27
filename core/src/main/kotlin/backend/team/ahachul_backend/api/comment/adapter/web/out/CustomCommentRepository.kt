@@ -29,12 +29,12 @@ class CustomCommentRepository(
             Projections.constructor(
                 SearchComment::class.java,
                 commentEntity.id,
-                commentEntity.upperComment?.id,
+                commentEntity.upperComment,
                 commentEntity.content,
                 commentEntity.status,
                 commentEntity.createdAt,
                 commentEntity.createdBy,
-                commentEntity.member.nickname,
+                commentEntity.member,
                 commentEntity.visibility,
                 ExpressionUtils.`as`(
                     JPAExpressions.select(count(commentLikeEntity.id))
