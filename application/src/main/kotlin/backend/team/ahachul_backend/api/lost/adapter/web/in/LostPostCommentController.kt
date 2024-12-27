@@ -13,6 +13,7 @@ class LostPostCommentController(
     private val commentUseCase: CommentUseCase
 ) {
 
+    @Authentication(required = false)
     @GetMapping("/v1/lost-posts/{lostId}/comments")
     fun getLostPostComments(@PathVariable lostId: Long, request: GetCommentsDto.Request): CommonResponse<GetCommentsDto.Response> {
         return CommonResponse.success(commentUseCase.getComments(request.toCommand(lostId, PostType.LOST)))

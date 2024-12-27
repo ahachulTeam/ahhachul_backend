@@ -13,6 +13,7 @@ class CommunityPostCommentController(
     private val commentUseCase: CommentUseCase
 ) {
 
+    @Authentication(required = false)
     @GetMapping("/v1/community-posts/{postId}/comments")
     fun getCommunityPostComments(@PathVariable postId: Long, request: GetCommentsDto.Request): CommonResponse<GetCommentsDto.Response> {
         return CommonResponse.success(commentUseCase.getComments(request.toCommand(postId, PostType.COMMUNITY)))

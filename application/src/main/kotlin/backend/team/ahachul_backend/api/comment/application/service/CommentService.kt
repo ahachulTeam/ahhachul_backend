@@ -31,12 +31,20 @@ class CommentService(
 ): CommentUseCase {
 
     override fun getComments(command: GetCommentsCommand): GetCommentsDto.Response {
-        val comments = commentReader.searchComments(command)
-            .map {
+        val postWriterId = when (command.postType) {
+            PostType.COMMUNITY -> communityPostReader.getCommunityPost(command.postId).createdBy
+            PostType.LOST -> lostPostReader.getLostPost(command.postId).createdBy
+        }.toLongOrNull()
+
+        val loginMemberId = RequestUtils.getAttribute("memberId")?.toLong()
+        val isPostWriterEqualToLoginMember = postWriterId != null && loginMemberId == postWriterId
+
+        val comments = commentReader.searchComments(command).map {
                 GetCommentsDto.Comment(
                     it.id,
                     it.upperCommentId,
-                    it.content,
+                    if(it.validateReadPermission(loginMemberId)
+                        || isPostWriterEqualToLoginMember) it.content else "",
                     it.status,
                     it.createdAt,
                     it.createdBy,
