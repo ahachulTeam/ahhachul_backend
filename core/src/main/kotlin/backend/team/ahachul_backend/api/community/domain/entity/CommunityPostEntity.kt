@@ -22,6 +22,7 @@ class CommunityPostEntity(
 
     var title: String,
 
+    @Lob
     var content: String,
 
     @Enumerated(EnumType.STRING)
