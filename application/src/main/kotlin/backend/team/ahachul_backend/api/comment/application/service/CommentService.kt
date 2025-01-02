@@ -42,7 +42,7 @@ class CommentService(
         val comments = commentReader.searchComments(command).map {
                 GetCommentsDto.Comment(
                     it.id,
-                    it.upperCommentId,
+                    it.upperComment?.id,
                     if (it.validateReadPermission(loginMemberId)
                         || isPostWriterEqualToLoginMember) it.content else "",
                     it.status,

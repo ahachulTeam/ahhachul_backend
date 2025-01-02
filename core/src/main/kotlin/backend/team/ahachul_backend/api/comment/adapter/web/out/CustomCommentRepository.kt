@@ -29,7 +29,7 @@ class CustomCommentRepository(
             Projections.constructor(
                 SearchComment::class.java,
                 commentEntity.id,
-                commentEntity.upperComment?.id,
+                commentEntity.upperComment,
                 commentEntity.content,
                 commentEntity.status,
                 commentEntity.createdAt,
@@ -49,6 +49,7 @@ class CustomCommentRepository(
         )
             .from(commentEntity)
             .join(commentEntity.member, memberEntity)
+            .leftJoin(commentEntity.upperComment)
             .where(
                 postIdEq(command.postType, command.postId)
             )
