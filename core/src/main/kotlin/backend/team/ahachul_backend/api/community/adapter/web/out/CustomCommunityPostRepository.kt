@@ -30,7 +30,7 @@ class CustomCommunityPostRepository(
 ) {
 
     companion object {
-        const val HOT_POST_LIMIT_DAYS = 7L
+        const val HOT_POST_LIMIT_DAYS = 3L
     }
 
     fun getByCustom(postId: Long, memberId: String?): GetCommunityPost? {
