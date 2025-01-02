@@ -168,7 +168,6 @@ class CommunityPostService(
                     commentCnt = it.commentCnt,
                     viewCnt = viewsSupport.get(it.id),
                     likeCnt = it.likeCnt,
-                    hotPostYn = it.hotPostYn,
                     regionType = it.regionType,
                     subwayLineId = it.subwayLineId,
                     createdAt = it.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),

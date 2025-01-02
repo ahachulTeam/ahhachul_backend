@@ -45,7 +45,6 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     commentCnt = 0,
                     viewCnt = 0,
                     likeCnt = 0,
-                    hotPostYn = YNType.Y,
                     regionType = RegionType.METROPOLITAN,
                     subwayLineId = 1L,
                     createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
@@ -68,7 +67,6 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                 .queryParam("subwayLineId", "1")
                 .queryParam("content", "내용")
                 .queryParam("hashTag", "여행")
-                .queryParam("hotPostYn", "Y")
                 .queryParam("writer", "작성자")
                 .queryParam("sort", "createdAt,desc")
                 .queryParam("pageToken", "MTIzMTI5MTU6MTI=")
@@ -107,7 +105,6 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.data[].commentCnt").type(JsonFieldType.NUMBER).description("댓글 수"),
                         fieldWithPath("result.data[].viewCnt").type(JsonFieldType.NUMBER).description("조회수"),
                         fieldWithPath("result.data[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
-                        fieldWithPath("result.data[].hotPostYn").type("YNType").description("핫 게시글 여부").attributes(getFormatAttribute("Y, N")),
                         fieldWithPath("result.data[].regionType").type("RegionType").description("지역").attributes(getFormatAttribute("METROPOLITAN")),
                         fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
                         fieldWithPath("result.data[].createdAt").type("LocalDateTime").description("작성일자"),
@@ -135,7 +132,6 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     commentCnt = 0,
                     viewCnt = 0,
                     likeCnt = 0,
-                    hotPostYn = YNType.Y,
                     regionType = RegionType.METROPOLITAN,
                     subwayLineId = 1L,
                     createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
@@ -193,7 +189,6 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.data[].commentCnt").type(JsonFieldType.NUMBER).description("댓글 수"),
                         fieldWithPath("result.data[].viewCnt").type(JsonFieldType.NUMBER).description("조회수"),
                         fieldWithPath("result.data[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
-                        fieldWithPath("result.data[].hotPostYn").type("YNType").description("핫 게시글 여부").attributes(getFormatAttribute("Y, N")),
                         fieldWithPath("result.data[].regionType").type("RegionType").description("지역").attributes(getFormatAttribute("METROPOLITAN")),
                         fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
                         fieldWithPath("result.data[].createdAt").type("LocalDateTime").description("작성일자"),

@@ -118,7 +118,6 @@ class CustomCommunityPostRepository(
                 subwayLineEq(command.subwayLine),
                 hashTagEqWithSubQuery(command.hashTag),
                 titleOrContentContains(command.content),
-                hotPostYnEq(command.hotPostYn),
                 writerEq(command.writer),
                 createdAtBeforeOrEqual(
                     command.date,
@@ -173,11 +172,8 @@ class CustomCommunityPostRepository(
     private fun subwayLineEq(subwayLine: SubwayLineEntity?) =
         subwayLine?.let { communityPostEntity.subwayLineEntity.eq(subwayLine) }
 
-    private fun hotPostYnEq(hotPostYn: YNType?) =
-        hotPostYn?.let { communityPostEntity.hotPostYn.eq(hotPostYn)
-            .and(communityPostEntity.hotPostSelectedDate.after(LocalDateTime.now().minusDays(HOT_POST_LIMIT_DAYS))) }
-
-    private fun hotPost() = hotPostYnEq(YNType.Y)
+    private fun hotPost() = communityPostEntity.hotPostYn.eq(YNType.Y)
+        .and(communityPostEntity.hotPostSelectedDate.after(LocalDateTime.now().minusDays(HOT_POST_LIMIT_DAYS)))
 
     private fun hashTagEqWithSubQuery(hashTag: String?) =
         hashTag?.let {
@@ -227,7 +223,6 @@ class CustomCommunityPostRepository(
                 .where(
                     commentEntity.communityPost.id.eq(communityPostEntity.id)
                 ),
-            communityPostEntity.hotPostYn,
             communityPostEntity.createdAt,
             communityPostEntity.createdBy,
             communityPostEntity.member.nickname,
