@@ -97,6 +97,7 @@ class CustomCommunityPostRepository(
                 communityPostEntity.createdAt,
                 communityPostEntity.createdBy,
                 communityPostEntity.member.nickname.`as`("writer"),
+                communityPostEntity.status
             )
         )
             .from(communityPostEntity)

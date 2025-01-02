@@ -5,18 +5,19 @@ import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostR
 import backend.team.ahachul_backend.api.community.application.command.`in`.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
+import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
 import backend.team.ahachul_backend.api.member.domain.model.MemberStatusType
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
-import backend.team.ahachul_backend.common.exception.CommonException
-import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.domain.model.YNType
+import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.persistence.HashTagRepository
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
@@ -198,6 +199,32 @@ class CommunityPostServiceTest(
         assertThat(result.regionType).isEqualTo(RegionType.METROPOLITAN)
         assertThat(result.writer).isEqualTo(member?.nickname)
         assertThat(result.hashTags).containsExactly("여행", "취미")
+    }
+
+    @Test
+    @DisplayName("커뮤니티 삭제된 게시글 조회시 예외 발생")
+    fun 커뮤니티_게시글_삭제_예외_발생() {
+        // given
+        val createCommand = CreateCommunityPostCommand(
+            title = "제목",
+            content = "내용",
+            categoryType = CommunityCategoryType.FREE,
+            subwayLineId = subwayLine.id
+        )
+
+        val (postId, _, _, _, _) = communityPostUseCase.createCommunityPost(createCommand)
+        communityPostUseCase.deleteCommunityPost(DeleteCommunityPostCommand(postId))
+
+        // when, then
+        assertThatThrownBy {
+            communityPostUseCase.getCommunityPost(
+                GetCommunityPostCommand(
+                    id = postId
+                )
+            )
+        }
+            .isExactlyInstanceOf(CommonException::class.java)
+            .hasMessage(ResponseCode.POST_NOT_FOUND.message)
     }
 
     @Test

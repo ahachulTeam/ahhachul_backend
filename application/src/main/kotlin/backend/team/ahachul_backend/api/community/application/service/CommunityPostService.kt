@@ -12,11 +12,14 @@ import backend.team.ahachul_backend.api.community.application.port.out.Community
 import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostFileEntity
+import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.dto.PageInfoDto
+import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.logging.NamedLogger
 import backend.team.ahachul_backend.common.persistence.SubwayLineReader
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.support.ViewsSupport
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
@@ -85,6 +88,11 @@ class CommunityPostService(
     override fun getCommunityPost(command: GetCommunityPostCommand): GetCommunityPostDto.Response {
         val userId: String? = RequestUtils.getAttribute("memberId")
         val communityPost = communityPostReader.getByCustom(command.id, userId)
+
+        if (communityPost.status == CommunityPostType.DELETED) {
+            throw CommonException(ResponseCode.POST_NOT_FOUND)
+        }
+
         val views = viewsSupport.increase(command.id)
         val hashTags = communityPostHashTagReader.findAllByPostId(communityPost.id).map { it.hashTag.name }
         val communityPostFiles = communityPostFileReader.findAllByPostId(communityPost.id)
