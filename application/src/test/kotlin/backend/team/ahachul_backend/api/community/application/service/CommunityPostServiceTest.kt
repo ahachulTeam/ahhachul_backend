@@ -14,6 +14,7 @@ import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
+import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.persistence.HashTagRepository
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.utils.RequestUtils
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Sort
+import java.time.LocalDateTime
 
 class CommunityPostServiceTest(
     @Autowired val communityPostRepository: CommunityPostRepository,
@@ -513,5 +515,43 @@ class CommunityPostServiceTest(
             .extracting("content")
             .usingRecursiveComparison()
             .isEqualTo((2 downTo 1).map { "내용$it" })
+    }
+
+    @Test
+    @DisplayName("커뮤니티 인기 게시글 조회")
+    fun 커뮤니티_인기_게시글_조회() {
+        // given
+        for (i: Int in 1..10) {
+            communityPostUseCase.createCommunityPost(
+                CreateCommunityPostCommand(
+                    title = "지하철 제목$i",
+                    content = "지하철 내용$i",
+                    categoryType = CommunityCategoryType.FREE,
+                    subwayLineId = subwayLine.id
+                )
+            )
+        }
+
+        // when
+        val findCommunityPost = communityPostRepository.findAll().first()
+
+        findCommunityPost.hotPostYn = YNType.Y
+        findCommunityPost.hotPostSelectedDate = LocalDateTime.now()
+
+        val result = communityPostUseCase.searchCommunityHotPosts(
+            SearchCommunityHotPostCommand(
+                subwayLineId = null,
+                content = null,
+                hashTag = null,
+                writer = null,
+                sort = Sort.unsorted(),
+                pageToken = null,
+                pageSize = 10
+            )
+        )
+
+        // then
+        assertThat(result.data).hasSize(1)
+        assertThat(result.data.first().id).isEqualTo(findCommunityPost.id)
     }
 }

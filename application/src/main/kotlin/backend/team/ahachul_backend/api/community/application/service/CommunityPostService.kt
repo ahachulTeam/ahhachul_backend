@@ -2,12 +2,14 @@ package backend.team.ahachul_backend.api.community.application.service
 
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.community.application.command.`in`.*
+import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityHotPostCommand
 import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityPostCommand
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostFileReader
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostHashTagReader
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostReader
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostWriter
+import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostFileEntity
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
@@ -51,41 +53,33 @@ class CommunityPostService(
             )
         )
 
-        val posts = searchCommunityPosts
-            .map {
-                val file = communityPostFileReader.findByPostId(it.id)?.file
-                SearchCommunityPostDto.Response(
-                    id = it.id,
-                    title = it.title,
-                    content = it.content,
-                    categoryType = it.categoryType,
-                    hashTags = communityPostHashTagReader.findAllByPostId(it.id).map { it.hashTag.name },
-                    commentCnt = it.commentCnt,
-                    viewCnt = viewsSupport.get(it.id),
-                    likeCnt = it.likeCnt,
-                    hotPostYn = it.hotPostYn,
-                    regionType = it.regionType,
-                    subwayLineId = it.subwayLineId,
-                    createdAt = it.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
-                    createdBy = it.createdBy,
-                    writer = it.writer,
-                    image = file?.let { it1 -> ImageDto.of(it1.id, file.filePath) }
-                )
-            }.toList()
-
-        if (isHashTagSearchCond(command.hashTag, command.content)) {
-            logger.info("userId = $userId hashtag = ${command.hashTag}")
-        }
+        loggingHashTag(userId, command.hashTag, command.content)
 
         return PageInfoDto.of(
-            data=posts,
+            data=convertCommunityPostDto(searchCommunityPosts),
             pageSize=command.pageSize,
             arrayOf(SearchCommunityPostDto.Response::createdAt, SearchCommunityPostDto.Response::id)
         )
     }
 
-    private fun isHashTagSearchCond(hashTag: String?, content: String?): Boolean {
-        return !hashTag.isNullOrEmpty() && content.isNullOrEmpty()
+    override fun searchCommunityHotPosts(command: SearchCommunityHotPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
+        val userId: String? = RequestUtils.getAttribute("memberId")
+        val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
+
+        val searchCommunityHotPosts = communityPostReader.searchCommunityHotPosts(
+            GetSliceCommunityHotPostCommand.from(
+                command = command,
+                subwayLine = subwayLine
+            )
+        )
+
+        loggingHashTag(userId, command.hashTag, command.content)
+
+        return PageInfoDto.of(
+            data=convertCommunityPostDto(searchCommunityHotPosts),
+            pageSize=command.pageSize,
+            arrayOf(SearchCommunityPostDto.Response::createdAt, SearchCommunityPostDto.Response::id)
+        )
     }
 
     override fun getCommunityPost(command: GetCommunityPostCommand): GetCommunityPostDto.Response {
@@ -149,5 +143,39 @@ class CommunityPostService(
                 imageUrl = it.file.filePath
             )
         }
+    }
+
+    private fun loggingHashTag(userId: String?, hashtag: String?, content: String?) {
+        if (isHashTagSearchCond(hashtag, content)) {
+            logger.info("userId = $userId hashtag = $hashtag")
+        }
+    }
+
+    private fun isHashTagSearchCond(hashTag: String?, content: String?): Boolean {
+        return !hashTag.isNullOrEmpty() && content.isNullOrEmpty()
+    }
+
+    private fun convertCommunityPostDto(searchCommunityPosts: List<SearchCommunityPost>): List<SearchCommunityPostDto.Response> {
+        return searchCommunityPosts
+            .map {
+                val file = communityPostFileReader.findByPostId(it.id)?.file
+                SearchCommunityPostDto.Response(
+                    id = it.id,
+                    title = it.title,
+                    content = it.content,
+                    categoryType = it.categoryType,
+                    hashTags = communityPostHashTagReader.findAllByPostId(it.id).map { it.hashTag.name },
+                    commentCnt = it.commentCnt,
+                    viewCnt = viewsSupport.get(it.id),
+                    likeCnt = it.likeCnt,
+                    hotPostYn = it.hotPostYn,
+                    regionType = it.regionType,
+                    subwayLineId = it.subwayLineId,
+                    createdAt = it.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
+                    createdBy = it.createdBy,
+                    writer = it.writer,
+                    image = file?.let { it1 -> ImageDto.of(it1.id, file.filePath) }
+                )
+            }.toList()
     }
 }
