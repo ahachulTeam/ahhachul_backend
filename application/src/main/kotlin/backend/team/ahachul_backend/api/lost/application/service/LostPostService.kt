@@ -17,6 +17,7 @@ import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostFileEntity
 import backend.team.ahachul_backend.api.lost.domain.model.LostOrigin
+import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.dto.ImageDto
@@ -44,6 +45,11 @@ class LostPostService(
 
     override fun getLostPost(id: Long): GetLostPostDto.Response {
         val entity = lostPostReader.getLostPost(id)
+
+        if (entity.type == LostPostType.DELETED) {
+            throw CommonException(ResponseCode.POST_NOT_FOUND)
+        }
+
         val recommendPosts = getRecommendPosts(entity.subwayLine, entity.category)
         val recommendPostsDto = mapRecommendPostsDto(recommendPosts)
         val commentCnt = commentReader.countLost(id)
