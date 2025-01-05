@@ -40,6 +40,7 @@ class LostPostEntity(
 
     var title: String,
 
+    @Lob
     var content: String,
 
     @Enumerated(value = EnumType.STRING)
