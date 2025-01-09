@@ -42,7 +42,8 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         LocalDateTime.now(),
                         "작성자 ID",
                         "작성자 닉네임",
-                        true
+                        true,
+                        0L
                     ),
                     childComments = listOf(
                         GetCommentsDto.Comment(
@@ -53,7 +54,8 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                             LocalDateTime.now(),
                             "작성자 ID",
                             "작성자 닉네임",
-                            false
+                            false,
+                            0L
                         )
                     )
                 )
@@ -66,6 +68,7 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
         // when
         val result = mockMvc.perform(
             get("/v1/lost-posts/{lostId}/comments", 1L)
+                .queryParam("sort", "createdAt,desc")
                 .accept(MediaType.APPLICATION_JSON)
         )
 
@@ -79,6 +82,9 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                     pathParameters(
                         parameterWithName("lostId").description("코멘트 조회할 유실물 아이디")
                     ),
+                    queryParameters(
+                        parameterWithName("sort").description("정렬 조건").attributes(getFormatAttribute("(likes|createdAt),(asc|desc)")),
+                    ),
                     PayloadDocumentation.responseFields(
                         *commonResponseFields(),
                         fieldWithPath("result.comments[].parentComment.id").type(JsonFieldType.NUMBER).description("코멘트 아이디"),
@@ -89,6 +95,7 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].parentComment.createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.comments[].parentComment.writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
                         fieldWithPath("result.comments[].parentComment.isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional(),
+                        fieldWithPath("result.comments[].parentComment.likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
                         fieldWithPath("result.comments[].childComments[].id").type(JsonFieldType.NUMBER).description("코멘트 아이디"),
                         fieldWithPath("result.comments[].childComments[].upperCommentId").type(JsonFieldType.NUMBER).description("상위 코멘트 아이디").optional(),
                         fieldWithPath("result.comments[].childComments[].content").type(JsonFieldType.STRING).description("코멘트 내용"),
@@ -97,6 +104,7 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].childComments[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.comments[].childComments[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
                         fieldWithPath("result.comments[].childComments[].isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional(),
+                        fieldWithPath("result.comments[].childComments[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
                         )
                 )
             )

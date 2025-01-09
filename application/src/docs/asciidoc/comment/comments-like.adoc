@@ -1,0 +1,25 @@
+==== 코멘트 좋아요
+
+.Request
+include::{snippets}/comment-like/http-request.adoc[]
+.Request Headers
+include::{snippets}/comment-like/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/comment-like/path-parameters.adoc[]
+.Response
+include::{snippets}/comment-like/http-response.adoc[]
+.Response Fields
+include::{snippets}/comment-like/response-fields.adoc[]
+
+==== 코멘트 좋아요 취소
+
+.Request
+include::{snippets}/comment-not-like/http-request.adoc[]
+.Request Headers
+include::{snippets}/comment-not-like/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/comment-not-like/path-parameters.adoc[]
+.Response
+include::{snippets}/comment-not-like/http-response.adoc[]
+.Response Fields
+include::{snippets}/comment-not-like/response-fields.adoc[]

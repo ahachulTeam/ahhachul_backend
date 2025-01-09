@@ -2,7 +2,6 @@ package backend.team.ahachul_backend.api.lost.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.CreateCommentDto
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.GetCommentsDto
-import backend.team.ahachul_backend.api.comment.application.command.GetCommentsCommand
 import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
 import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.common.annotation.Authentication
@@ -16,8 +15,8 @@ class LostPostCommentController(
 
     @Authentication(required = false)
     @GetMapping("/v1/lost-posts/{lostId}/comments")
-    fun getLostPostComments(@PathVariable lostId: Long): CommonResponse<GetCommentsDto.Response> {
-        return CommonResponse.success(commentUseCase.getComments(GetCommentsCommand(lostId, PostType.LOST)))
+    fun getLostPostComments(@PathVariable lostId: Long, request: GetCommentsDto.Request): CommonResponse<GetCommentsDto.Response> {
+        return CommonResponse.success(commentUseCase.getComments(request.toCommand(lostId, PostType.LOST)))
     }
 
     @Authentication
