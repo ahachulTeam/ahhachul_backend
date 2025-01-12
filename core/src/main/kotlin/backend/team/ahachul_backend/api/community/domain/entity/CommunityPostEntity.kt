@@ -22,7 +22,6 @@ class CommunityPostEntity(
 
     var title: String,
 
-    @Lob
     @Column(columnDefinition = "text")
     var content: String,
 

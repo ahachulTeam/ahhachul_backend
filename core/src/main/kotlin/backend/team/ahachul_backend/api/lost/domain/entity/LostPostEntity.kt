@@ -40,7 +40,6 @@ class LostPostEntity(
 
     var title: String,
 
-    @Lob
     @Column(columnDefinition = "text")
     var content: String,
 
