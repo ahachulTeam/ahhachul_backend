@@ -26,6 +26,7 @@ include::member/error.adoc[]
 == Comment
 
 include::comment/comments.adoc[]
+include::comment/comments-like.adoc[]
 
 == Community
 

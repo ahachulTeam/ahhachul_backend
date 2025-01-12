@@ -11,6 +11,17 @@ include::{snippets}/search-community-posts/http-response.adoc[]
 .Response Fields
 include::{snippets}/search-community-posts/response-fields.adoc[]
 
+==== 게시글 인기글 조회
+
+.Request
+include::{snippets}/search-community-hot-posts/http-request.adoc[]
+.Query Parameters
+include::{snippets}/search-community-hot-posts/query-parameters.adoc[]
+.Response
+include::{snippets}/search-community-hot-posts/http-response.adoc[]
+.Response Fields
+include::{snippets}/search-community-hot-posts/response-fields.adoc[]
+
 ==== 게시글 상세 조회
 
 - `likeYn`, `hateYn` 는 동시에 true 일 수 없다.

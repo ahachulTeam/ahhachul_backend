@@ -12,7 +12,6 @@ import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUse
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentWriter
 import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity
-import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
 import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostReader
 import backend.team.ahachul_backend.api.lost.application.port.out.LostPostReader
@@ -30,6 +29,7 @@ class CommentService(
     private val lostPostReader: LostPostReader,
     private val memberReader: MemberReader,
 ): CommentUseCase {
+
     override fun getComments(command: GetCommentsCommand): GetCommentsDto.Response {
         val postWriterId = when (command.postType) {
             PostType.COMMUNITY -> communityPostReader.getCommunityPost(command.postId).createdBy
@@ -39,20 +39,18 @@ class CommentService(
         val loginMemberId = RequestUtils.getAttribute("memberId")?.toLong()
         val isPostWriterEqualToLoginMember = postWriterId != null && loginMemberId == postWriterId
 
-        val comments = when (command.postType) {
-            PostType.COMMUNITY -> commentReader.findAllByCommunityPostId(command.postId)
-            PostType.LOST -> commentReader.findAllByLostPostId(command.postId)
-        }.map {
+        val comments = commentReader.searchComments(command).map {
                 GetCommentsDto.Comment(
                     it.id,
                     it.upperComment?.id,
-                    if(it.validateReadPermission(loginMemberId)
+                    if (it.validateReadPermission(loginMemberId)
                         || isPostWriterEqualToLoginMember) it.content else "",
                     it.status,
                     it.createdAt,
                     it.createdBy,
                     it.member.nickname!!,
-                    it.visibility.isPrivate
+                    it.visibility.isPrivate,
+                    it.likeCnt
                 )
             }
 

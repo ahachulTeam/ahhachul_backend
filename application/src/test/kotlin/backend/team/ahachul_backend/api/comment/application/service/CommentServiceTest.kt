@@ -5,6 +5,7 @@ import backend.team.ahachul_backend.api.comment.application.command.CreateCommen
 import backend.team.ahachul_backend.api.comment.application.command.DeleteCommentCommand
 import backend.team.ahachul_backend.api.comment.application.command.GetCommentsCommand
 import backend.team.ahachul_backend.api.comment.application.command.UpdateCommentCommand
+import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentLikeUseCase
 import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
 import backend.team.ahachul_backend.api.comment.domain.model.CommentType
 import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.domain.Sort
 import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
@@ -40,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional
 class CommentServiceTest(
     @Autowired val commentRepository: CommentRepository,
     @Autowired val commentUseCase: CommentUseCase,
+    @Autowired val commentLikeUseCase: CommentLikeUseCase,
     @Autowired val memberRepository: MemberRepository,
     @Autowired val subwayLineRepository: SubwayLineRepository,
     @Autowired val categoryRepository: CategoryRepository,
@@ -246,7 +249,8 @@ class CommentServiceTest(
 
         val getCommentsCommand = GetCommentsCommand(
             postId = communityPost.id,
-            PostType.COMMUNITY
+            PostType.COMMUNITY,
+            Sort.unsorted()
         )
 
         // when
@@ -277,7 +281,8 @@ class CommentServiceTest(
 
         val getCommentsCommand = GetCommentsCommand(
             postId = lostPost.id,
-            PostType.LOST
+            PostType.LOST,
+            Sort.unsorted()
         )
 
         // when
@@ -319,7 +324,8 @@ class CommentServiceTest(
 
         val getCommentsCommand = GetCommentsCommand(
             postId = communityPost.id,
-            PostType.COMMUNITY
+            PostType.COMMUNITY,
+            Sort.unsorted()
         )
 
         // when
@@ -367,7 +373,8 @@ class CommentServiceTest(
 
         val getCommentsCommand = GetCommentsCommand(
             postId = lostPost.id,
-            PostType.LOST
+            PostType.LOST,
+            Sort.unsorted()
         )
 
         // when
@@ -414,7 +421,8 @@ class CommentServiceTest(
 
         val getCommentsCommand = GetCommentsCommand(
             postId = communityPost.id,
-            PostType.COMMUNITY
+            PostType.COMMUNITY,
+            Sort.unsorted()
         )
 
         // when
@@ -425,4 +433,75 @@ class CommentServiceTest(
         assertThat(result.comments[0].parentComment.id).isEqualTo(upper_comment_id)
         assertThat(result.comments[0].childComments).hasSize(4)
     }
+
+    @Test
+    @DisplayName("코멘트 좋아요 수 조회")
+    fun 코멘트_좋아요_수_조회() {
+        // given
+        for (i in 1..10) {
+            val createCommentCommand = CreateCommentCommand(
+                postId = communityPost.id,
+                postType = PostType.COMMUNITY,
+                upperCommentId = null,
+                content = "내용${i}",
+                visibility = CommentVisibility.PUBLIC
+            )
+            val createComment = commentUseCase.createComment(createCommentCommand)
+            commentLikeUseCase.like(createComment.id)
+        }
+
+        val getCommentsCommand = GetCommentsCommand(
+            postId = communityPost.id,
+            PostType.COMMUNITY,
+            Sort.unsorted()
+        )
+
+        // when
+        val result = commentUseCase.getComments(getCommentsCommand)
+
+        // then
+        assertThat(result.comments).hasSize(10)
+        for (i: Int in 0..9) {
+            assertThat(result.comments[i].parentComment.likeCnt).isEqualTo(1L)
+        }
+    }
+
+    @Test
+    @DisplayName("코멘트 좋아요 수 정렬")
+    fun 코멘트_좋아요_수_정렬() {
+        // given
+        for (i in 1..10) {
+            val createCommentCommand = CreateCommentCommand(
+                postId = communityPost.id,
+                postType = PostType.COMMUNITY,
+                upperCommentId = null,
+                content = "내용${i}",
+                visibility = CommentVisibility.PUBLIC
+            )
+            val createComment = commentUseCase.createComment(createCommentCommand)
+            if (i > 5) {
+                commentLikeUseCase.like(createComment.id)
+            }
+        }
+
+        val getCommentsCommand = GetCommentsCommand(
+            postId = communityPost.id,
+            PostType.COMMUNITY,
+            Sort.by("likes").descending()
+        )
+
+        // when
+        val result = commentUseCase.getComments(getCommentsCommand)
+
+        // then
+        assertThat(result.comments).hasSize(10)
+        for (i: Int in 0..9) {
+            if (i < 5) {
+                assertThat(result.comments[i].parentComment.likeCnt).isEqualTo(1L)
+            } else {
+                assertThat(result.comments[i].parentComment.likeCnt).isEqualTo(0L)
+            }
+        }
+    }
+
 }

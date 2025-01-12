@@ -41,6 +41,7 @@ enum class ResponseCode(
 
     // POST
     IMPOSSIBLE_RECOMMEND_LOST_POST("600", "추천할 수 없는 습득물 게시물입니다.", HttpStatus.BAD_REQUEST),
+    POST_NOT_FOUND("404", "게시글이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
 
     // TRAIN
     INVALID_PREFIX_TRAIN_NO("700", "유효하지 않은 열차 번호입니다.", HttpStatus.BAD_REQUEST),

@@ -1,5 +1,6 @@
 package backend.team.ahachul_backend.api.community.adapter.web.out
 
+import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityHotPostCommand
 import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityPostCommand
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostReader
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostWriter
@@ -31,5 +32,9 @@ class CommunityPostPersistence(
 
     override fun searchCommunityPosts(command: GetSliceCommunityPostCommand): List<SearchCommunityPost> {
         return customRepository.searchCommunityPosts(command)
+    }
+
+    override fun searchCommunityHotPosts(command: GetSliceCommunityHotPostCommand): List<SearchCommunityPost> {
+        return customRepository.searchCommunityHotPosts(command)
     }
 }
