@@ -25,6 +25,16 @@ class CommunityPostController(
     }
 
     @Authentication(required = false)
+    @GetMapping("/v1/community-hot-posts")
+    fun searchCommunityHotPosts(
+        @RequestParam(required = false) pageToken: String?,
+        @RequestParam pageSize: Int,
+        request: SearchCommunityHotPostDto.Request
+    ): CommonResponse<PageInfoDto<SearchCommunityPostDto.Response>> {
+        return CommonResponse.success(communityPostUseCase.searchCommunityHotPosts(request.toCommand(pageToken, pageSize)))
+    }
+
+    @Authentication(required = false)
     @GetMapping("/v1/community-posts/{postId}")
     fun getCommunityPost(@PathVariable postId: Long): CommonResponse<GetCommunityPostDto.Response> {
         return CommonResponse.success(communityPostUseCase.getCommunityPost(GetCommunityPostCommand(postId)))

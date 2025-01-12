@@ -5,17 +5,19 @@ import backend.team.ahachul_backend.api.community.adapter.web.out.CommunityPostR
 import backend.team.ahachul_backend.api.community.application.command.`in`.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
+import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
 import backend.team.ahachul_backend.api.member.domain.model.MemberStatusType
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
-import backend.team.ahachul_backend.common.exception.CommonException
-import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
+import backend.team.ahachul_backend.common.domain.model.YNType
+import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.persistence.HashTagRepository
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Sort
+import java.time.LocalDateTime
 
 class CommunityPostServiceTest(
     @Autowired val communityPostRepository: CommunityPostRepository,
@@ -199,6 +202,32 @@ class CommunityPostServiceTest(
     }
 
     @Test
+    @DisplayName("커뮤니티 삭제된 게시글 조회시 예외 발생")
+    fun 커뮤니티_게시글_삭제_예외_발생() {
+        // given
+        val createCommand = CreateCommunityPostCommand(
+            title = "제목",
+            content = "내용",
+            categoryType = CommunityCategoryType.FREE,
+            subwayLineId = subwayLine.id
+        )
+
+        val (postId, _, _, _, _) = communityPostUseCase.createCommunityPost(createCommand)
+        communityPostUseCase.deleteCommunityPost(DeleteCommunityPostCommand(postId))
+
+        // when, then
+        assertThatThrownBy {
+            communityPostUseCase.getCommunityPost(
+                GetCommunityPostCommand(
+                    id = postId
+                )
+            )
+        }
+            .isExactlyInstanceOf(CommonException::class.java)
+            .hasMessage(ResponseCode.POST_NOT_FOUND.message)
+    }
+
+    @Test
     @DisplayName("커뮤니티 조회수 증가")
     fun 커뮤니티_조회수_증가() {
         // given
@@ -250,7 +279,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = "제",
             hashTag = null,
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = null,
@@ -261,7 +289,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = "지하철",
             hashTag = null,
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = null,
@@ -272,7 +299,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = "지하철",
             hashTag = null,
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = null,
@@ -283,7 +309,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = null,
             hashTag = null,
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = null,
@@ -337,7 +362,6 @@ class CommunityPostServiceTest(
              subwayLineId = null,
              content = null,
              hashTag = null,
-             hotPostYn = null,
              writer = null,
              sort = Sort.unsorted(),
              pageToken = null,
@@ -348,7 +372,6 @@ class CommunityPostServiceTest(
              subwayLineId = null,
              content = null,
              hashTag = null,
-             hotPostYn = null,
              writer = null,
              sort = Sort.unsorted(),
              pageToken = null,
@@ -391,7 +414,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = null,
             hashTag = "여행",
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = null,
@@ -402,7 +424,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = null,
             hashTag = "취미",
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = null,
@@ -443,7 +464,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = null,
             hashTag = null,
-            hotPostYn = null,
             writer = "nickname",
             sort = Sort.unsorted(),
             pageToken = null,
@@ -476,7 +496,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = null,
             hashTag = null,
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = null,
@@ -490,7 +509,6 @@ class CommunityPostServiceTest(
             subwayLineId = null,
             content = null,
             hashTag = null,
-            hotPostYn = null,
             writer = null,
             sort = Sort.unsorted(),
             pageToken = response1.pageToken,
@@ -513,5 +531,43 @@ class CommunityPostServiceTest(
             .extracting("content")
             .usingRecursiveComparison()
             .isEqualTo((2 downTo 1).map { "내용$it" })
+    }
+
+    @Test
+    @DisplayName("커뮤니티 인기 게시글 조회")
+    fun 커뮤니티_인기_게시글_조회() {
+        // given
+        for (i: Int in 1..10) {
+            communityPostUseCase.createCommunityPost(
+                CreateCommunityPostCommand(
+                    title = "지하철 제목$i",
+                    content = "지하철 내용$i",
+                    categoryType = CommunityCategoryType.FREE,
+                    subwayLineId = subwayLine.id
+                )
+            )
+        }
+
+        // when
+        val findCommunityPost = communityPostRepository.findAll().first()
+
+        findCommunityPost.hotPostYn = YNType.Y
+        findCommunityPost.hotPostSelectedDate = LocalDateTime.now()
+
+        val result = communityPostUseCase.searchCommunityHotPosts(
+            SearchCommunityHotPostCommand(
+                subwayLineId = null,
+                content = null,
+                hashTag = null,
+                writer = null,
+                sort = Sort.unsorted(),
+                pageToken = null,
+                pageSize = 10
+            )
+        )
+
+        // then
+        assertThat(result.data).hasSize(1)
+        assertThat(result.data.first().id).isEqualTo(findCommunityPost.id)
     }
 }
