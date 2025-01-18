@@ -3,6 +3,7 @@ package backend.team.ahachul_backend.api.member.adapter.web.`in`
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.GetRedirectUrlDto
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.GetTokenDto
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.LoginMemberDto
+import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.LogoutMemberDto
 import backend.team.ahachul_backend.api.member.application.port.`in`.AuthUseCase
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.GetRedirectUrlCommand
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
@@ -28,6 +29,12 @@ class AuthController(
     @PostMapping("/v1/auth/login")
     fun login(@RequestHeader(value = "Origin") origin: String?, @RequestBody request: LoginMemberDto.Request): CommonResponse<LoginMemberDto.Response> {
         return CommonResponse.success(authUseCase.login(request.toCommand(origin)))
+    }
+
+    @PostMapping("/v1/auth/logout")
+    fun logout(@RequestBody request: LogoutMemberDto.Request): CommonResponse<*> {
+        authUseCase.logout(request.accessToken)
+        return CommonResponse.success()
     }
 
     @PostMapping("/v1/auth/token/refresh")
