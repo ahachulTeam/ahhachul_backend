@@ -3,12 +3,15 @@ package backend.team.ahachul_backend.api.member.adapter.web.`in`
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.GetRedirectUrlDto
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.GetTokenDto
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.LoginMemberDto
+import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.LogoutMemberDto
 import backend.team.ahachul_backend.api.member.application.port.`in`.AuthUseCase
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.properties.OAuthProperties
+import backend.team.ahachul_backend.common.response.CommonResponse
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
+import org.mockito.BDDMockito.willDoNothing
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
@@ -117,6 +120,41 @@ class AuthControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.accessTokenExpiresIn").type(JsonFieldType.NUMBER).description("엑세스 토큰 만료 기간"),
                         fieldWithPath("result.refreshToken").type(JsonFieldType.STRING).description("리프레쉬 토큰. 만료 기간 : 30일"),
                         fieldWithPath("result.refreshTokenExpiresIn").type(JsonFieldType.NUMBER).description("리프레쉬 토큰 만료 기간"),
+                    )
+                ),
+            )
+    }
+
+    @Test
+    fun logoutTest() {
+        // given
+        willDoNothing().given(authUseCase).logout(any())
+
+        val request = LogoutMemberDto.Request(
+            accessToken = "accessToken"
+        )
+
+        // when
+        val result = mockMvc.perform(
+            post("/v1/auth/logout")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "logout",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestFields(
+                        fieldWithPath("accessToken").type(JsonFieldType.STRING).description("엑세스 토큰"),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result").optional().description("X")
                     )
                 ),
             )

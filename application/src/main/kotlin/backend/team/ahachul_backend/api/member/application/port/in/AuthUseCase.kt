@@ -11,6 +11,8 @@ interface AuthUseCase {
 
     fun login(command: LoginMemberCommand): LoginMemberDto.Response
 
+    fun logout(accessToken: String)
+
     fun getToken(command: GetTokenCommand): GetTokenDto.Response
 
     fun getRedirectUrl(command: GetRedirectUrlCommand): GetRedirectUrlDto.Response
