@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.common.application.port.out.StationReade
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
+import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.BookmarkStationCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
@@ -101,6 +102,17 @@ class MemberService(
             }
 
         return GetBookmarkStationDto.Response(stationInfos)
+    }
+
+    override fun searchMembers(command: SearchMemberCommand): SearchMemberDto.Response {
+        val members = memberReader.searchMembers(command).map {
+            SearchMemberDto.SearchMemberResponse(
+                id = it.id,
+                nickname = it.nickname
+            )
+        }
+
+        return SearchMemberDto.Response.of(members)
     }
 
     private fun getSubwayLineInfos(station: StationEntity): List<GetBookmarkStationDto.SubwayLineInfo>{
