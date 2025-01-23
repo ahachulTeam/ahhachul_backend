@@ -49,4 +49,12 @@ class MemberController(
     fun getBookmarkStation(): CommonResponse<GetBookmarkStationDto.Response> {
         return CommonResponse.success(memberUseCase.getBookmarkStation())
     }
+
+    @GetMapping("/v1/members/search")
+    fun searchMembers(
+        request: SearchMemberDto.Request
+    ): CommonResponse<SearchMemberDto.Response> {
+        return CommonResponse.success(memberUseCase.searchMembers(request.toCommand()))
+    }
+
 }
