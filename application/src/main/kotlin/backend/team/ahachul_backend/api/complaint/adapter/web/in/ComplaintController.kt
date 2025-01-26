@@ -1,7 +1,7 @@
-package backend.team.ahachul_backend.api.complaint.adapter.`in`
+package backend.team.ahachul_backend.api.complaint.adapter.web.`in`
 
-import backend.team.ahachul_backend.api.complaint.adapter.`in`.dto.SearchComplaintMessagesDto
-import backend.team.ahachul_backend.api.complaint.adapter.`in`.dto.SendComplaintMessageDto
+import backend.team.ahachul_backend.api.complaint.adapter.web.`in`.dto.SearchComplaintMessagesDto
+import backend.team.ahachul_backend.api.complaint.adapter.web.`in`.dto.SendComplaintMessageDto
 import backend.team.ahachul_backend.api.complaint.application.port.`in`.ComplaintUseCase
 import backend.team.ahachul_backend.common.annotation.Authentication
 import backend.team.ahachul_backend.common.response.CommonResponse

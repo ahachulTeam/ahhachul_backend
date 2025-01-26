@@ -1,4 +1,4 @@
-package backend.team.ahachul_backend.api.complaint.adapter.`in`.dto
+package backend.team.ahachul_backend.api.complaint.adapter.web.`in`.dto
 
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintMessageStatusType
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintType

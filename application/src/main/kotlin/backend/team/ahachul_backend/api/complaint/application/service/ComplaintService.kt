@@ -1,6 +1,6 @@
 package backend.team.ahachul_backend.api.complaint.application.service
 
-import backend.team.ahachul_backend.api.complaint.adapter.`in`.dto.SearchComplaintMessagesDto
+import backend.team.ahachul_backend.api.complaint.adapter.web.`in`.dto.SearchComplaintMessagesDto
 import backend.team.ahachul_backend.api.complaint.application.command.SendComplaintMessageCommand
 import backend.team.ahachul_backend.api.complaint.application.port.`in`.ComplaintUseCase
 import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintMessageFileReader
