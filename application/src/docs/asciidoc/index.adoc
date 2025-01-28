@@ -58,7 +58,8 @@ include::train/error.adoc[]
 
 == Complaint
 
-include::complaint/complaints.adoc[]
+include::complaint/posts.adoc[]
+include::complaint/type.adoc[]
 
 == Rank
 

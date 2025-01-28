@@ -12,10 +12,10 @@ class UpdateComplaintPostDto {
     data class Request(
         val complaintType: ComplaintType?,
         val shortContentType: ShortContentType?,
+        val content: String?,
         val phoneNumber: String?,
         val trainNo: String?,
         val location: Int?,
-        val content: String?,
         val subwayLineId: Long?,
         val status: ComplaintPostType?,
         val removeFileIds: List<Long>? = arrayListOf(),
