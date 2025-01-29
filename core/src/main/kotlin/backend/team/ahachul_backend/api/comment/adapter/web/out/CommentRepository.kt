@@ -8,4 +8,6 @@ interface CommentRepository: JpaRepository<CommentEntity, Long> {
     fun countByCommunityPostId(postId: Long): Int
 
     fun countByLostPostId(postId: Long): Int
+
+    fun countByComplaintPostId(postId: Long): Int
 }

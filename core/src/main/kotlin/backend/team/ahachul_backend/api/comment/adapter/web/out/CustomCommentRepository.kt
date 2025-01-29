@@ -77,5 +77,6 @@ class CustomCommentRepository(
         when (postType) {
             PostType.COMMUNITY -> commentEntity.communityPost.id.eq(postId)
             PostType.LOST -> commentEntity.lostPost.id.eq(postId)
+            PostType.COMPLAINT -> commentEntity.complaintPost.id.eq(postId)
         }
 }
