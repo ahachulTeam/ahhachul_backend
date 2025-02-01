@@ -40,7 +40,7 @@ jobs:
         shell: bash
 
       - name: Upload build artifact (JAR and Dockerfile)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
@@ -59,7 +59,7 @@ jobs:
           echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Download build artifact (JAR and Dockerfile)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts
       
@@ -125,7 +125,7 @@ jobs:
           EOF
 
       - name: Upload appspec.yaml
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: appspec-artifact
           path: ./appspec.yaml
@@ -142,7 +142,7 @@ jobs:
           echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Download appspec artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: appspec-artifact
 
