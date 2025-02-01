@@ -23,7 +23,7 @@ enum class ResponseCode(
     INVALID_OAUTH_ACCESS_TOKEN("206", "유효하지 않은 액세스 토큰입니다.", HttpStatus.UNAUTHORIZED),
     INVALID_AUTH("207", "권한이 없습니다.", HttpStatus.FORBIDDEN),
     FAILED_TO_CONNECT_TO_REDIS("208", "통신 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    ALREADY_LOGOUT_TOKEN("209", "이미 로그아웃된 토큰입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    ALREADY_LOGOUT_TOKEN("209", "이미 로그아웃된 토큰입니다.", HttpStatus.UNAUTHORIZED),
 
 
     // REPORT
