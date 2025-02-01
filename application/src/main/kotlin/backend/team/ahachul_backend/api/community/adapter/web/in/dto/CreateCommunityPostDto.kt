@@ -15,9 +15,8 @@ class CreateCommunityPostDto {
         val categoryType: CommunityCategoryType,
         val hashTags: List<String> = listOf(),
         val subwayLineId: Long,
-        val imageFiles: List<MultipartFile> = listOf()
     ) {
-        fun toCommand(): CreateCommunityPostCommand {
+        fun toCommand(imageFiles: List<MultipartFile>?): CreateCommunityPostCommand {
             return CreateCommunityPostCommand(
                 title = title,
                 content = content,
@@ -36,10 +35,10 @@ class CreateCommunityPostDto {
         val categoryType: CommunityCategoryType,
         val region: RegionType,
         val subwayLineId: Long,
-        val images: List<ImageDto> = arrayListOf()
+        val images: List<ImageDto>? = arrayListOf()
     ) {
         companion object {
-            fun of(entity: CommunityPostEntity, images: List<ImageDto>): Response {
+            fun of(entity: CommunityPostEntity, images: List<ImageDto>?): Response {
                 return Response(
                     id = entity.id,
                     title = entity.title,
