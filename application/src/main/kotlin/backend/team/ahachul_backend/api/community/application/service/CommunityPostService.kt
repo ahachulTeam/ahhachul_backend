@@ -111,7 +111,10 @@ class CommunityPostService(
         val subwayLine = subwayLineReader.getById(command.subwayLineId)
         val communityPost = communityPostWriter.save(CommunityPostEntity.of(command, member, subwayLine))
         communityPostHashTagService.createCommunityPostHashTag(communityPost, command.hashTags)
-        val images = communityPostFileService.createCommunityPostFiles(communityPost, command.imageFiles)
+
+        val images = command.imageFiles?.let {
+            communityPostFileService.createCommunityPostFiles(communityPost, command.imageFiles!!)
+        }
 
         return CreateCommunityPostDto.Response.of(
             communityPost,
@@ -126,7 +129,9 @@ class CommunityPostService(
         communityPost.checkMe(memberId)
         communityPost.update(command)
         communityPostHashTagService.createCommunityPostHashTag(communityPost, command.hashTags)
-        communityPostFileService.createCommunityPostFiles(communityPost, command.uploadFiles)
+        command.uploadFiles?.let {
+            communityPostFileService.createCommunityPostFiles(communityPost, command.uploadFiles!!)
+        }
         communityPostFileService.deleteCommunityPostFiles(command.removeFileIds)
         val communityPostFiles = communityPostFileReader.findAllByPostId(communityPost.id)
         return UpdateCommunityPostDto.Response.of(
