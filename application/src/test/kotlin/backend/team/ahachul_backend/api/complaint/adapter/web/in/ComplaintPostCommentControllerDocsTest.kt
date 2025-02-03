@@ -1,4 +1,4 @@
-package backend.team.ahachul_backend.api.community.adapter.web.`in`
+package backend.team.ahachul_backend.api.complaint.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.CreateCommentDto
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.GetCommentsDto
@@ -22,14 +22,14 @@ import org.springframework.restdocs.request.RequestDocumentation.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 
-@WebMvcTest(CommunityPostCommentController::class)
-class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
+@WebMvcTest(ComplaintPostCommentController::class)
+class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
 
     @MockBean
     lateinit var commentUseCase: CommentUseCase
 
     @Test
-    fun getCommunityPostCommentsTest() {
+    fun getComplaintPostCommentsTest() {
         // given
         val response = GetCommentsDto.Response(
             listOf(
@@ -67,7 +67,7 @@ class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
 
         // when
         val result = mockMvc.perform(
-            get("/v1/community-posts/{postId}/comments", 1L)
+            get("/v1/complaint-posts/{postId}/comments", 1L)
                 .queryParam("sort", "createdAt,desc")
                 .accept(MediaType.APPLICATION_JSON)
         )
@@ -76,11 +76,11 @@ class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
         result.andExpect(status().isOk)
             .andDo(
                 document(
-                    "get-community-post-comments",
+                    "get-complaint-post-comments",
                     getDocsRequest(),
                     getDocsResponse(),
                     pathParameters(
-                        parameterWithName("postId").description("코멘트 조회할 게시글 아이디")
+                        parameterWithName("postId").description("코멘트 조회할 민원 아이디")
                     ),
                     queryParameters(
                         parameterWithName("sort").description("정렬 조건").attributes(getFormatAttribute("(likes|createdAt),(asc|desc)")),
@@ -111,26 +111,26 @@ class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
-    fun createCommunityPostCommentTest() {
+    fun createComplaintPostCommentTest() {
         // given
         val response = CreateCommentDto.Response(
-            id = 2,
-            upperCommentId = 1,
-            content = "생성된 커뮤니티 코멘트 내용"
+            id = 3,
+            upperCommentId = 2,
+            content = "생성된 민원 코멘트 내용"
         )
 
         given(commentUseCase.createComment(any()))
             .willReturn(response)
 
         val request = CreateCommentDto.Request(
-            upperCommentId = 1,
-            content = "생성할 커뮤니티 코멘트 내용",
+            upperCommentId = 2,
+            content = "생성할 민원 코멘트 내용",
             isPrivate = null,
         )
 
         // when
         val result = mockMvc.perform(
-            post("/v1/community-posts/{postId}/comments", 1L)
+            post("/v1/complaint-posts/{postId}/comments", 1L)
                 .header("Authorization", "Bearer <Access Token>")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
@@ -141,11 +141,11 @@ class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
         result.andExpect(status().isOk)
             .andDo(
                 document(
-                    "create-community-post-comment",
+                    "create-complaint-post-comment",
                     getDocsRequest(),
                     getDocsResponse(),
                     pathParameters(
-                        parameterWithName("postId").description("코멘트 생성할 게시글 아이디")
+                        parameterWithName("postId").description("코멘트 생성할 민원 아이디")
                     ),
                     requestHeaders(
                         headerWithName("Authorization").description("엑세스 토큰")
