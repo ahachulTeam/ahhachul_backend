@@ -12,7 +12,17 @@ jobs:
       checks: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v2
+      - name: Parse combined secrets
+        id: parse_secrets
+        run: |
+          echo "Extracting secrets..."
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ env.TOKEN_GITHUB }}
+          submodules: true
 
       - name: Set up JDK 17
         uses: actions/setup-java@v1

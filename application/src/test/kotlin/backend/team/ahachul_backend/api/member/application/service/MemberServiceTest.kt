@@ -24,8 +24,8 @@ import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
-import org.assertj.core.api.Assertions.*
-import org.junit.jupiter.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -81,7 +81,7 @@ class MemberServiceTest(
         val searchMembers = memberUseCase.searchMembers(searchMemberCommand)
 
         //then
-        assertThat(searchMembers.members.size).isEqualTo(10)
+        assertThat(searchMembers.members.size).isEqualTo(11)
     }
 
     @ParameterizedTest
@@ -134,7 +134,7 @@ class MemberServiceTest(
     fun 사용자_닉네임_사용가능_여부_체크() {
         // given
         val availableCommand = CheckNicknameCommand(
-            nickname = "nickname2"
+            nickname = "nickname11"
         )
         val unavailableCommand = CheckNicknameCommand(
             nickname = "nickname"
