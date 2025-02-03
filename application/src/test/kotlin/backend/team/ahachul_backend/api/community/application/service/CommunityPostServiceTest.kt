@@ -107,7 +107,7 @@ class CommunityPostServiceTest(
             id = postId,
             "수정된 제목",
             "수정된 내용",
-            CommunityCategoryType.HUMOR
+            CommunityCategoryType.ISSUE
         )
 
         // when
@@ -117,7 +117,7 @@ class CommunityPostServiceTest(
         assertThat(result.id).isEqualTo(postId)
         assertThat(result.title).isEqualTo("수정된 제목")
         assertThat(result.content).isEqualTo("수정된 내용")
-        assertThat(result.categoryType).isEqualTo(CommunityCategoryType.HUMOR)
+        assertThat(result.categoryType).isEqualTo(CommunityCategoryType.ISSUE)
     }
 
     @Test
@@ -138,7 +138,7 @@ class CommunityPostServiceTest(
             id = postId,
             "수정된 제목",
             "수정된 내용",
-            CommunityCategoryType.HUMOR
+            CommunityCategoryType.ISSUE
         )
 
         // when, then
