@@ -12,6 +12,12 @@ jobs:
       checks: write
       pull-requests: write
     steps:
+      - name: Parse combined secrets
+        id: parse_secrets
+        run: |
+          echo "Extracting secrets..."
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+
       - name: Checkout source code
         uses: actions/checkout@v3
         with:
