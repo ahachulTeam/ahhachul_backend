@@ -66,11 +66,15 @@ jobs:
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPOSITORY_URI }}
 
-      - name: Build Docker image
-        run: docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}:latest .
+      - name: Build Spring container image
+        run: |
+          docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}/spring-app:latest -f app.Dockerfile .
+          docker push ${{ env.ECR_REPOSITORY_URI }}/spring-app:latest
 
-      - name: Push Docker image to Amazon ECR
-        run: docker push ${{ env.ECR_REPOSITORY_URI }}:latest
+      - name: Build Cron Job container image
+        run: |
+          docker build -t ${{ env.ECR_REPOSITORY_URI }}/cron-job:latest -f cron.Dockerfile .
+          docker push ${{ env.ECR_REPOSITORY_URI }}/cron-job:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -109,15 +113,15 @@ jobs:
       - name: Deploy to EC2 using SSM
         id: deploy-ssm
         run: |
-          COMMAND_ID=$(aws ssm send-command \
-            --document-name "AWS-RunShellScript" \
-            --targets "Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }}" \
-            --parameters 'commands=["${{ env.DEPLOY_COMMAND }}"]' \
-            --comment "Deploy new Docker container" \
-            --query "Command.CommandId" \
-            --output text \
-            --region ${{ env.AWS_REGION }})
-          
+            COMMAND_ID=$(aws ssm send-command \
+                 --document-name "AWS-RunShellScript" \
+                 --targets "Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }}" \
+                 --parameters 'commands=["${{ env.DEPLOY_COMMAND }}"]' \   
+                 --comment "Deploy new Docker container" \
+                 --query "Command.CommandId" \
+                 --output text \
+                 --region ${{ env.AWS_REGION }})
+
           if [ -z "$COMMAND_ID" ]; then
             echo "Failed to send command"
             exit 1
