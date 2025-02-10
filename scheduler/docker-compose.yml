@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  spring-app:
+    image: ${ECR_REPOSITORY_URI}/spring-app:latest
+    container_name: spring-app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ahachul-data:/app/ahachul_data/datas
+    depends_on:
+      - cron-container
+
+  cron-job:
+    image: ${ECR_REPOSITORY_URI}/cron-job:latest
+    container_name: cron-job
+    volumes:
+      - ahachul-data:/app/ahachul_data/datas
+
+volumes:
+  ahachul-data:
