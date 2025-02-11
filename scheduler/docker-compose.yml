@@ -2,18 +2,20 @@ version: '3.8'
 
 services:
   spring-app:
-    image: ${ECR_REPOSITORY_URI}/spring-app:latest
-    container_name: spring-app
+    image: ${ECR_REPOSITORY_URI}/app:latest
+    container_name: batch-dev-container
     ports:
       - "8080:8080"
     volumes:
       - ahachul-data:/app/ahachul_data/datas
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
     depends_on:
       - cron-container
 
-  cron-job:
-    image: ${ECR_REPOSITORY_URI}/cron-job:latest
-    container_name: cron-job
+  cron-app:
+    image: ${ECR_REPOSITORY_URI}/cron:latest
+    container_name: batch-dev-cron-container
     volumes:
       - ahachul-data:/app/ahachul_data/datas
 

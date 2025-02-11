@@ -69,12 +69,12 @@ jobs:
       - name: Build Spring container image
         run: |
           docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}/spring-app:latest -f app.Dockerfile .
-          docker push ${{ env.ECR_REPOSITORY_URI }}/spring-app:latest
+          docker push ${{ env.ECR_REPOSITORY_URI }}/app:latest
 
       - name: Build Cron Job container image
         run: |
-          docker build -t ${{ env.ECR_REPOSITORY_URI }}/cron-job:latest -f cron.Dockerfile .
-          docker push ${{ env.ECR_REPOSITORY_URI }}/cron-job:latest
+          docker build -t ${{ env.ECR_REPOSITORY_URI }}/cron:latest -f cron.Dockerfile .
+          docker push ${{ env.ECR_REPOSITORY_URI }}/cron:latest
 
   deploy:
     runs-on: ubuntu-latest
