@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - 'application/**'
       - '.github/**'
+  workflow_dispatch:
 
 jobs:
   build:
