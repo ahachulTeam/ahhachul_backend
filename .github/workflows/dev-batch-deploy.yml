@@ -119,7 +119,6 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }}" \
             --parameters 'commands=["${{ env.DEPLOY_COMMAND }}"]' \   
-            --comment "Deploy new Docker container" \
             --query "Command.CommandId" \
             --output text \
             --region ${{ env.AWS_REGION }})
