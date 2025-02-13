@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - feature/305
     paths-ignore:
       - 'application/**'
       - '.github/**'
@@ -113,14 +114,14 @@ jobs:
       - name: Deploy to EC2 using SSM
         id: deploy-ssm
         run: |
-            COMMAND_ID=$(aws ssm send-command \
-                 --document-name "AWS-RunShellScript" \
-                 --targets "Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }}" \
-                 --parameters 'commands=["${{ env.DEPLOY_COMMAND }}"]' \   
-                 --comment "Deploy new Docker container" \
-                 --query "Command.CommandId" \
-                 --output text \
-                 --region ${{ env.AWS_REGION }})
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }}" \
+            --parameters 'commands=["${{ env.DEPLOY_COMMAND }}"]' \   
+            --comment "Deploy new Docker container" \
+            --query "Command.CommandId" \
+            --output text \
+            --region ${{ env.AWS_REGION }})
 
           if [ -z "$COMMAND_ID" ]; then
             echo "Failed to send command"
