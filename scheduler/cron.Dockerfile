@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r /app/ahachul_data/requirements.txt
 # 스크립트 복사 및 실행 권한 부여
 RUN mkdir -p /app/script && \
     echo '#!/bin/bash\npython /app/ahachul_data/main.py -o un' > /app/script/new.sh && \
-    chmod +x /app/script/new.sh \
+    chmod +x /app/script/new.sh
 
 # 크론탭 설정
 RUN echo "0 15 * * * /app/script/new.sh >> /var/log/cron.log 2>&1" > /etc/cron.d/new-task
