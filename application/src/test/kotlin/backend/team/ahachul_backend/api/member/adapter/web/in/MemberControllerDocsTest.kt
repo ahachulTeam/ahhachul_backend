@@ -4,7 +4,6 @@ import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -16,6 +15,8 @@ import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*
 import org.springframework.restdocs.payload.JsonFieldType
 import org.springframework.restdocs.payload.PayloadDocumentation.*
+import org.springframework.restdocs.request.RequestDocumentation.parameterWithName
+import org.springframework.restdocs.request.RequestDocumentation.queryParameters
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(MemberController::class)
@@ -241,5 +242,43 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     )
                 )
             )
+    }
+
+    @Test
+    fun searchMembersTest() {
+        //given
+        val response = SearchMemberDto.Response(
+            members = listOf(
+                SearchMemberDto.SearchMemberResponse(
+                    id = 1L,
+                    nickname = "nickname",
+                )
+            )
+        )
+
+        given(memberUseCase.searchMembers(any())).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v1/members/search")
+                .queryParam("nickname", "닉네임")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(document("search-members",
+                getDocsRequest(),
+                getDocsResponse(),
+                queryParameters(
+                    parameterWithName("nickname").description("닉네임 입력"),
+                ),
+                responseFields(
+                    *commonResponseFields(),
+                    fieldWithPath("result.members[].id").type(JsonFieldType.NUMBER).description("회원 아이디"),
+                    fieldWithPath("result.members[].nickname").type(JsonFieldType.STRING).description("회원 닉네임"),
+                )
+            ))
+
     }
 }

@@ -8,6 +8,8 @@ interface CommunityPostUseCase {
 
     fun searchCommunityPosts(command: SearchCommunityPostCommand): PageInfoDto<SearchCommunityPostDto.Response>
 
+    fun searchCommunityHotPosts(command: SearchCommunityHotPostCommand): PageInfoDto<SearchCommunityPostDto.Response>
+
     fun getCommunityPost(command: GetCommunityPostCommand): GetCommunityPostDto.Response
 
     fun createCommunityPost(command: CreateCommunityPostCommand): CreateCommunityPostDto.Response

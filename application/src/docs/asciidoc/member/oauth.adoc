@@ -22,6 +22,17 @@ include::{snippets}/login/http-response.adoc[]
 .Response Fields
 include::{snippets}/login/response-fields.adoc[]
 
+==== 로그아웃
+
+.Request
+include::{snippets}/logout/http-request.adoc[]
+.Request Fields
+include::{snippets}/logout/request-fields.adoc[]
+.Response
+include::{snippets}/logout/http-response.adoc[]
+.Response Fields
+include::{snippets}/logout/response-fields.adoc[]
+
 ==== 토큰 재발급
 
 - 리프레쉬 토큰 만료 기간이 7일보다 적게 남았을 경우 리프레쉬 토큰 또한 재발급
