@@ -18,7 +18,7 @@ RUN mkdir -p /app/script && \
     chmod +x /app/script/new.sh
 
 # 크론탭 설정
-echo "0 15 * * * /app/script/new.sh >> /var/log/cron.log 2>&1" | crontab -
+RUN echo "0 15 * * * /app/script/new.sh >> /var/log/cron.log 2>&1" | crontab -
 
 # 크론 데몬 실행
 CMD ["cron", "-f"]
