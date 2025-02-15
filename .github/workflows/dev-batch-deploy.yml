@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - feature/305
     paths-ignore:
       - 'application/**'
       - '.github/**'
@@ -125,9 +124,9 @@ jobs:
             --region ${{ env.AWS_REGION }})
 
           if [ -z "$COMMAND_ID" ]; then
-                  echo "Failed to send command"
-                  exit 1
-                fi
+            echo "Failed to send command"
+            exit 1
+          fi
 
           echo "SSM Command ID: $COMMAND_ID"
           echo "::set-output name=command_id::$COMMAND_ID"
