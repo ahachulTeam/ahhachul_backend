@@ -1,4 +1,4 @@
-package backend.team.ahachul_backend.api.member.application.port.`in`.command
+package backend.team.ahachul_backend.api.member.application.command
 
 import backend.team.ahachul_backend.common.exception.BusinessException
 import backend.team.ahachul_backend.common.response.ResponseCode

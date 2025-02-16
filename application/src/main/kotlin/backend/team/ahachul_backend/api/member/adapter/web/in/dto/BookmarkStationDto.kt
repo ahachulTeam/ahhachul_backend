@@ -1,6 +1,6 @@
 package backend.team.ahachul_backend.api.member.adapter.web.`in`.dto
 
-import backend.team.ahachul_backend.api.member.application.port.`in`.command.BookmarkStationCommand
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
 
 class BookmarkStationDto {
 
