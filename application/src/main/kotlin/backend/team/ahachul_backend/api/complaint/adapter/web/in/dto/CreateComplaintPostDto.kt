@@ -15,7 +15,7 @@ class CreateComplaintPostDto {
         val phoneNumber: String?,
         val trainNo: String?,
         val location: Int?,
-        val subwayLine: Long
+        val subwayLineId: Long
     ) {
         fun toCommand(imageFiles: List<MultipartFile>?): CreateComplaintPostCommand {
             return CreateComplaintPostCommand(
@@ -25,7 +25,7 @@ class CreateComplaintPostDto {
                 phoneNumber = phoneNumber,
                 trainNo = trainNo,
                 location = location,
-                subwayLine = subwayLine,
+                subwayLineId = subwayLineId,
                 imageFiles = imageFiles,
             )
         }
