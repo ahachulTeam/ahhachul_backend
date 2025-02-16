@@ -46,11 +46,10 @@ jobs:
           name: build-artifacts
           path: |
             ./${{ env.MODULE_NAME }}/build/libs/*.jar
-            ./${{ env.MODULE_NAME }}/*.Dockerfile
-            
-  upload-docker-image:
+            ./${{ env.MODULE_NAME }}/*.
+
+  setup-docker:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Parse combined secrets
         id: parse_secrets
@@ -67,11 +66,20 @@ jobs:
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPOSITORY_URI }}
 
+  upload-docker-image:
+    runs-on: ubuntu-latest
+    needs: setup-docker
+    steps:
       - name: Build Spring container image
         run: |
           docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}/app:latest -f app.Dockerfile .
           docker push ${{ env.ECR_REPOSITORY_URI }}/app:latest
 
+  upload-cron-image:
+    runs-on: ubuntu-latest
+    needs: setup-docker
+    if: contains(github.event.commits.*.modified, 'scheduler/cron.Dockerfile')
+    steps:
       - name: Build Cron Job container image
         run: |
           docker build -t ${{ env.ECR_REPOSITORY_URI }}/cron:latest -f cron.Dockerfile .
