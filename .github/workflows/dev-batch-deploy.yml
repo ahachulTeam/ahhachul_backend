@@ -50,6 +50,7 @@ jobs:
 
   setup-docker:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Parse combined secrets
         id: parse_secrets
