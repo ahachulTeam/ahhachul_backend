@@ -14,5 +14,5 @@ class ScheduleModuleApplication
 fun main(args: Array<String>) {
     val context: ApplicationContext = runApplication<ScheduleModuleApplication>(*args)
     val properties = context.getBean(SocketServerProperties::class.java)
-    SimpleSocketServer.main(arrayOf(properties.port, properties.getConfigFilePath()))
+    SimpleSocketServer.main(arrayOf(properties.port, properties.configPath))
 }

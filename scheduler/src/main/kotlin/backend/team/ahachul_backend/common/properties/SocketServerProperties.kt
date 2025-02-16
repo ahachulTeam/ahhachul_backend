@@ -9,10 +9,4 @@ import org.springframework.core.io.ClassPathResource
 data class SocketServerProperties(
     var port: String = "",
     var configPath: String = ""
-) {
-
-    fun getConfigFilePath(): String {
-        return ClassPathResource(configPath).url.toString()
-    }
-
-}
+)
