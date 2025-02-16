@@ -67,7 +67,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 
@@ -99,7 +99,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 
@@ -110,7 +110,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 
@@ -144,7 +144,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 
@@ -171,7 +171,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 
@@ -193,7 +193,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 
@@ -232,7 +232,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 
@@ -261,7 +261,7 @@ class ComplaintPostServiceTest(
             phoneNumber = null,
             trainNo = null,
             location = null,
-            subwayLine = subwayLine.id,
+            subwayLineId = subwayLine.id,
             imageFiles = listOf(),
         )
 

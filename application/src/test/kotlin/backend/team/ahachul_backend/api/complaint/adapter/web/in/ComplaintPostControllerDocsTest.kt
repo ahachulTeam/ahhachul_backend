@@ -191,7 +191,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
             phoneNumber = "010-1234-5678",
             trainNo = "1234",
             location = 1,
-            subwayLine = 1L
+            subwayLineId = 1L
         )
 
         val mapper = ObjectMapper()
@@ -236,7 +236,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                     fieldWithPath("phoneNumber").type(JsonFieldType.STRING).description("민원 전화번호").optional(),
                     fieldWithPath("trainNo").type(JsonFieldType.STRING).description("민원 열차 번호").optional(),
                     fieldWithPath("location").type(JsonFieldType.NUMBER).description("민원 열차 칸").optional(),
-                    fieldWithPath("subwayLine").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
+                    fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
                 ),
                 responseFields(
                     *commonResponseFields(),

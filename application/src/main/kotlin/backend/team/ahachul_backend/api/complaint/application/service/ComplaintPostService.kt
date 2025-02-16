@@ -91,7 +91,7 @@ class ComplaintPostService(
     override fun createComplaintPost(command: CreateComplaintPostCommand): CreateComplaintPostDto.Response {
         val memberId = RequestUtils.getAttribute("memberId")!!
         val member = memberReader.getMember(memberId.toLong())
-        val subwayLine = subwayLineReader.getById(command.subwayLine)
+        val subwayLine = subwayLineReader.getById(command.subwayLineId)
 
         val complaintPost = complaintPostWriter.save(
             ComplaintPostEntity.of(
