@@ -46,7 +46,7 @@ jobs:
           name: build-artifacts
           path: |
             ./${{ env.MODULE_NAME }}/build/libs/*.jar
-            ./${{ env.MODULE_NAME }}/*.
+            ./${{ env.MODULE_NAME }}/*.Dockerfile
 
   setup-docker:
     runs-on: ubuntu-latest
