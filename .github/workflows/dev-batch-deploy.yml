@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - feature/337
     paths-ignore:
       - 'application/**'
       - '.github/**'
