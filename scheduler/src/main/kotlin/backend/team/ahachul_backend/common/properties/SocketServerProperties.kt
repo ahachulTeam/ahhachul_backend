@@ -10,7 +10,9 @@ data class SocketServerProperties(
     var port: String = "",
     var configPath: String = ""
 ) {
+
     fun getConfigFilePath(): String {
-        return ClassPathResource(configPath).file.absolutePath
+        return ClassPathResource(configPath).url.toString()
     }
+
 }
