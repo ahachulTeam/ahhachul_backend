@@ -51,12 +51,15 @@ jobs:
   setup-docker:
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      ECR_REPOSITORY_URI: ${{ steps.parse_secrets.outputs.ECR_REPOSITORY_URI }}
     steps:
       - name: Parse combined secrets
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
           echo '${{ secrets.DEV_BATCH_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo "::set-output name=ECR_REPOSITORY_URI::${{ env.ECR_REPOSITORY_URI }}"
 
       - name: Download build artifact (JAR and Dockerfile)
         uses: actions/download-artifact@v4
@@ -67,10 +70,6 @@ jobs:
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPOSITORY_URI }}
 
-  upload-docker-image:
-    runs-on: ubuntu-latest
-    needs: setup-docker
-    steps:
       - name: Build Spring container image
         run: |
           docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}/app:latest -f app.Dockerfile .
@@ -83,8 +82,8 @@ jobs:
     steps:
       - name: Build Cron Job container image
         run: |
-          docker build -t ${{ env.ECR_REPOSITORY_URI }}/cron:latest -f cron.Dockerfile .
-          docker push ${{ env.ECR_REPOSITORY_URI }}/cron:latest
+          docker build -t ${{ needs.setup-docker.outputs.ECR_REPOSITORY_URI }}/cron:latest -f cron.Dockerfile .
+          docker push ${{ needs.setup-docker.outputs.ECR_REPOSITORY_URI }}/cron:latest
 
   deploy:
     runs-on: ubuntu-latest
