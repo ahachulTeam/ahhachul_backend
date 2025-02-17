@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - feature/305
     paths:
       - 'scheduler/cron.Dockerfile'
   workflow_dispatch:
