@@ -58,21 +58,12 @@ class MemberService(
         val bookmarkStations = command.stationNames
         val originMemberStations = memberStationReader.getByMember(member)
 
-        originMemberStations.forEach {
-            val stationName = it.station.name
-            if (isAlreadyExists(bookmarkStations, stationName)) {
-                bookmarkStations.remove(stationName)
-            } else {
-                memberStationWriter.delete(it.id)
-            }
+        if (originMemberStations.isNotEmpty()) {
+            memberStationWriter.deleteAllByMember(member)
         }
 
         val bookmarkStationIds = saveNewStations(member, bookmarkStations)
         return BookmarkStationDto.Response(bookmarkStationIds)
-    }
-
-    private fun isAlreadyExists(newNames: List<String>, originName: String): Boolean {
-        return newNames.contains(originName)
     }
 
     private fun saveNewStations(member: MemberEntity, bookmarkStations: List<String>): List<Long> {

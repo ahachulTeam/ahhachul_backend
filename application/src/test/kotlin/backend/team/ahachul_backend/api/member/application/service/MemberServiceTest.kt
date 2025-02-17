@@ -201,7 +201,45 @@ class MemberServiceTest(
         val result = memberUseCase.bookmarkStation(command)
 
         // then
-        assertThat(result.memberStationIds.size).isEqualTo(1)  // new bookmark
+        assertThat(result.memberStationIds.size).isEqualTo(2)  // new bookmark
+    }
+
+    @Test
+    fun 즐겨찾기_역_수정_시_순서_유지() {
+        // given
+        val stationList = listOf(
+            StationEntity(name = "시청역"),
+            StationEntity(name = "발산역"),
+            StationEntity(name = "강남역"),
+            StationEntity(name = "우장산역")
+        )
+
+        stationList.forEach {
+            stationRepository.save(it)
+        }
+
+        stationList.subList(0, 2).forEach {     // origin bookmark
+            memberStationRepository.save(
+                MemberStationEntity(
+                    member = member!!,
+                    station = it
+                )
+            )
+        }
+
+        val command = BookmarkStationCommand(
+            stationNames = mutableListOf("발산역", "시청역", "강남역")
+        )
+
+        // when
+        memberUseCase.bookmarkStation(command)
+
+        // then
+        val result = memberUseCase.getBookmarkStation()
+        assertThat(result.stationInfoList.size).isEqualTo(3)
+        assertThat(result.stationInfoList[0].stationName).isEqualTo("발산역")
+        assertThat(result.stationInfoList[1].stationName).isEqualTo("시청역")
+        assertThat(result.stationInfoList[2].stationName).isEqualTo("강남역")
     }
 
     @Test
