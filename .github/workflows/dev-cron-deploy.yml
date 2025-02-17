@@ -1,14 +1,11 @@
-name: CI/CD Pipeline for Dev Batch
+name: CI/CD Pipeline for Dev Cron
 
 on:
   push:
     branches:
       - develop
-    paths-ignore:
-      - 'application/**'
-      - '.github/**'
+    paths:
       - 'scheduler/cron.Dockerfile'
-
   workflow_dispatch:
 
 jobs:
@@ -29,25 +26,11 @@ jobs:
           token: ${{ env.TOKEN_GITHUB }}
           submodules: true
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v1
-        with:
-          java-version: 17
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        shell: bash
-
-      - name: Build with Gradle
-        run: SPRING_PROFILES_ACTIVE=test ./gradlew :${{ env.MODULE_NAME }}:clean :${{ env.MODULE_NAME }}:build
-        shell: bash
-        
-      - name: Upload build artifact (JAR and Dockerfile)
+      - name: Upload build artifact (Dockerfile)
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
-            ./${{ env.MODULE_NAME }}/build/libs/*.jar
             ./${{ env.MODULE_NAME }}/*.Dockerfile
 
   upload-docker-image:
@@ -60,7 +43,7 @@ jobs:
           echo "Extracting secrets..."
           echo '${{ secrets.DEV_BATCH_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
-      - name: Download build artifact (JAR and Dockerfile)
+      - name: Download build artifact (Dockerfile)
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
@@ -69,10 +52,10 @@ jobs:
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPOSITORY_URI }}
 
-      - name: Build Spring container image
+      - name: Build Cron Job container image
         run: |
-          docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}/app:latest -f app.Dockerfile .
-          docker push ${{ env.ECR_REPOSITORY_URI }}/app:latest
+          docker build -t ${{ env.ECR_REPOSITORY_URI }}/cron:latest -f cron.Dockerfile .
+          docker push ${{ env.ECR_REPOSITORY_URI }}/cron:latest
 
   deploy:
     runs-on: ubuntu-latest
