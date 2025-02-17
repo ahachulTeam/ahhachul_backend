@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for Dev Batch
+name: CI/CD Pipeline for Dev Cron
 
 on:
   push:
