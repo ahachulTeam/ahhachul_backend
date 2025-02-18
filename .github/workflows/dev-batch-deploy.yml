@@ -49,7 +49,7 @@ jobs:
           name: build-artifacts
           path: |
             ./${{ env.MODULE_NAME }}/build/libs/*.jar
-            ./${{ env.MODULE_NAME }}/src/main/resources/logback-spring.xml  # 추가
+            ./${{ env.MODULE_NAME }}/build/resources/main/logback-spring.xml
             ./${{ env.MODULE_NAME }}/*.Dockerfile
 
   upload-docker-image:
