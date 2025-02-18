@@ -41,7 +41,10 @@ jobs:
       - name: Build with Gradle
         run: SPRING_PROFILES_ACTIVE=test ./gradlew :${{ env.MODULE_NAME }}:clean :${{ env.MODULE_NAME }}:build
         shell: bash
-        
+
+      - name: Debug working directory
+        run: pwd && ls -al ./${{ env.MODULE_NAME }}/src/main/resources/
+
       - name: Upload build artifact (JAR and Dockerfile)
         uses: actions/upload-artifact@v4
         with:
