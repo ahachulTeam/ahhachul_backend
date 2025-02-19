@@ -4,9 +4,10 @@ import backend.team.ahachul_backend.api.common.application.port.out.StationReade
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
-import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
@@ -53,9 +54,9 @@ class MemberService(
     }
 
     @Transactional
-    override fun bookmarkStation(command: BookmarkStationCommand): BookmarkStationDto.Response {
+    override fun bookmarkStation(command: BookmarkStationCommands): BookmarkStationDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute("memberId")!!.toLong())
-        val bookmarkStations = command.stationNames
+        val bookmarkStations = command.stations
         val originMemberStations = memberStationReader.getByMember(member)
 
         if (originMemberStations.isNotEmpty()) {
@@ -66,13 +67,13 @@ class MemberService(
         return BookmarkStationDto.Response(bookmarkStationIds)
     }
 
-    private fun saveNewStations(member: MemberEntity, bookmarkStations: List<String>): List<Long> {
+    private fun saveNewStations(member: MemberEntity, bookmarkStations: List<BookmarkStationCommand>): List<Long> {
         return bookmarkStations
-            .map { stationReader.getByName(it) }
-            .map { station ->
+            .map {
                 val memberStation = MemberStationEntity(
-                        member = member,
-                        station = station
+                    member = member,
+                    station = stationReader.getByName(it.stationName),
+                    label = it.label
                 )
                 memberStationWriter.save(memberStation).id
             }
@@ -86,9 +87,10 @@ class MemberService(
             .map {
                 val station = it.station
                 GetBookmarkStationDto.StationInfo(
-                        stationId = station.id,
-                        stationName = station.name,
-                        subwayLineInfoList = getSubwayLineInfos(station)
+                    stationId = station.id,
+                    stationName = station.name,
+                    label = it.label,
+                    subwayLineInfoList = getSubwayLineInfos(station)
                 )
             }
 
@@ -106,12 +108,12 @@ class MemberService(
         return SearchMemberDto.Response.of(members)
     }
 
-    private fun getSubwayLineInfos(station: StationEntity): List<GetBookmarkStationDto.SubwayLineInfo>{
+    private fun getSubwayLineInfos(station: StationEntity): List<GetBookmarkStationDto.SubwayLineInfo> {
         val subwayLineStations = subwayLineStationReader.findByStation(station)
         return subwayLineStations.map {
             GetBookmarkStationDto.SubwayLineInfo(
-                    subwayLineId = it.subwayLine.id,
-                    subwayLineName = it.subwayLine.name
+                subwayLineId = it.subwayLine.id,
+                subwayLineName = it.subwayLine.name
             )
         }
     }

@@ -12,6 +12,8 @@ class MemberStationEntity(
     @Column(name = "member_station_id")
     val id: Long = 0,
 
+    var label: String?,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     val member: MemberEntity,

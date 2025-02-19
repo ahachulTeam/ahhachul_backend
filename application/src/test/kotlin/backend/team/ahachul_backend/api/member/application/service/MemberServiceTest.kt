@@ -6,9 +6,10 @@ import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberStationRepository
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
-import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.out.MemberWriter
@@ -24,8 +25,7 @@ import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -159,8 +159,12 @@ class MemberServiceTest(
         )
         stations.forEach { stationRepository.save(it) }
 
-        val command = BookmarkStationCommand(
-            stationNames = mutableListOf("시청역", "발산역", "강남역")
+        val command = BookmarkStationCommands(
+            stations = listOf(
+                BookmarkStationCommand("시청역", ""),
+                BookmarkStationCommand("발산역", "집"),
+                BookmarkStationCommand("강남역", "회사"),
+            )
         )
 
         // when
@@ -188,20 +192,23 @@ class MemberServiceTest(
             memberStationRepository.save(
                 MemberStationEntity(
                     member = member!!,
-                    station = it
+                    station = it,
+                    label = ""
                 )
             )
         }
 
-        val command = BookmarkStationCommand(
-            stationNames = mutableListOf("발산역", "우장산역")
+        val command = BookmarkStationCommands(
+            stations = listOf(
+                BookmarkStationCommand("시청역", "집"),
+            )
         )
 
         // when
         val result = memberUseCase.bookmarkStation(command)
 
         // then
-        assertThat(result.memberStationIds.size).isEqualTo(2)  // new bookmark
+        assertThat(result.memberStationIds.size).isEqualTo(1)  // new bookmark
     }
 
     @Test
@@ -222,13 +229,19 @@ class MemberServiceTest(
             memberStationRepository.save(
                 MemberStationEntity(
                     member = member!!,
-                    station = it
+                    station = it,
+                    label = ""
                 )
             )
         }
 
-        val command = BookmarkStationCommand(
-            stationNames = mutableListOf("발산역", "시청역", "강남역")
+        val command = BookmarkStationCommands(
+            stations = listOf(
+                BookmarkStationCommand("시청역", "회사"),
+                BookmarkStationCommand("강남역", "집"),
+                BookmarkStationCommand("우장산역", "즐겨찾는 장소"),
+                BookmarkStationCommand("발산역", "학교"),
+            )
         )
 
         // when
@@ -236,19 +249,30 @@ class MemberServiceTest(
 
         // then
         val result = memberUseCase.getBookmarkStation()
-        assertThat(result.stationInfoList.size).isEqualTo(3)
-        assertThat(result.stationInfoList[0].stationName).isEqualTo("발산역")
-        assertThat(result.stationInfoList[1].stationName).isEqualTo("시청역")
-        assertThat(result.stationInfoList[2].stationName).isEqualTo("강남역")
+        assertThat(result.stationInfoList.size).isEqualTo(4)
+
+        assertThat(result.stationInfoList)
+            .extracting("stationName", "label")
+            .containsExactly(
+                tuple("시청역", "회사"),
+                tuple("강남역", "집"),
+                tuple("우장산역", "즐겨찾는 장소"),
+                tuple("발산역", "학교"),
+            )
     }
 
     @Test
-    fun 즐겨찾는_역이_3개_이상이면_실패() {
-        // given
+    fun 즐겨찾는_역이_4개_보다_크면_실패() {
         // when + then
         assertThatThrownBy {
-            BookmarkStationCommand(
-                stationNames = mutableListOf("시청역", "발산역", "강남역", "구로역")
+            BookmarkStationCommands(
+                stations = listOf(
+                    BookmarkStationCommand("시청역", "회사"),
+                    BookmarkStationCommand("강남역", "집"),
+                    BookmarkStationCommand("우장산역", "즐겨찾는 장소"),
+                    BookmarkStationCommand("발산역", "학교"),
+                    BookmarkStationCommand("양재역", ""),
+                )
             )
         }
             .isExactlyInstanceOf(BusinessException::class.java)
@@ -270,7 +294,8 @@ class MemberServiceTest(
             memberStationRepository.save(
                 MemberStationEntity(
                     member = member!!,
-                    station = stationEntity
+                    station = stationEntity,
+                    label = ""
                 )
             )
             subwayLineStationRepository.save(
