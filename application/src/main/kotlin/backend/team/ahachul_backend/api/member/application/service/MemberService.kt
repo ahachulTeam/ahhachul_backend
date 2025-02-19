@@ -15,6 +15,8 @@ import backend.team.ahachul_backend.api.member.application.port.out.MemberStatio
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationWriter
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberStationEntity
+import backend.team.ahachul_backend.common.exception.CommonException
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -59,24 +61,16 @@ class MemberService(
         val bookmarkStations = command.stations
         val originMemberStations = memberStationReader.getByMember(member)
 
+        if (isAlreadyRegisteredStation(originMemberStations, bookmarkStations)) {
+            throw CommonException(ResponseCode.ALREADY_REGISTERED_STATION)
+        }
+
         if (originMemberStations.isNotEmpty()) {
             memberStationWriter.deleteAllByMember(member)
         }
 
         val bookmarkStationIds = saveNewStations(member, bookmarkStations)
         return BookmarkStationDto.Response(bookmarkStationIds)
-    }
-
-    private fun saveNewStations(member: MemberEntity, bookmarkStations: List<BookmarkStationCommand>): List<Long> {
-        return bookmarkStations
-            .map {
-                val memberStation = MemberStationEntity(
-                    member = member,
-                    station = stationReader.getByName(it.stationName),
-                    label = it.label
-                )
-                memberStationWriter.save(memberStation).id
-            }
     }
 
     override fun getBookmarkStation(): GetBookmarkStationDto.Response {
@@ -106,6 +100,31 @@ class MemberService(
         }
 
         return SearchMemberDto.Response.of(members)
+    }
+
+    private fun isAlreadyRegisteredStation(
+        originMemberStations: List<MemberStationEntity>,
+        bookmarkStations: List<BookmarkStationCommand>
+    ): Boolean {
+        if (originMemberStations.size != bookmarkStations.size) {
+            return false
+        }
+
+        return originMemberStations.indices.all {
+            originMemberStations[it].isEquals(bookmarkStations[it].stationName, bookmarkStations[it].label)
+        }
+    }
+
+    private fun saveNewStations(member: MemberEntity, bookmarkStations: List<BookmarkStationCommand>): List<Long> {
+        return bookmarkStations
+            .map {
+                val memberStation = MemberStationEntity(
+                    member = member,
+                    station = stationReader.getByName(it.stationName),
+                    label = it.label
+                )
+                memberStationWriter.save(memberStation).id
+            }
     }
 
     private fun getSubwayLineInfos(station: StationEntity): List<GetBookmarkStationDto.SubwayLineInfo> {

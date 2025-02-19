@@ -23,4 +23,8 @@ class MemberStationEntity(
     val station: StationEntity
 
 ): BaseEntity() {
+
+    fun isEquals(stationName: String, label: String?) : Boolean {
+        return this.station.name == stationName && this.label == label
+    }
 }

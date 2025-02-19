@@ -21,6 +21,7 @@ import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.exception.BusinessException
+import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
@@ -259,6 +260,41 @@ class MemberServiceTest(
                 tuple("우장산역", "즐겨찾는 장소"),
                 tuple("발산역", "학교"),
             )
+    }
+
+    @Test
+    fun 이미_등록된_즐겨찾기_역_정보와_동일한_정보로_수정_요청하지_못한다() {
+        // given
+        val station1 = StationEntity(name = "시청역")
+        val station2 = StationEntity(name = "강남역")
+
+        stationRepository.saveAll(listOf(station1, station2))
+
+        val memberStation1 = MemberStationEntity(
+            member = member!!,
+            station = station1,
+            label = "집"
+        )
+
+        val memberStation2 = MemberStationEntity(
+            member = member!!,
+            station = station2,
+            label = "직장"
+        )
+
+        memberStationRepository.saveAll(listOf(memberStation1, memberStation2))
+
+        val command = BookmarkStationCommands(
+            stations = listOf(
+                BookmarkStationCommand("시청역", "집"),
+                BookmarkStationCommand("강남역", "직장"),
+            )
+        )
+
+        // when & then
+        assertThatThrownBy { memberUseCase.bookmarkStation(command) }
+            .isExactlyInstanceOf(CommonException::class.java)
+            .hasMessage("이미 등록된 즐겨찾기 역 정보와 동일합니다.")
     }
 
     @Test
