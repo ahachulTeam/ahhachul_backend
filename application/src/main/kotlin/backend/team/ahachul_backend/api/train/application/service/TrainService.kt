@@ -85,8 +85,8 @@ class TrainService(
 
         val trainRealTimes = trainRealTimeMap.getOrElse(subwayLineIdentity.toString()) { emptyList() }
 
-        return upDownType?.let { type ->
-            trainRealTimes.filter { it.upDownType == type }.take(4)
+        return upDownType?.let {
+                type ->  trainRealTimes.filter { it.upDownType == type }.take(4)
         } ?: trainRealTimes
     }
 
@@ -140,12 +140,16 @@ class TrainService(
         trainRealTime
             ?.groupBy { it.updnLine }
             ?.entries?.forEach { map ->
-                val lis = map.value.map { dto ->
-                    GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2)) }
-                    .sortedWith( compareBy(
-                            { it.currentTrainArrivalCode.priority },
-                            { it.stationOrder }
-                    )).subList(0, 2)
+                val subIdx = if (map.value.size >= 2) 2 else 1  // 상행, 하행 각각 최대 두개씩 반환
+
+                val lis = map.value
+                    .map { dto ->
+                    GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
+                    }.sortedWith( compareBy(
+                        { it.currentTrainArrivalCode.priority },
+                        { it.stationOrder }
+                    )).subList(0, subIdx)
+
                 total.addAll(lis)
             }
         return total
