@@ -40,7 +40,7 @@ class MemberController(
     @PostMapping("/v1/members/bookmarks/stations")
     fun bookmarkStation(
             @RequestBody request: BookmarkStationDto.Request
-    ): CommonResponse<BookmarkStationDto.Response> {
+    ): CommonResponse<GetBookmarkStationDto.Response> {
         return CommonResponse.success(memberUseCase.bookmarkStation(request.toCommand()))
     }
 

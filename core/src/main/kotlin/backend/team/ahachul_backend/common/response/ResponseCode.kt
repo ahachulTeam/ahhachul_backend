@@ -53,7 +53,7 @@ enum class ResponseCode(
     FAILED_TO_GET_CONGESTION_INFO("705", "현재 혼잡도 정보를 받을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // STATION
-    EXCEED_MAXIMUM_STATION_COUNT("800", "즐겨찾는 역은 최대 3개까지 가능합니다.", HttpStatus.BAD_REQUEST),
+    EXCEED_MAXIMUM_STATION_COUNT("800", "즐겨찾는 역은 최대 4개까지 가능합니다.", HttpStatus.BAD_REQUEST),
 
     // FILE
     FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
