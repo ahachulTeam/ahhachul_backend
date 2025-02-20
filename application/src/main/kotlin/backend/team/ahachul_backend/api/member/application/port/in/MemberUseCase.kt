@@ -14,7 +14,7 @@ interface MemberUseCase {
 
     fun checkNickname(command: CheckNicknameCommand): CheckNicknameDto.Response
 
-    fun bookmarkStation(command: BookmarkStationCommands): BookmarkStationDto.Response
+    fun bookmarkStation(command: BookmarkStationCommands): GetBookmarkStationDto.Response
 
     fun getBookmarkStation(): GetBookmarkStationDto.Response
 

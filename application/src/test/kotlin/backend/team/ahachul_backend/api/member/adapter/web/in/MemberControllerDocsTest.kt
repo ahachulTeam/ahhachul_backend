@@ -166,7 +166,44 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
     @Test
     fun bookmarkStationTest() {
         // given
-        val response = BookmarkStationDto.Response(listOf(1L, 2L, 3L))
+        val response = GetBookmarkStationDto.Response(
+            stationInfoList = listOf(
+                GetBookmarkStationDto.StationInfo(
+                    stationId = 1L,
+                    stationName = "발산역",
+                    label = "집",
+                    subwayLineInfoList = listOf(
+                        GetBookmarkStationDto.SubwayLineInfo(
+                            subwayLineId = 1L,
+                            subwayLineName = "1호선"
+                        )
+                    )
+                ),
+                GetBookmarkStationDto.StationInfo(
+                    stationId = 2L,
+                    stationName = "우장산역",
+                    label = "학교",
+                    subwayLineInfoList = listOf(
+                        GetBookmarkStationDto.SubwayLineInfo(
+                            subwayLineId = 5L,
+                            subwayLineName = "5호선"
+                        )
+                    )
+                ),
+                GetBookmarkStationDto.StationInfo(
+                    stationId = 3L,
+                    stationName = "화곡역",
+                    label = "즐겨찾는 장소",
+                    subwayLineInfoList = listOf(
+                        GetBookmarkStationDto.SubwayLineInfo(
+                            subwayLineId = 1L,
+                            subwayLineName = "1호선"
+                        )
+                    )
+                )
+            )
+        )
+
         given(memberUseCase.bookmarkStation(any()))
                 .willReturn(response)
 
@@ -198,7 +235,13 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     ),
                     responseFields(
                         *commonResponseFields(),
-                        fieldWithPath("result.memberStationIds").type(JsonFieldType.ARRAY).description("즐겨찾는 역 ID 리스트"),
+                        fieldWithPath("result.stationInfoList").type(JsonFieldType.ARRAY).description("즐겨찾기 한 역 정보 리스트"),
+                        fieldWithPath("result.stationInfoList[].stationId").type(JsonFieldType.NUMBER).description("역 고유 ID"),
+                        fieldWithPath("result.stationInfoList[].stationName").type(JsonFieldType.STRING).description("역 이름"),
+                        fieldWithPath("result.stationInfoList[].label").type(JsonFieldType.STRING).description("역 별명").optional(),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList").type(JsonFieldType.ARRAY).description("해당 역이 존재하는 노선 리스트"),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 고유 ID"),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineName").type(JsonFieldType.STRING).description("노선 이름"),
                     )
                 )
             )

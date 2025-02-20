@@ -7,9 +7,9 @@ import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEn
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberStationRepository
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
-import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.out.MemberWriter
@@ -21,7 +21,6 @@ import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.exception.BusinessException
-import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
@@ -172,7 +171,7 @@ class MemberServiceTest(
         val result = memberUseCase.bookmarkStation(command)
 
         // then
-        assertThat(result.memberStationIds.size).isEqualTo(3)
+        assertThat(result.stationInfoList.size).isEqualTo(3)
     }
 
     @Test
@@ -209,7 +208,7 @@ class MemberServiceTest(
         val result = memberUseCase.bookmarkStation(command)
 
         // then
-        assertThat(result.memberStationIds.size).isEqualTo(1)  // new bookmark
+        assertThat(result.stationInfoList.size).isEqualTo(1)  // new bookmark
     }
 
     @Test
@@ -263,7 +262,7 @@ class MemberServiceTest(
     }
 
     @Test
-    fun 이미_등록된_즐겨찾기_역_정보와_동일한_정보로_수정_요청하지_못한다() {
+    fun 이미_등록된_즐겨찾기_역_정보와_동일한_정보로_수정_요청시_변경하지_않는다() {
         // given
         val station1 = StationEntity(name = "시청역")
         val station2 = StationEntity(name = "강남역")
@@ -291,10 +290,17 @@ class MemberServiceTest(
             )
         )
 
-        // when & then
-        assertThatThrownBy { memberUseCase.bookmarkStation(command) }
-            .isExactlyInstanceOf(CommonException::class.java)
-            .hasMessage("이미 등록된 즐겨찾기 역 정보와 동일합니다.")
+        // when
+        val result = memberUseCase.bookmarkStation(command)
+
+        // then
+        assertThat(result.stationInfoList.size).isEqualTo(2)
+        assertThat(result.stationInfoList[0].stationId).isEqualTo(memberStation1.station.id)
+        assertThat(result.stationInfoList[0].stationName).isEqualTo(memberStation1.station.name)
+        assertThat(result.stationInfoList[0].label).isEqualTo(memberStation1.label)
+        assertThat(result.stationInfoList[1].stationId).isEqualTo(memberStation2.station.id)
+        assertThat(result.stationInfoList[1].stationName).isEqualTo(memberStation2.station.name)
+        assertThat(result.stationInfoList[1].label).isEqualTo(memberStation2.label)
     }
 
     @Test
