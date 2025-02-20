@@ -94,7 +94,7 @@ class TrainService(
      * Redis 통신 오류에 대한 FallBack 메서드
      */
     fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, e: RedisConnectionFailureException
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: RedisConnectionFailureException
     ): List<GetTrainRealTimesDto.TrainRealTime> {
         logger.error("can't connect to redis server")
         throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
@@ -104,7 +104,7 @@ class TrainService(
      * 열차 도착 정보 API 오류에 대한 FallBack 메서드
      */
     fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, e : CallNotPermittedException
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e : CallNotPermittedException
     ): List<GetTrainRealTimesDto.TrainRealTime> {
         logger.error("circuit breaker opened for external train api")
         throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
