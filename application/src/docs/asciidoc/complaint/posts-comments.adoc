@@ -1,0 +1,28 @@
+==== 민원 코멘트 조회
+
+.Request
+include::{snippets}/get-complaint-post-comments/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-complaint-post-comments/path-parameters.adoc[]
+.Query Parameters
+include::{snippets}/get-complaint-post-comments/query-parameters.adoc[]
+.Response
+include::{snippets}/get-complaint-post-comments/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-complaint-post-comments/response-fields.adoc[]
+
+==== 민원 코멘트 작성
+
+.Request
+include::{snippets}/create-complaint-post-comment/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-complaint-post-comment/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/create-complaint-post-comment/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/create-complaint-post-comment/request-fields.adoc[]
+.Response
+include::{snippets}/create-complaint-post-comment/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-complaint-post-comment/response-fields.adoc[]
+

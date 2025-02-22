@@ -77,7 +77,7 @@ class CommentServiceTest(
         lateinit var postWriter: MemberEntity
 
         for (i in 1..membersCount) {
-            val member = memberRepository.save(
+            val anotherMember = memberRepository.save(
                 MemberEntity(
                     nickname = "nickname${i}",
                     provider = ProviderType.KAKAO,
@@ -90,10 +90,10 @@ class CommentServiceTest(
             )
 
             if (i == 1) {
-                postWriter = member
+                postWriter = anotherMember
             }
 
-            memberIds.add(member.id)
+            memberIds.add(anotherMember.id)
         }
         loginWithMemberId(memberIds[0])
 

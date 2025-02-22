@@ -9,6 +9,7 @@ class GetBookmarkStationDto {
     data class StationInfo(
         val stationId: Long,
         val stationName: String,
+        val label: String?,
         val subwayLineInfoList: List<SubwayLineInfo>
     )
 

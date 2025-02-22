@@ -14,5 +14,7 @@ interface CommentReader {
 
     fun countLost(postId: Long): Int
 
+    fun countComplaint(postId: Long): Int
+
     fun searchComments(command: GetCommentsCommand): List<SearchComment>
 }

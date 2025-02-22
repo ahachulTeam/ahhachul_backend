@@ -8,4 +8,6 @@ interface MemberRepository: JpaRepository<MemberEntity, Long> {
     fun findByProviderUserId(providerUserId: String): MemberEntity?
 
     fun existsByNickname(nickname: String): Boolean
+
+    fun findByNicknameContaining(nickname: String): MutableList<MemberEntity>
 }

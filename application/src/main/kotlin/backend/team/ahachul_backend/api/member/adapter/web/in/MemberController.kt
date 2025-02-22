@@ -40,7 +40,7 @@ class MemberController(
     @PostMapping("/v1/members/bookmarks/stations")
     fun bookmarkStation(
             @RequestBody request: BookmarkStationDto.Request
-    ): CommonResponse<BookmarkStationDto.Response> {
+    ): CommonResponse<GetBookmarkStationDto.Response> {
         return CommonResponse.success(memberUseCase.bookmarkStation(request.toCommand()))
     }
 
@@ -49,4 +49,12 @@ class MemberController(
     fun getBookmarkStation(): CommonResponse<GetBookmarkStationDto.Response> {
         return CommonResponse.success(memberUseCase.getBookmarkStation())
     }
+
+    @GetMapping("/v1/members/search")
+    fun searchMembers(
+        request: SearchMemberDto.Request
+    ): CommonResponse<SearchMemberDto.Response> {
+        return CommonResponse.success(memberUseCase.searchMembers(request.toCommand()))
+    }
+
 }

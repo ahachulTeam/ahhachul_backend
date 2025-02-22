@@ -1,0 +1,44 @@
+=== 민원 코드
+==== 민원 타입 (대분류)
+
+|===
+|Type|Description
+|ENVIRONMENTAL_COMPLAINT|환경민원
+|TEMPERATURE_CONTROL|온도조절
+|DISORDER|질서저해
+|ANNOUNCEMENT|안내방송
+|EMERGENCY_PATIENT|응급환자
+|VIOLENCE|폭력
+|SEXUAL_HARASSMENT|성추행
+|OTHER_COMPLAINT|기타민원
+|===
+
+==== 민원 타입 (소분류)
+
+|===
+|Type|Description
+|WASTE|오물
+|VOMIT|토사물
+|VENTILATION_REQUEST|환기요청
+|NOISY|시끄러워요
+|NOT_HEARD|안들려요
+|TOO_HOT|더워요
+|TOO_COLD|추워요
+|MOBILE_VENDOR|이동상인
+|DRUNK|취객
+|HOMELESS|노숙
+|BEGGING|구걸
+|RELIGIOUS_ACTIVITY|종교행위
+|SELF|본인
+|WITNESS|목격자
+|VICTIM|피해자
+|===
+
+==== 민원 상태
+|===
+|Type|Description
+|CREATED|생성
+|IN_PROGRESS|진행중
+|COMPLETED|처리완료
+|DELETED|삭제
+|===

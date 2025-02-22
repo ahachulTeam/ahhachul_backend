@@ -151,9 +151,9 @@ class CommunityPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         headerWithName("Authorization").description("엑세스 토큰")
                     ),
                     PayloadDocumentation.requestFields(
-                        fieldWithPath("upperCommentId").description("상위 코멘트 아이디").optional(),
-                        fieldWithPath("content").description("생성할 내용"),
-                        fieldWithPath("isPrivate").description("비공개 여부").optional(),
+                        fieldWithPath("upperCommentId").type(JsonFieldType.NUMBER).description("상위 코멘트 아이디").optional(),
+                        fieldWithPath("content").type(JsonFieldType.STRING).description("생성할 내용"),
+                        fieldWithPath("isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional()
                     ),
                     PayloadDocumentation.responseFields(
                         *commonResponseFields(),

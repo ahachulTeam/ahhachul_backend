@@ -76,6 +76,7 @@ class CommentLikeServiceTest(
                 upperComment = null,
                 communityPost = communityPost,
                 lostPost = null,
+                complaintPost = null,
                 member = member
             )
         )

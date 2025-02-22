@@ -39,7 +39,7 @@ class AuthLogoutControllerTest {
                 .header("Authorization", "Bearer logout-token")
                 .accept(MediaType.APPLICATION_JSON)
         )
-            .andExpect(status().isInternalServerError)
+            .andExpect(status().isUnauthorized)
     }
 
     fun <T> any(): T {
