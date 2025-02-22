@@ -3,6 +3,7 @@ package backend.team.ahachul_backend.api.community.adapter.web.out
 import backend.team.ahachul_backend.api.community.domain.GetCommunityPost
 import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.comment.domain.entity.QCommentEntity.commentEntity
+import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityHotPostCommand
 import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostEntity.communityPostEntity
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostHashTagEntity.communityPostHashTagEntity
@@ -13,6 +14,7 @@ import backend.team.ahachul_backend.common.domain.entity.QHashTagEntity.hashTagE
 import backend.team.ahachul_backend.common.domain.entity.QSubwayLineEntity.subwayLineEntity
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.YNType
+import com.querydsl.core.types.ConstructorExpression
 import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.ExpressionUtils.count
 import com.querydsl.core.types.OrderSpecifier
@@ -30,7 +32,7 @@ class CustomCommunityPostRepository(
 ) {
 
     companion object {
-        const val HOT_POST_LIMIT_DAYS = 7L
+        const val HOT_POST_LIMIT_DAYS = 3L
     }
 
     fun getByCustom(postId: Long, memberId: String?): GetCommunityPost? {
@@ -95,6 +97,7 @@ class CustomCommunityPostRepository(
                 communityPostEntity.createdAt,
                 communityPostEntity.createdBy,
                 communityPostEntity.member.nickname.`as`("writer"),
+                communityPostEntity.status
             )
         )
             .from(communityPostEntity)
@@ -107,35 +110,7 @@ class CustomCommunityPostRepository(
     fun searchCommunityPosts(command: GetSliceCommunityPostCommand): List<SearchCommunityPost> {
         val orderSpecifier = getOrder(command.sort)
 
-        return queryFactory.select(
-            Projections.constructor(
-                SearchCommunityPost::class.java,
-                communityPostEntity.id,
-                communityPostEntity.title,
-                communityPostEntity.content,
-                communityPostEntity.categoryType,
-                communityPostEntity.regionType,
-                communityPostEntity.subwayLineEntity.id,
-                ExpressionUtils.`as`(
-                    JPAExpressions.select(count(communityPostLikeEntity.id))
-                        .from(communityPostLikeEntity)
-                        .where(
-                            communityPostLikeEntity.communityPost.id.eq(communityPostEntity.id)
-                                .and(communityPostLikeEntity.likeYn.eq(YNType.Y))
-                        ),
-                    "likeCnt"
-                ),
-                JPAExpressions.select(commentEntity.id.count())
-                    .from(commentEntity)
-                    .where(
-                        commentEntity.communityPost.id.eq(communityPostEntity.id)
-                    ),
-                communityPostEntity.hotPostYn,
-                communityPostEntity.createdAt,
-                communityPostEntity.createdBy,
-                communityPostEntity.member.nickname,
-            )
-        )
+        return queryFactory.select(searchCommunityPostSimpleConstructorExpression())
             .from(communityPostEntity)
             .join(communityPostEntity.member, memberEntity)
             .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
@@ -144,7 +119,29 @@ class CustomCommunityPostRepository(
                 subwayLineEq(command.subwayLine),
                 hashTagEqWithSubQuery(command.hashTag),
                 titleOrContentContains(command.content),
-                hotPostYnEq(command.hotPostYn),
+                writerEq(command.writer),
+                createdAtBeforeOrEqual(
+                    command.date,
+                    command.communityPostId
+                )
+            )
+            .orderBy(orderSpecifier)
+            .limit((command.pageSize + 1).toLong())
+            .fetch()
+    }
+
+    fun searchCommunityHotPosts(command: GetSliceCommunityHotPostCommand): List<SearchCommunityPost> {
+        val orderSpecifier = getOrder(command.sort)
+
+        return queryFactory.select(searchCommunityPostSimpleConstructorExpression())
+            .from(communityPostEntity)
+            .join(communityPostEntity.member, memberEntity)
+            .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
+            .where(
+                hotPost(),
+                subwayLineEq(command.subwayLine),
+                hashTagEqWithSubQuery(command.hashTag),
+                titleOrContentContains(command.content),
                 writerEq(command.writer),
                 createdAtBeforeOrEqual(
                     command.date,
@@ -176,9 +173,8 @@ class CustomCommunityPostRepository(
     private fun subwayLineEq(subwayLine: SubwayLineEntity?) =
         subwayLine?.let { communityPostEntity.subwayLineEntity.eq(subwayLine) }
 
-    private fun hotPostYnEq(hotPostYn: YNType?) =
-        hotPostYn?.let { communityPostEntity.hotPostYn.eq(hotPostYn)
-            .and(communityPostEntity.hotPostSelectedDate.after(LocalDateTime.now().minusDays(HOT_POST_LIMIT_DAYS))) }
+    private fun hotPost() = communityPostEntity.hotPostYn.eq(YNType.Y)
+        .and(communityPostEntity.hotPostSelectedDate.after(LocalDateTime.now().minusDays(HOT_POST_LIMIT_DAYS)))
 
     private fun hashTagEqWithSubQuery(hashTag: String?) =
         hashTag?.let {
@@ -204,4 +200,32 @@ class CustomCommunityPostRepository(
                 )
             }
         }
+
+    private fun searchCommunityPostSimpleConstructorExpression(): ConstructorExpression<SearchCommunityPost>? =
+        Projections.constructor(
+            SearchCommunityPost::class.java,
+            communityPostEntity.id,
+            communityPostEntity.title,
+            communityPostEntity.content,
+            communityPostEntity.categoryType,
+            communityPostEntity.regionType,
+            communityPostEntity.subwayLineEntity.id,
+            ExpressionUtils.`as`(
+                JPAExpressions.select(count(communityPostLikeEntity.id))
+                    .from(communityPostLikeEntity)
+                    .where(
+                        communityPostLikeEntity.communityPost.id.eq(communityPostEntity.id)
+                            .and(communityPostLikeEntity.likeYn.eq(YNType.Y))
+                    ),
+                "likeCnt"
+            ),
+            JPAExpressions.select(commentEntity.id.count())
+                .from(commentEntity)
+                .where(
+                    commentEntity.communityPost.id.eq(communityPostEntity.id)
+                ),
+            communityPostEntity.createdAt,
+            communityPostEntity.createdBy,
+            communityPostEntity.member.nickname,
+        )
 }

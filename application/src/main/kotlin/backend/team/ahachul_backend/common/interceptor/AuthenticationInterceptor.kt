@@ -1,5 +1,6 @@
 package backend.team.ahachul_backend.common.interceptor
 
+import backend.team.ahachul_backend.api.member.application.service.AuthLogoutCacheUtils
 import backend.team.ahachul_backend.common.annotation.Authentication
 import backend.team.ahachul_backend.common.client.RedisClient
 import backend.team.ahachul_backend.common.exception.CommonException
@@ -19,7 +20,8 @@ import org.springframework.web.servlet.HandlerInterceptor
 @Component
 class AuthenticationInterceptor(
         private val jwtUtils: JwtUtils,
-        private val redisClient: RedisClient
+        private val redisClient: RedisClient,
+        private val authLogoutCacheUtils: AuthLogoutCacheUtils,
 ): HandlerInterceptor {
 
     companion object {
@@ -34,6 +36,7 @@ class AuthenticationInterceptor(
 
         try {
             val jwtTokenExcludePrefix = parseJwtToken(request)
+            authLogoutCacheUtils.alreadyLogout(jwtTokenExcludePrefix)
             val verifiedJwtToken = jwtUtils.verify(jwtTokenExcludePrefix)
             val authenticatedMemberId = verifiedJwtToken.body.subject
 
@@ -53,6 +56,7 @@ class AuthenticationInterceptor(
 
                 else -> {
                     if (e.message == ResponseCode.BLOCKED_MEMBER.message) throw e
+                    if (e.message == ResponseCode.ALREADY_LOGOUT_TOKEN.message) throw e
                     throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
                 }
             }

@@ -10,17 +10,21 @@ import backend.team.ahachul_backend.api.lost.application.port.out.LostPostWriter
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.CreateLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.SearchLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
+import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostStatusCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetRecommendLostPostsCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetSliceLostPostsCommand
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostFileEntity
 import backend.team.ahachul_backend.api.lost.domain.model.LostOrigin
+import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.dto.PageInfoDto
+import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.persistence.SubwayLineReader
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -41,6 +45,11 @@ class LostPostService(
 
     override fun getLostPost(id: Long): GetLostPostDto.Response {
         val entity = lostPostReader.getLostPost(id)
+
+        if (entity.type == LostPostType.DELETED) {
+            throw CommonException(ResponseCode.POST_NOT_FOUND)
+        }
+
         val recommendPosts = getRecommendPosts(entity.subwayLine, entity.category)
         val recommendPostsDto = mapRecommendPostsDto(recommendPosts)
         val commentCnt = commentReader.countLost(id)
@@ -191,6 +200,21 @@ class LostPostService(
         command.removeFileIds?.let {
             lostPostFileService.deleteLostPostFiles(it)
         }
+    }
+
+    @Transactional
+    override fun updateLostPostStatus(command: UpdateLostPostStatusCommand): UpdateLostPostStatusDto.Response {
+        val memberId = RequestUtils.getAttribute("memberId")!!
+        val entity = lostPostReader.getLostPost(command.id)
+
+        if (entity.origin == LostOrigin.LOST112) {
+            throw CommonException(ResponseCode.BAD_REQUEST)
+        }
+
+        entity.checkMe(memberId)
+
+        entity.updateStatus(command.status)
+        return UpdateLostPostStatusDto.Response.from(entity)
     }
 
     @Transactional

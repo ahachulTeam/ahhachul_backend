@@ -1,12 +1,10 @@
-<div align="center">
-
 # 🚀 AhHachul Backend
 
 **🧜‍♂️ 더욱 쾌적한 지하철을 위한 유저 기반 커뮤니티 플랫폼, ..아... 하철이형! 🧜**
 
 <br />
 
-<img width="1424" alt="image" src="https://github.com/ahachulTeam/ahachul_web/assets/80245801/d29c819c-6b95-4a77-838a-3bdc92a297fb">
+<img width="1200" alt="image" src="https://github.com/ahachulTeam/ahachul_web/assets/80245801/d29c819c-6b95-4a77-838a-3bdc92a297fb">
 </div>
 
 <br />
@@ -67,13 +65,16 @@
 
 
 ## 배포 파이프라인 구성
-- Github Action, AWS, Docker
-<img width="777" alt="스크린샷 2024-01-19 오후 2 21 34" src="https://github.com/ahachulTeam/ahachul_backend/assets/71436576/b5337394-21b6-4d01-a89b-3ececbcd6eae">
+- Github Action, AWS ECR, Docker (구버전)
+- Github Action, AWS ECR / ECS, Docker (신버전)
+
+<img width="777" alt="image" src="https://github.com/user-attachments/assets/effa4535-3c27-45e2-a098-470e5e9d7309" />
+
 
 ## ERD 
 [ERDCloud 링크](https://www.erdcloud.com/d/6dKc9AeJrWc2ZQRNv)
 
-<img width="946" alt="image" src="https://github.com/user-attachments/assets/1aefa163-0845-463c-a50d-c448bbfadb5d">
+<img width="777" alt="image" src="https://github.com/user-attachments/assets/1aefa163-0845-463c-a50d-c448bbfadb5d">
 
 ## 협업 규칙
 

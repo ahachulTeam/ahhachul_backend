@@ -9,7 +9,7 @@ class UpdateCommunityPostCommand(
     val content: String,
     val categoryType: CommunityCategoryType,
     val hashTags: List<String> = arrayListOf(),
-    val uploadFiles: List<MultipartFile> = arrayListOf(),
+    val uploadFiles: List<MultipartFile>? = arrayListOf(),
     val removeFileIds: List<Long> = arrayListOf()
 ) {
 }

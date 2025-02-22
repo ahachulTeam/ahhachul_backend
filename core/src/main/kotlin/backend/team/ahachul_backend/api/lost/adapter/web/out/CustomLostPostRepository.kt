@@ -77,7 +77,8 @@ class CustomLostPostRepository(
                     command.lostType,
                     command.date,
                     command.lostPostId
-                )
+                ),
+                typeNotEq(LostPostType.DELETED)
             )
             .orderBy(*orderSpecifier.toTypedArray())
             .limit((command.pageSize + 1).toLong())
@@ -125,6 +126,10 @@ class CustomLostPostRepository(
             lostPostEntity.title.contains(keyword)
                 .or(lostPostEntity.content.contains(keyword))
         }
+
+    private fun typeNotEq(type: LostPostType?) =
+        type?.let { lostPostEntity.type.ne(type) }
+
 
     private fun createdAtBeforeOrEqual(lostType: LostType, localDateTime: LocalDateTime?, id: Long?) =
         if (lostType == LostType.ACQUIRE) {

@@ -52,3 +52,14 @@ include::{snippets}/get-bookmark-station/http-request.adoc[]
 include::{snippets}/get-bookmark-station/http-response.adoc[]
 .Response Fields
 include::{snippets}/get-bookmark-station/response-fields.adoc[]
+
+==== 사용자 검색
+
+.Request
+include::{snippets}/search-members/http-request.adoc[]
+.Query Parameters
+include::{snippets}/search-members/query-parameters.adoc[]
+.Response
+include::{snippets}/search-members/http-response.adoc[]
+.Response Fields
+include::{snippets}/search-members/response-fields.adoc[]

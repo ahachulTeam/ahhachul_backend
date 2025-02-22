@@ -85,8 +85,8 @@ class TrainService(
 
         val trainRealTimes = trainRealTimeMap.getOrElse(subwayLineIdentity.toString()) { emptyList() }
 
-        return upDownType?.let { type ->
-            trainRealTimes.filter { it.upDownType == type }.take(4)
+        return upDownType?.let {
+                type ->  trainRealTimes.filter { it.upDownType == type }.take(4)
         } ?: trainRealTimes
     }
 
@@ -94,7 +94,7 @@ class TrainService(
      * Redis 통신 오류에 대한 FallBack 메서드
      */
     fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, e: RedisConnectionFailureException
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: RedisConnectionFailureException
     ): List<GetTrainRealTimesDto.TrainRealTime> {
         logger.error("can't connect to redis server")
         throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
@@ -104,7 +104,7 @@ class TrainService(
      * 열차 도착 정보 API 오류에 대한 FallBack 메서드
      */
     fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, e : CallNotPermittedException
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e : CallNotPermittedException
     ): List<GetTrainRealTimesDto.TrainRealTime> {
         logger.error("circuit breaker opened for external train api")
         throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
@@ -140,12 +140,16 @@ class TrainService(
         trainRealTime
             ?.groupBy { it.updnLine }
             ?.entries?.forEach { map ->
-                val lis = map.value.map { dto ->
-                    GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2)) }
-                    .sortedWith( compareBy(
-                            { it.currentTrainArrivalCode.priority },
-                            { it.stationOrder }
-                    )).subList(0, 2)
+                val subIdx = if (map.value.size >= 2) 2 else 1  // 상행, 하행 각각 최대 두개씩 반환
+
+                val lis = map.value
+                    .map { dto ->
+                    GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
+                    }.sortedWith( compareBy(
+                        { it.currentTrainArrivalCode.priority },
+                        { it.stationOrder }
+                    )).subList(0, subIdx)
+
                 total.addAll(lis)
             }
         return total

@@ -40,6 +40,7 @@ class LostPostEntity(
 
     var title: String,
 
+    @Column(columnDefinition = "text")
     var content: String,
 
     @Enumerated(value = EnumType.STRING)
@@ -106,6 +107,10 @@ class LostPostEntity(
         command.status?.let { this.status= it }
         subwayLine?.let { this.subwayLine = subwayLine }
         category?.let { this.category = category }
+    }
+
+    fun updateStatus(status: LostStatus) {
+        this.status = status
     }
 
     fun delete() {

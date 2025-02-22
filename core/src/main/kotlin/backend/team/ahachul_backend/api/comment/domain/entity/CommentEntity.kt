@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.comment.application.command.CreateCommen
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.comment.domain.model.CommentType
 import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
+import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintPostEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.common.domain.entity.BaseEntity
@@ -37,6 +38,10 @@ class CommentEntity(
     var lostPost: LostPostEntity?,
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "complaint_post_id")
+    var complaintPost: ComplaintPostEntity?,
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     var member: MemberEntity,
 
@@ -51,6 +56,7 @@ class CommentEntity(
                 upperComment = commentEntity,
                 communityPost = post as? CommunityPostEntity,
                 lostPost = post as? LostPostEntity,
+                complaintPost = post as? ComplaintPostEntity,
                 member = memberEntity
             )
         }

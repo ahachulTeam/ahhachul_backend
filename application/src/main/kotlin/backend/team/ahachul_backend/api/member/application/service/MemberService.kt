@@ -4,8 +4,10 @@ import backend.team.ahachul_backend.api.common.application.port.out.StationReade
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
+import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
-import backend.team.ahachul_backend.api.member.application.port.`in`.command.BookmarkStationCommand
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
@@ -52,63 +54,87 @@ class MemberService(
     }
 
     @Transactional
-    override fun bookmarkStation(command: BookmarkStationCommand): BookmarkStationDto.Response {
+    override fun bookmarkStation(command: BookmarkStationCommands): GetBookmarkStationDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
-        val bookmarkStations = command.stationNames
-        val originMemberStations = memberStationReader.getByMember(member)
+        val bookmarkStations = memberStationReader.getByMember(member)
 
-        originMemberStations.forEach {
-            val stationName = it.station.name
-            if (isAlreadyExists(bookmarkStations, stationName)) {
-                bookmarkStations.remove(stationName)
-            } else {
-                memberStationWriter.delete(it.id)
-            }
+        if (isEqualsAlreadyRegisteredStation(bookmarkStations, command.stations)) {
+            return createBookmarkStationResponse(bookmarkStations)
         }
 
-        val bookmarkStationIds = saveNewStations(member, bookmarkStations)
-        return BookmarkStationDto.Response(bookmarkStationIds)
-    }
+        if (bookmarkStations.isNotEmpty()) {
+            memberStationWriter.deleteAllByMember(member)
+        }
 
-    private fun isAlreadyExists(newNames: List<String>, originName: String): Boolean {
-        return newNames.contains(originName)
-    }
-
-    private fun saveNewStations(member: MemberEntity, bookmarkStations: List<String>): List<Long> {
-        return bookmarkStations
-            .map { stationReader.getByName(it) }
-            .map { station ->
-                val memberStation = MemberStationEntity(
-                        member = member,
-                        station = station
-                )
-                memberStationWriter.save(memberStation).id
-            }
+        val savedMemberStations = saveNewStations(member, command.stations)
+        return createBookmarkStationResponse(savedMemberStations)
     }
 
     override fun getBookmarkStation(): GetBookmarkStationDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
 
         val bookmarkStations = memberStationReader.getByMember(member)
-        val stationInfos = bookmarkStations
+
+        return createBookmarkStationResponse(bookmarkStations)
+    }
+
+    override fun searchMembers(command: SearchMemberCommand): SearchMemberDto.Response {
+        val members = memberReader.searchMembers(command).map {
+            SearchMemberDto.SearchMemberResponse(
+                id = it.id,
+                nickname = it.nickname
+            )
+        }
+
+        return SearchMemberDto.Response.of(members)
+    }
+
+    private fun isEqualsAlreadyRegisteredStation(
+        originMemberStations: List<MemberStationEntity>,
+        newBookmarkStationCommands: List<BookmarkStationCommand>
+    ): Boolean {
+        if (originMemberStations.size != newBookmarkStationCommands.size) {
+            return false
+        }
+
+        return originMemberStations.indices.all {
+            originMemberStations[it].isEquals(newBookmarkStationCommands[it].stationName, newBookmarkStationCommands[it].label)
+        }
+    }
+
+    private fun saveNewStations(member: MemberEntity, bookmarkStations: List<BookmarkStationCommand>): List<MemberStationEntity> {
+        return bookmarkStations
+            .map {
+                val memberStation = MemberStationEntity(
+                    member = member,
+                    station = stationReader.getByName(it.stationName),
+                    label = it.label
+                )
+                memberStationWriter.save(memberStation)
+            }
+    }
+
+    private fun createBookmarkStationResponse(memberStations: List<MemberStationEntity>): GetBookmarkStationDto.Response {
+        val stationInfos = memberStations
             .map {
                 val station = it.station
                 GetBookmarkStationDto.StationInfo(
-                        stationId = station.id,
-                        stationName = station.name,
-                        subwayLineInfoList = getSubwayLineInfos(station)
+                    stationId = station.id,
+                    stationName = station.name,
+                    label = it.label,
+                    subwayLineInfoList = getSubwayLineInfos(station)
                 )
             }
 
         return GetBookmarkStationDto.Response(stationInfos)
     }
 
-    private fun getSubwayLineInfos(station: StationEntity): List<GetBookmarkStationDto.SubwayLineInfo>{
+    private fun getSubwayLineInfos(station: StationEntity): List<GetBookmarkStationDto.SubwayLineInfo> {
         val subwayLineStations = subwayLineStationReader.findByStation(station)
         return subwayLineStations.map {
             GetBookmarkStationDto.SubwayLineInfo(
-                    subwayLineId = it.subwayLine.id,
-                    subwayLineName = it.subwayLine.name
+                subwayLineId = it.subwayLine.id,
+                subwayLineName = it.subwayLine.name
             )
         }
     }

@@ -316,7 +316,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선 ID").optional(),
                     fieldWithPath("status").type(JsonFieldType.STRING).description("유실물 찾기 완료 상태")
                         .attributes(getFormatAttribute( "PROGRESS / COMPLETE")).optional(),
-                    fieldWithPath("removeFileIds").type(JsonFieldType.ARRAY).description("삭제할 유실물 이미지 번호 리스트"),
+                    fieldWithPath("removeFileIds").type(JsonFieldType.ARRAY).description("삭제할 유실물 이미지 번호 리스트").optional(),
                     fieldWithPath("categoryName").type(JsonFieldType.STRING).description("[deprecated] 카테고리 이름").optional() // deprecated
                 ),
                 responseFields(
@@ -330,6 +330,51 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("result.categoryName").type(JsonFieldType.STRING).description("카테고리 이름")
                 )
             ))
+    }
+
+    @Test
+    fun updateLostPostStatus() {
+        // given
+        val response = UpdateLostPostStatusDto.Response(
+            id = 1
+        )
+
+        given(lostPostUseCase.updateLostPostStatus(any()))
+            .willReturn(response)
+
+        val request = UpdateLostPostStatusDto.Request(
+            status = LostStatus.COMPLETE
+        )
+
+        //when
+        val result = mockMvc.perform(
+            patch("/v1/lost-posts/{lostId}/status", 1L)
+                .header("Authorization", "Bearer <Access Token>")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        //then
+        result.andExpect(status().isOk)
+            .andDo(document("update-lost-post-status",
+                getDocsRequest(),
+                getDocsResponse(),
+                requestHeaders(
+                    headerWithName("Authorization").description("엑세스 토큰")
+                ),
+                pathParameters(
+                    parameterWithName("lostId").description("유실물 아이디")
+                ),
+                requestFields(
+                    fieldWithPath("status").type(JsonFieldType.STRING).description("유실물 찾기 완료 상태").attributes(getFormatAttribute( "PROGRESS / COMPLETE"))
+                ),
+                responseFields(
+                    *commonResponseFields(),
+                    fieldWithPath("result.id").type(JsonFieldType.NUMBER).description("수정한 유실물 아이디")
+                )
+            )
+        )
     }
 
     @Test

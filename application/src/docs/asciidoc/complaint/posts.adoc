@@ -1,0 +1,81 @@
+=== /complaint-posts
+
+==== 민원 조회
+
+.Request
+include::{snippets}/search-complaint-posts/http-request.adoc[]
+.Query Parameters
+include::{snippets}/search-complaint-posts/query-parameters.adoc[]
+.Response
+include::{snippets}/search-complaint-posts/http-response.adoc[]
+.Response Fields
+include::{snippets}/search-complaint-posts/response-fields.adoc[]
+
+==== 민원 상세 조회
+
+.Request
+include::{snippets}/get-complaint-post/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-complaint-post/path-parameters.adoc[]
+.Response
+include::{snippets}/get-complaint-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-complaint-post/response-fields.adoc[]
+
+==== 민원 생성
+
+.Request
+include::{snippets}/create-complaint-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-complaint-post/request-headers.adoc[]
+.Request Parts
+include::{snippets}/create-complaint-post/request-parts.adoc[]
+.Request Parts - content
+include::{snippets}/create-complaint-post/request-part-content-fields.adoc[]
+.Response
+include::{snippets}/create-complaint-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-complaint-post/response-fields.adoc[]
+
+==== 민원 업데이트
+
+.Request
+include::{snippets}/update-complaint-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/update-complaint-post/request-headers.adoc[]
+.Request Parts
+include::{snippets}/update-complaint-post/request-parts.adoc[]
+.Request Parts - content
+include::{snippets}/update-complaint-post/request-part-content-fields.adoc[]
+.Response
+include::{snippets}/update-complaint-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/update-complaint-post/response-fields.adoc[]
+
+==== 민원 상태 업데이트
+
+.Request
+include::{snippets}/update-complaint-post-status/http-request.adoc[]
+.Request Headers
+include::{snippets}/update-complaint-post-status/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/update-complaint-post-status/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/update-complaint-post-status/request-fields.adoc[]
+.Response
+include::{snippets}/update-complaint-post-status/http-response.adoc[]
+.Response Fields
+include::{snippets}/update-complaint-post-status/response-fields.adoc[]
+
+==== 민원 삭제
+
+.Request
+include::{snippets}/delete-complaint-post/http-request.adoc[]
+.Request Headers
+include::{snippets}/delete-complaint-post/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/delete-complaint-post/path-parameters.adoc[]
+.Response
+include::{snippets}/delete-complaint-post/http-response.adoc[]
+.Response Fields
+include::{snippets}/delete-complaint-post/response-fields.adoc[]

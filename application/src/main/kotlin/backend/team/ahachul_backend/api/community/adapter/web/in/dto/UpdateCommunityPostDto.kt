@@ -13,10 +13,9 @@ class UpdateCommunityPostDto {
         val content: String,
         val categoryType: CommunityCategoryType,
         val hashTags: List<String>,
-        val uploadFiles: List<MultipartFile> = listOf(),
         val removeFileIds: List<Long> = listOf()
     ) {
-        fun toCommand(postId: Long): UpdateCommunityPostCommand {
+        fun toCommand(postId: Long, uploadFiles: List<MultipartFile>?): UpdateCommunityPostCommand {
             return UpdateCommunityPostCommand(
                 id = postId,
                 title = title,

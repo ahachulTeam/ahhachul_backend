@@ -17,9 +17,15 @@ import backend.team.ahachul_backend.common.client.KakaoMemberClient
 import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
 import backend.team.ahachul_backend.common.dto.GoogleUserInfoDto
 import backend.team.ahachul_backend.common.dto.KakaoMemberInfoDto
+import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.properties.JwtProperties
 import backend.team.ahachul_backend.common.properties.OAuthProperties
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.JwtUtils
+import io.jsonwebtoken.ExpiredJwtException
+import io.jsonwebtoken.MalformedJwtException
+import io.jsonwebtoken.UnsupportedJwtException
+import io.jsonwebtoken.security.SignatureException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.util.UriComponentsBuilder
@@ -36,6 +42,7 @@ class AuthService(
     private val jwtUtils: JwtUtils,
     private val jwtProperties: JwtProperties,
     private val oAuthProperties: OAuthProperties,
+    private val authLogoutCacheUtils: AuthLogoutCacheUtils,
 ): AuthUseCase {
 
     companion object {
@@ -65,6 +72,11 @@ class AuthService(
             }
         }
         return makeLoginResponse(member.id.toString(), member.isNeedAdditionalUserInfo() || isDuplicatedNickname)
+    }
+
+    override fun logout(accessToken: String) {
+        validateToken(accessToken)
+        authLogoutCacheUtils.logout(accessToken)
     }
 
     private fun getKakaoMemberInfo(provideCode: String, originHost: String?): KakaoMemberInfoDto {
@@ -139,6 +151,27 @@ class AuthService(
                     .build()
                     .toString()
             })
+    }
+
+    private fun validateToken(token: String) {
+        try {
+            jwtUtils.verify(token)
+        } catch (e: Exception) {
+            when (e) {
+                is SignatureException, is UnsupportedJwtException, is IllegalArgumentException, is MalformedJwtException -> {
+                    throw CommonException(ResponseCode.INVALID_ACCESS_TOKEN, e)
+                }
+
+                is ExpiredJwtException -> {
+                    throw CommonException(ResponseCode.EXPIRED_ACCESS_TOKEN, e)
+                }
+
+                else -> {
+                    throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
+                }
+            }
+        }
+
     }
 }
 
