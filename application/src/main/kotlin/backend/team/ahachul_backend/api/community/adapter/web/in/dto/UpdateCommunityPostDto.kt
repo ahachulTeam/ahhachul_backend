@@ -12,7 +12,7 @@ class UpdateCommunityPostDto {
         val title: String,
         val content: String,
         val categoryType: CommunityCategoryType,
-        val hashTags: List<String>,
+        val hashTags: List<String> = listOf(),
         val removeFileIds: List<Long> = listOf()
     ) {
         fun toCommand(postId: Long, uploadFiles: List<MultipartFile>?): UpdateCommunityPostCommand {

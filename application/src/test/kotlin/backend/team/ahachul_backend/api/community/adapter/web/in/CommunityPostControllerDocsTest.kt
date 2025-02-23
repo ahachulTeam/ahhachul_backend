@@ -307,7 +307,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
         // when
         val result = mockMvc.perform(
             multipart("/v1/community-posts")
-                .file("imageFiles", MockMultipartFile("files", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "File 1 Content".toByteArray()).bytes)
+                .file("files", MockMultipartFile("files", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "File 1 Content".toByteArray()).bytes)
                 .file(requestFile)
                 .header("Authorization", "Bearer <Access Token>")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -325,7 +325,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         headerWithName("Authorization").description("엑세스 토큰")
                     ),
                     requestParts(
-                        partWithName("imageFiles").description("이미지 파일").optional(),
+                        partWithName("files").description("이미지 파일").optional(),
                         partWithName("content").description("request dto")
                     ),
                     requestPartFields(
@@ -384,7 +384,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
         // when
         val result = mockMvc.perform(
              multipart("/v1/community-posts/{postId}", 1)
-                 .file("uploadFiles", MockMultipartFile("files", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "File 1 Content".toByteArray()).bytes)
+                 .file("files", MockMultipartFile("files", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "File 1 Content".toByteArray()).bytes)
                  .file(requestFile)
                  .header("Authorization", "Bearer <Access Token>")
                  .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -405,7 +405,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         parameterWithName("postId").description("게시물 아이디")
                     ),
                     requestParts(
-                        partWithName("uploadFiles").description("이미지 파일").optional(),
+                        partWithName("files").description("이미지 파일").optional(),
                         partWithName("content").description("request dto")
                     ),
                     requestPartFields(
