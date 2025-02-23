@@ -18,13 +18,12 @@ class JpaConfig(
 ) {
 
     companion object {
-        private const val MEMBER_ID = "memberId"
         private const val UNAUTHORIZED_VALUE = "SYSTEM"
     }
 
     @Bean
     fun auditorProvider() = AuditorAware {
-        val memberId: String = RequestUtils.getAttribute(MEMBER_ID) ?: UNAUTHORIZED_VALUE
+        val memberId: String = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID) ?: UNAUTHORIZED_VALUE
         Optional.of(memberId)
     }
 

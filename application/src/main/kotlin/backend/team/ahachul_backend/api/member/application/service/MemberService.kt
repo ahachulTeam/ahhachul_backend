@@ -30,13 +30,13 @@ class MemberService(
 ) : MemberUseCase {
 
     override fun getMember(): GetMemberDto.Response {
-        val member = memberReader.getMember(RequestUtils.getAttribute("memberId")!!.toLong())
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
         return GetMemberDto.Response.of(member)
     }
 
     @Transactional
     override fun updateMember(command: UpdateMemberCommand): UpdateMemberDto.Response {
-        val member = memberReader.getMember(RequestUtils.getAttribute("memberId")!!.toLong())
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
         command.nickname?.let { member.changeNickname(it) }
         command.gender?.let { member.changeGender(it) }
         command.ageRange?.let { member.changeAgeRange(it) }
@@ -55,7 +55,7 @@ class MemberService(
 
     @Transactional
     override fun bookmarkStation(command: BookmarkStationCommands): GetBookmarkStationDto.Response {
-        val member = memberReader.getMember(RequestUtils.getAttribute("memberId")!!.toLong())
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
         val bookmarkStations = memberStationReader.getByMember(member)
 
         if (isEqualsAlreadyRegisteredStation(bookmarkStations, command.stations)) {
@@ -71,7 +71,8 @@ class MemberService(
     }
 
     override fun getBookmarkStation(): GetBookmarkStationDto.Response {
-        val member = memberReader.getMember(RequestUtils.getAttribute("memberId")!!.toLong())
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
+
         val bookmarkStations = memberStationReader.getByMember(member)
 
         return createBookmarkStationResponse(bookmarkStations)

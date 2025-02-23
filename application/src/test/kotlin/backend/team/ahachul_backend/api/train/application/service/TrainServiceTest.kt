@@ -57,7 +57,7 @@ class TrainServiceTest(
                 status = MemberStatusType.ACTIVE
             )
         )
-        member.id.let { RequestUtils.setAttribute("memberId", it) }
+        member.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
     }
 
     @Test

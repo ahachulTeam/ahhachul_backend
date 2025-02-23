@@ -4,16 +4,20 @@ import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
 
 class RequestUtils {
+    enum class Attribute (val key: String) {
+        MEMBER_ID("memberId")
+    }
 
     companion object {
-        fun setAttribute(key: String, value: Any) {
+        fun setAttribute(attribute: Attribute, value: Any) {
             RequestContextHolder.getRequestAttributes()
-                    ?.setAttribute(key, value, RequestAttributes.SCOPE_REQUEST)
+                    ?.setAttribute(attribute.key, value, RequestAttributes.SCOPE_REQUEST)
+
         }
 
-        fun getAttribute(key: String): String? {
+        fun getAttribute(attribute: Attribute): String? {
             return RequestContextHolder.getRequestAttributes()
-                ?.getAttribute(key, RequestAttributes.SCOPE_REQUEST)
+                ?.getAttribute(attribute.key, RequestAttributes.SCOPE_REQUEST)
                 ?.toString()
         }
     }

@@ -46,7 +46,7 @@ class CommunityPostService(
     private val logger = NamedLogger("HASHTAG_LOGGER")
 
     override fun searchCommunityPosts(command: SearchCommunityPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
-        val userId: String? = RequestUtils.getAttribute("memberId")
+        val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
         val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
 
         val searchCommunityPosts = communityPostReader.searchCommunityPosts(
@@ -66,7 +66,7 @@ class CommunityPostService(
     }
 
     override fun searchCommunityHotPosts(command: SearchCommunityHotPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
-        val userId: String? = RequestUtils.getAttribute("memberId")
+        val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
         val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
 
         val searchCommunityHotPosts = communityPostReader.searchCommunityHotPosts(
@@ -86,7 +86,7 @@ class CommunityPostService(
     }
 
     override fun getCommunityPost(command: GetCommunityPostCommand): GetCommunityPostDto.Response {
-        val userId: String? = RequestUtils.getAttribute("memberId")
+        val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
         val communityPost = communityPostReader.getByCustom(command.id, userId)
 
         if (communityPost.status == CommunityPostType.DELETED) {
@@ -106,7 +106,7 @@ class CommunityPostService(
 
     @Transactional
     override fun createCommunityPost(command: CreateCommunityPostCommand): CreateCommunityPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val member = memberReader.getMember(memberId.toLong())
         val subwayLine = subwayLineReader.getById(command.subwayLineId)
         val communityPost = communityPostWriter.save(CommunityPostEntity.of(command, member, subwayLine))
@@ -124,7 +124,7 @@ class CommunityPostService(
 
     @Transactional
     override fun updateCommunityPost(command: UpdateCommunityPostCommand): UpdateCommunityPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val communityPost = communityPostReader.getCommunityPost(command.id)
         communityPost.checkMe(memberId)
         communityPost.update(command)
@@ -142,7 +142,7 @@ class CommunityPostService(
 
     @Transactional
     override fun deleteCommunityPost(command: DeleteCommunityPostCommand): DeleteCommunityPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val entity = communityPostReader.getCommunityPost(command.id)
         entity.checkMe(memberId)
         entity.delete()

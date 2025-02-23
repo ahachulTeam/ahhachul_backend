@@ -24,7 +24,7 @@ class CommunityPostReportService(
 ): ReportUseCase {
 
     override fun save(targetId: Long): CreateReportDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val sourceMember = memberReader.getMember(memberId.toLong())
         val targetPost = communityPostReader.getCommunityPost(targetId)
         val targetMember = targetPost.member!!

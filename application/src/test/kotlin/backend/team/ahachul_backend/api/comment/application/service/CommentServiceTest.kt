@@ -58,7 +58,7 @@ class CommentServiceTest(
     private val membersCount: Int = 5
 
     private fun loginWithMemberId(memberId: Long) {
-        RequestUtils.setAttribute("memberId", memberId)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, memberId)
     }
     @BeforeEach
     fun setup() {
@@ -73,7 +73,7 @@ class CommentServiceTest(
                 status = MemberStatusType.ACTIVE
             )
         )
-        member.id.let { RequestUtils.setAttribute("memberId", it) }
+        member.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
         lateinit var postWriter: MemberEntity
 
         for (i in 1..membersCount) {
