@@ -66,7 +66,7 @@ class CommunityPostService(
     }
 
     override fun searchCommunityHotPosts(command: SearchCommunityHotPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
-        val userId: String? = RequestUtils.getAttribute("memberId")
+        val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
         val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
 
         val searchCommunityHotPosts = communityPostReader.searchCommunityHotPosts(

@@ -24,7 +24,7 @@ class CommentLikeService(
 
     @Transactional
     override fun like(commentId: Long) {
-        val memberId = RequestUtils.getAttribute("memberId")!!.toLong()
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong()
 
         if (existCommentLike(commentId, memberId)) {
             throw CommonException(ResponseCode.INVALID_DOMAIN)
@@ -41,7 +41,7 @@ class CommentLikeService(
 
     @Transactional
     override fun notLike(commentId: Long) {
-        val memberId = RequestUtils.getAttribute("memberId")!!.toLong()
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong()
 
         if (notExistCommentLike(commentId, memberId)) {
             throw CommonException(ResponseCode.INVALID_DOMAIN)

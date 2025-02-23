@@ -89,7 +89,7 @@ class ComplaintPostService(
 
     @Transactional
     override fun createComplaintPost(command: CreateComplaintPostCommand): CreateComplaintPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val member = memberReader.getMember(memberId.toLong())
         val subwayLine = subwayLineReader.getById(command.subwayLineId)
 
@@ -110,7 +110,7 @@ class ComplaintPostService(
 
     @Transactional
     override fun updateComplaintPost(command: UpdateComplaintPostCommand): UpdateComplaintPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val complaintPost = complaintPostReader.getComplaintPost(command.id)
         complaintPost.checkMe(memberId)
 
@@ -126,7 +126,7 @@ class ComplaintPostService(
 
     @Transactional
     override fun updateComplaintPostStatus(command: UpdateComplaintPostStatusCommand): UpdateComplaintPostStatusDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val complaintPost = complaintPostReader.getComplaintPost(command.id)
 
         if (complaintPost.status == ComplaintPostType.DELETED) {
@@ -141,7 +141,7 @@ class ComplaintPostService(
 
     @Transactional
     override fun deleteComplaintPost(postId: Long): DeleteComplaintPostDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val complaintPost = complaintPostReader.getComplaintPost(postId)
 
         if (complaintPost.status == ComplaintPostType.DELETED) {

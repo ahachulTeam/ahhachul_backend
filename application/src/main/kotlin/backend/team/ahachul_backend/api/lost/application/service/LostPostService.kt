@@ -204,7 +204,7 @@ class LostPostService(
 
     @Transactional
     override fun updateLostPostStatus(command: UpdateLostPostStatusCommand): UpdateLostPostStatusDto.Response {
-        val memberId = RequestUtils.getAttribute("memberId")!!
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val entity = lostPostReader.getLostPost(command.id)
 
         if (entity.origin == LostOrigin.LOST112) {

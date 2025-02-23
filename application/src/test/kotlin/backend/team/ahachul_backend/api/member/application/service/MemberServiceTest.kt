@@ -70,7 +70,7 @@ class MemberServiceTest(
             ageRange = "20",
             status = MemberStatusType.ACTIVE
         ))
-        member!!.id.let { RequestUtils.setAttribute("memberId", it) }
+        member!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
     }
 
     @ParameterizedTest
@@ -102,7 +102,7 @@ class MemberServiceTest(
         val result = memberUseCase.getMember()
 
         // then
-        assertThat(result.memberId).isEqualTo(RequestUtils.getAttribute("memberId")!!.toLong())
+        assertThat(result.memberId).isEqualTo(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
         assertThat(result.email).isEqualTo("email")
         assertThat(result.gender).isEqualTo(GenderType.MALE)
         assertThat(result.ageRange).isEqualTo("20")

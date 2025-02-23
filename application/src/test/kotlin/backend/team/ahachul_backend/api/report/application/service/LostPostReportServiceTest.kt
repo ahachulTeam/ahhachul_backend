@@ -45,7 +45,7 @@ class LostPostReportServiceTest(
         member = memberRepository.save(createMember("닉네임1"))
         otherMember = memberRepository.save(createMember("닉네임2"))
         manager = memberRepository.save(createMember("관리자"))
-        member!!.id.let { RequestUtils.setAttribute("memberId", it) }
+        member!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
         subwayLine = createSubwayLine()
         category = categoryRepository.save(CategoryEntity(name = "핸드폰"))
     }
@@ -72,7 +72,7 @@ class LostPostReportServiceTest(
         val target = lostPostRepository.save(createLostPost())
 
         // when, then
-        otherMember!!.id.let { RequestUtils.setAttribute("memberId", it) }
+        otherMember!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
 
         Assertions.assertThatThrownBy {
             lostPostReportService.save(target.id)
@@ -110,16 +110,16 @@ class LostPostReportServiceTest(
         // when
         lostPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember2.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember2.id)
         lostPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember3.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember3.id)
         lostPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember4.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember4.id)
         lostPostReportService.save(target.id)
 
-        RequestUtils.setAttribute("memberId", otherMember5.id)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, otherMember5.id)
         lostPostReportService.save(target.id)
 
         // then

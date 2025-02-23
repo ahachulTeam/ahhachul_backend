@@ -58,7 +58,7 @@ class CommentServiceTest(
     private val membersCount: Int = 5
 
     private fun loginWithMemberId(memberId: Long) {
-        RequestUtils.setAttribute("memberId", memberId)
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, memberId)
     }
     @BeforeEach
     fun setup() {

@@ -39,7 +39,7 @@ class CommentService(
             PostType.COMPLAINT -> complaintPostReader.getComplaintPost(command.postId).createdBy
         }.toLongOrNull()
 
-        val loginMemberId = RequestUtils.getAttribute("memberId")?.toLong()
+        val loginMemberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)?.toLong()
         val isPostWriterEqualToLoginMember = postWriterId != null && loginMemberId == postWriterId
 
         val comments = commentReader.searchComments(command).map {
