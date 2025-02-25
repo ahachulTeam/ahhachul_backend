@@ -1,5 +1,6 @@
-package backend.team.ahachul_backend.api.common.application.port.out
+package backend.team.ahachul_backend.api.common.adapter.web.out
 
+import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
 import org.springframework.stereotype.Component
