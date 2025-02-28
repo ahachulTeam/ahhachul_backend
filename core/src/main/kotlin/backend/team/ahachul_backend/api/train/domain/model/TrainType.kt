@@ -3,16 +3,14 @@ package backend.team.ahachul_backend.api.train.domain.model
 import backend.team.ahachul_backend.common.exception.DomainException
 import backend.team.ahachul_backend.common.response.ResponseCode.INVALID_ENUM
 
-enum class UpDownType(
-    val publicCode: Int
-) {
-    UP(1), DOWN(2);
+enum class TrainType {
+    EXPRESS, GENERAL;
 
     companion object {
-        fun from(code: String): UpDownType {
+        fun from(code: String): TrainType {
             return when (code) {
-                "상행", "내선" -> UP
-                "하행", "외선" -> DOWN
+                "G" -> GENERAL
+                "D" -> EXPRESS
                 else -> throw DomainException(INVALID_ENUM)
             }
         }
