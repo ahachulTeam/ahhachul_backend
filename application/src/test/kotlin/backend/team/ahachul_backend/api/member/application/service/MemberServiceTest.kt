@@ -1,7 +1,7 @@
 package backend.team.ahachul_backend.api.member.application.service
 
-import backend.team.ahachul_backend.api.common.application.port.out.StationRepository
-import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationRepository
+import backend.team.ahachul_backend.api.common.adapter.web.out.StationRepository
+import backend.team.ahachul_backend.api.common.adapter.web.out.SubwayLineStationRepository
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
