@@ -10,6 +10,8 @@ class PublicDataProperties(
     var realTimeStationArrivalSuffixUri: String = "",
     var realTimeStationArrivalToken: String = "",
     var realTimeCongestionUrl: String = "",
-    var realTimeCongestionAppKey: String = ""
+    var realTimeCongestionAppKey: String = "",
+    var stationTimesPrefixUri: String = "",
+    var stationTimesSuffixUri: String = "",
 ){
 }
