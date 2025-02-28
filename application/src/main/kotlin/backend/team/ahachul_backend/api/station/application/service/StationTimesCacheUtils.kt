@@ -42,6 +42,6 @@ class StationTimesCacheUtils(
 
     companion object {
         const val STATION_TIMES_REDIS_PREFIX = "STATION_TIMES:"
-        const val TRAIN_REAL_TIME_REDIS_EXPIRE_SEC = 30L
+        const val TRAIN_REAL_TIME_REDIS_EXPIRE_SEC = 1800L
     }
 }
