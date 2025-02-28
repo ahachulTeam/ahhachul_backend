@@ -9,12 +9,14 @@ import backend.team.ahachul_backend.common.dto.ImageDto
 class SearchComplaintPostDto {
 
     data class Request(
-        val subwayLineId: Long?,
+        val subwayLineIds: String?,
         val keyword: String?,
     ) {
         fun toCommand(pageToken: String?, pageSize: Int): SearchComplaintPostCommand {
             return SearchComplaintPostCommand(
-                subwayLineId = subwayLineId,
+                subwayLineIds = subwayLineIds?.let {
+                    it.split(",").map { x -> x.toLong() }
+                },
                 keyword = keyword,
                 pageToken = pageToken,
                 pageSize = pageSize

@@ -38,12 +38,14 @@ class ComplaintPostService(
 ): ComplaintPostUseCase {
 
     override fun searchComplaintPosts(command: SearchComplaintPostCommand): PageInfoDto<SearchComplaintPostDto.Response> {
-        val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
+        val subwayLines = command.subwayLineIds?.stream()
+            ?.map { subwayLineReader.getById(it) }
+            ?.toList()
 
         val complaintPosts = complaintPostReader.getComplaintPosts(
             GetSliceComplaintPostsCommand.of(
                 command = command,
-                subwayLine = subwayLine
+                subwayLines = subwayLines
             )
         ).map {
             val file = complaintPostFileReader.findByPostId(it.id)?.file
