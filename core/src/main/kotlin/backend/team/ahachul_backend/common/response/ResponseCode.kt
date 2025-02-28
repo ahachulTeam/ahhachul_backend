@@ -54,9 +54,10 @@ enum class ResponseCode(
 
     // STATION
     EXCEED_MAXIMUM_STATION_COUNT("800", "즐겨찾는 역은 최대 4개까지 가능합니다.", HttpStatus.BAD_REQUEST),
-    NOT_EXIST_PUBLIC_STATION_CODE("500", "공공 지하철 역 코드가 존재하지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    FAILED_STATION_TIMES_API("500", "역 시간표 API를 조회하는데 실패하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_STATION_TIMES_API_RESPONSE("500", "역 시간표 API 응답 값이 올바르지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    NOT_EXIST_PUBLIC_STATION_CODE("801", "공공 지하철 역 코드가 존재하지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    FAILED_STATION_TIMES_API("802", "역 시간표 API를 조회하는데 실패하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_STATION_TIMES_API_RESPONSE("804", "역 시간표 API 응답 값이 올바르지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    FAILED_TO_GET_STATION_TIMES("805", "현재 역 시간 정보를 받을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // FILE
     FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
