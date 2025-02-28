@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 
 class GetSliceLostPostsCommand(
     val lostType: LostType,
-    val subwayLines: List<SubwayLineEntity>,
+    val subwayLines: List<SubwayLineEntity>?,
     val category: CategoryEntity?,
     val keyword: String?,
     val date: LocalDateTime?,
@@ -18,7 +18,7 @@ class GetSliceLostPostsCommand(
 ) {
     companion object {
         fun from(
-            command: SearchLostPostCommand, subwayLines: List<SubwayLineEntity>, category: CategoryEntity?
+            command: SearchLostPostCommand, subwayLines: List<SubwayLineEntity>?, category: CategoryEntity?
         ): GetSliceLostPostsCommand {
             val pageToken = command.pageToken?.let {
                 PageTokenUtils.decodePageToken(it, listOf(LocalDateTime::class.java, Long::class.java))

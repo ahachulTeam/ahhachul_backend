@@ -10,7 +10,7 @@ class SearchCommunityPostDto {
 
     data class Request(
         val categoryType: CommunityCategoryType?,
-        val subwayLineId: Long?,
+        val subwayLineIds: String?,
         val content: String?,
         val hashTag: String?,
         val writer: String?,
@@ -19,7 +19,9 @@ class SearchCommunityPostDto {
         fun toCommand(pageToken: String?, pageSize: Int): SearchCommunityPostCommand {
             return SearchCommunityPostCommand(
                 categoryType = categoryType,
-                subwayLineId = subwayLineId,
+                subwayLineIds = subwayLineIds?.let {
+                    it.split(",").map { x -> x.toLong() }
+                },
                 content = content,
                 hashTag = hashTag,
                 writer = writer,

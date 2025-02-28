@@ -9,6 +9,8 @@ import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostEn
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostHashTagEntity.communityPostHashTagEntity
 import backend.team.ahachul_backend.api.community.domain.entity.QCommunityPostLikeEntity.communityPostLikeEntity
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
+import backend.team.ahachul_backend.api.lost.domain.entity.QLostPostEntity
+import backend.team.ahachul_backend.api.lost.domain.entity.QLostPostEntity.lostPostEntity
 import backend.team.ahachul_backend.api.member.domain.entity.QMemberEntity.memberEntity
 import backend.team.ahachul_backend.common.domain.entity.QHashTagEntity.hashTagEntity
 import backend.team.ahachul_backend.common.domain.entity.QSubwayLineEntity.subwayLineEntity
@@ -116,7 +118,7 @@ class CustomCommunityPostRepository(
             .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
             .where(
                 categoryTypeEq(command.categoryType),
-                subwayLineEq(command.subwayLine),
+                subwayLinesEq(command.subwayLines),
                 hashTagEqWithSubQuery(command.hashTag),
                 titleOrContentContains(command.content),
                 writerEq(command.writer),
@@ -139,7 +141,7 @@ class CustomCommunityPostRepository(
             .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
             .where(
                 hotPost(),
-                subwayLineEq(command.subwayLine),
+                subwayLinesEq(command.subwayLines),
                 hashTagEqWithSubQuery(command.hashTag),
                 titleOrContentContains(command.content),
                 writerEq(command.writer),
@@ -172,6 +174,10 @@ class CustomCommunityPostRepository(
 
     private fun subwayLineEq(subwayLine: SubwayLineEntity?) =
         subwayLine?.let { communityPostEntity.subwayLineEntity.eq(subwayLine) }
+
+    private fun subwayLinesEq(subwayLines: List<SubwayLineEntity>?) =
+        subwayLines?.takeIf { it.isNotEmpty() }
+            ?.let { communityPostEntity.subwayLineEntity.`in`(it) }
 
     private fun hotPost() = communityPostEntity.hotPostYn.eq(YNType.Y)
         .and(communityPostEntity.hotPostSelectedDate.after(LocalDateTime.now().minusDays(HOT_POST_LIMIT_DAYS)))

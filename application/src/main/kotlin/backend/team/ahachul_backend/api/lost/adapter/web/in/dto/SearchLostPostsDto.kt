@@ -8,14 +8,16 @@ class SearchLostPostsDto {
 
     data class Request(
         val lostType: LostType,
-        val subwayLineIds: String,
+        val subwayLineIds: String?,
         val category: String?,
         val keyword: String?,
     ) {
         fun toCommand(pageToken: String?, pageSize: Int): SearchLostPostCommand {
             return SearchLostPostCommand(
                 lostType = lostType,
-                subwayLineIds = subwayLineIds.split(",").map { it.toLong() },
+                subwayLineIds = subwayLineIds?.let {
+                    it.split(",").map { x -> x.toLong() }
+                },
                 keyword = keyword,
                 category = category,
                 pageToken = pageToken,

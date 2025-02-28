@@ -47,12 +47,14 @@ class CommunityPostService(
 
     override fun searchCommunityPosts(command: SearchCommunityPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
         val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
-        val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
+        val subwayLines = command.subwayLineIds?.stream()
+            ?.map { subwayLineReader.getById(it) }
+            ?.toList()
 
         val searchCommunityPosts = communityPostReader.searchCommunityPosts(
             GetSliceCommunityPostCommand.from(
                 command = command,
-                subwayLine = subwayLine
+                subwayLines = subwayLines
             )
         )
 
@@ -67,12 +69,14 @@ class CommunityPostService(
 
     override fun searchCommunityHotPosts(command: SearchCommunityHotPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
         val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
-        val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
+        val subwayLines = command.subwayLineIds?.stream()
+            ?.map { subwayLineReader.getById(it) }
+            ?.toList()
 
         val searchCommunityHotPosts = communityPostReader.searchCommunityHotPosts(
             GetSliceCommunityHotPostCommand.from(
                 command = command,
-                subwayLine = subwayLine
+                subwayLines = subwayLines
             )
         )
 

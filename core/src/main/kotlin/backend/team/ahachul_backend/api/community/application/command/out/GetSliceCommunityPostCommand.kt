@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 
 class GetSliceCommunityPostCommand(
     val categoryType: CommunityCategoryType?,
-    val subwayLine: SubwayLineEntity?,
+    val subwayLines: List<SubwayLineEntity>?,
     val content: String?,
     val hashTag: String?,
     val writer: String?,
@@ -21,7 +21,7 @@ class GetSliceCommunityPostCommand(
     companion object {
         fun from(
             command: SearchCommunityPostCommand,
-            subwayLine: SubwayLineEntity?,
+            subwayLines: List<SubwayLineEntity>?,
         ): GetSliceCommunityPostCommand {
             val pageToken = command.pageToken?.let {
                 PageTokenUtils.decodePageToken(it, listOf(LocalDateTime::class.java, Long::class.java))
@@ -29,7 +29,7 @@ class GetSliceCommunityPostCommand(
 
             return GetSliceCommunityPostCommand(
                 categoryType = command.categoryType,
-                subwayLine = subwayLine,
+                subwayLines = subwayLines,
                 content = command.content,
                 hashTag = command.hashTag,
                 writer = command.writer,

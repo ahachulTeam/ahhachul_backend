@@ -6,7 +6,7 @@ import org.springframework.data.domain.Sort
 class SearchCommunityHotPostDto {
 
     data class Request(
-        val subwayLineId: Long?,
+        val subwayLineIds: String?,
         val content: String?,
         val hashTag: String?,
         val writer: String?,
@@ -14,7 +14,9 @@ class SearchCommunityHotPostDto {
     ) {
         fun toCommand(pageToken: String?, pageSize: Int): SearchCommunityHotPostCommand {
             return SearchCommunityHotPostCommand(
-                subwayLineId = subwayLineId,
+                subwayLineIds = subwayLineIds?.let {
+                    it.split(",").map { x -> x.toLong() }
+                },
                 content = content,
                 hashTag = hashTag,
                 writer = writer,

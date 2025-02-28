@@ -67,7 +67,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
         val result = mockMvc.perform(
             get("/v1/community-posts")
                 .queryParam("categoryType", "ISSUE")
-                .queryParam("subwayLineId", "1")
+                .queryParam("subwayLineIds", "1,2")
                 .queryParam("content", "내용")
                 .queryParam("hashTag", "여행")
                 .queryParam("writer", "작성자")
@@ -87,7 +87,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     getDocsResponse(),
                     queryParameters(
                         parameterWithName("categoryType").description("카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")).optional(),
-                        parameterWithName("subwayLineId").description("노선 ID").optional(),
+                        parameterWithName("subwayLineIds").description("노선 ID 리스트").optional(),
                         parameterWithName("content").description("검색하고자 하는 내용").optional(),
                         parameterWithName("hashTag").description("검색하고자 하는 해시 태그").optional(),
                         parameterWithName("hotPostYn").description("검색하고자 하는 핫 게시글 여부").optional(),
@@ -153,7 +153,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
         // when
         val result = mockMvc.perform(
             get("/v1/community-hot-posts")
-                .queryParam("subwayLineId", "1")
+                .queryParam("subwayLineIds", "1,2")
                 .queryParam("content", "내용")
                 .queryParam("hashTag", "여행")
                 .queryParam("writer", "작성자")
@@ -172,7 +172,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     getDocsRequest(),
                     getDocsResponse(),
                     queryParameters(
-                        parameterWithName("subwayLineId").description("노선 ID").optional(),
+                        parameterWithName("subwayLineIds").description("노선 ID 리스트").optional(),
                         parameterWithName("content").description("검색하고자 하는 내용").optional(),
                         parameterWithName("hashTag").description("검색하고자 하는 해시 태그").optional(),
                         parameterWithName("writer").description("검색하고자 하는 작성자 닉네임").optional(),

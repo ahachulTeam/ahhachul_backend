@@ -3,7 +3,7 @@ package backend.team.ahachul_backend.api.community.application.command.`in`
 import org.springframework.data.domain.Sort
 
 class SearchCommunityHotPostCommand(
-    val subwayLineId: Long?,
+    val subwayLineIds: List<Long>?,
     val content: String?,
     val hashTag: String?,
     val writer: String?,
