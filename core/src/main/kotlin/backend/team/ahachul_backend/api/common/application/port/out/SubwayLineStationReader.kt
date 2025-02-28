@@ -8,4 +8,6 @@ interface SubwayLineStationReader {
     fun findByStation(station: StationEntity): List<SubwayLineStationEntity>
 
     fun findAll(): List<SubwayLineStationEntity>
+
+    fun findBySubwayLineIdAndStationId(subwayLineId: Long, stationId: Long): SubwayLineStationEntity
 }
