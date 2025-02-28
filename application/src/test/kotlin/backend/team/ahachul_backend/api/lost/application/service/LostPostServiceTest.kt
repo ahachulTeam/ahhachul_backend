@@ -395,7 +395,7 @@ class LostPostServiceTest(
     private fun createSearchLostPostCommand(pageToken: String?, subwayLineId:Long, keyword:String?): SearchLostPostCommand {
         return SearchLostPostCommand(
             lostType = LostType.ACQUIRE,
-            subwayLineId = subwayLineId,
+            subwayLineIds = listOf(subwayLineId),
             keyword = keyword,
             category = "휴대폰",
             pageToken = pageToken,

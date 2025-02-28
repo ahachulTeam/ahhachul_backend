@@ -110,12 +110,15 @@ class LostPostService(
     }
 
     override fun searchLostPosts(command: SearchLostPostCommand): PageInfoDto<SearchLostPostsDto.Response> {
-        val subwayLine = command.subwayLineId?.let { subwayLineReader.getById(it) }
+        val subwayLines = command.subwayLineIds.stream()
+            .map { subwayLineReader.getById(it) }
+            .toList()
+
         val category = command.category?.let { categoryReader.getCategoryByName(it) }
 
         val lostPostList = lostPostReader.getLostPosts(
             GetSliceLostPostsCommand.from(
-                command=command, subwayLine=subwayLine, category=category
+                command=command, subwayLines=subwayLines, category=category
             )
         )
 
