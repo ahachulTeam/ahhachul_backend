@@ -7,7 +7,7 @@ import org.springframework.data.domain.Sort
 import java.time.LocalDateTime
 
 class GetSliceCommunityHotPostCommand(
-    val subwayLine: SubwayLineEntity?,
+    val subwayLines: List<SubwayLineEntity>?,
     val content: String?,
     val hashTag: String?,
     val writer: String?,
@@ -19,14 +19,14 @@ class GetSliceCommunityHotPostCommand(
     companion object {
         fun from(
             command: SearchCommunityHotPostCommand,
-            subwayLine: SubwayLineEntity?,
+            subwayLines: List<SubwayLineEntity>?,
         ): GetSliceCommunityHotPostCommand {
             val pageToken = command.pageToken?.let {
                 PageTokenUtils.decodePageToken(it, listOf(LocalDateTime::class.java, Long::class.java))
             }
 
             return GetSliceCommunityHotPostCommand(
-                subwayLine = subwayLine,
+                subwayLines = subwayLines,
                 content = command.content,
                 hashTag = command.hashTag,
                 writer = command.writer,

@@ -20,7 +20,7 @@ class CustomComplaintPostRepository(
         return queryFactory
             .selectFrom(complaintPostEntity)
             .where(
-                subwayLineEq(command.subwayLine),
+                subwayLinesEq(command.subwayLines),
                 contentLike(command.keyword),
                 createdAtBeforeOrEqual(
                     command.date,
@@ -35,6 +35,10 @@ class CustomComplaintPostRepository(
 
     private fun subwayLineEq(subwayLine: SubwayLineEntity?) =
         subwayLine?.let { complaintPostEntity.subwayLine.eq(subwayLine) }
+
+    private fun subwayLinesEq(subwayLines: List<SubwayLineEntity>?) =
+        subwayLines?.takeIf { it.isNotEmpty() }
+            ?.let { complaintPostEntity.subwayLine.`in`(it) }
 
     private fun contentLike(keyword: String?) =
         keyword?.let { complaintPostEntity.content.contains(keyword) }

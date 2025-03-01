@@ -69,7 +69,7 @@ class CustomLostPostRepository(
 
         return queryFactory.selectFrom(lostPostEntity)
             .where(
-                subwayLineEq(command.subwayLine),
+                subwayLinesEq(command.subwayLines),
                 lostTypeEq(command.lostType),
                 categoryEq(command.category),
                 titleAndContentLike(command.keyword),
@@ -111,6 +111,10 @@ class CustomLostPostRepository(
 
     private fun subwayLineEq(subwayLine: SubwayLineEntity?) =
         subwayLine?.let { lostPostEntity.subwayLine.eq(subwayLine) }
+
+    private fun subwayLinesEq(subwayLines: List<SubwayLineEntity>?) =
+        subwayLines?.takeIf { it.isNotEmpty() }
+            ?.let { lostPostEntity.subwayLine.`in`(it) }
 
     private fun lostTypeEq(lostType: LostType?) =
         lostType?.let { lostPostEntity.lostType.eq(lostType) }

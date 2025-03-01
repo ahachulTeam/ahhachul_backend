@@ -276,7 +276,7 @@ class CommunityPostServiceTest(
 
         val verifyNameCommand = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = null,
             content = "제",
             hashTag = null,
             writer = null,
@@ -286,7 +286,7 @@ class CommunityPostServiceTest(
         )
         val verifyNameCommand2 = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = null,
             content = "지하철",
             hashTag = null,
             writer = null,
@@ -296,7 +296,7 @@ class CommunityPostServiceTest(
         )
         val verifyNameCommand3 = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = null,
             content = "지하철",
             hashTag = null,
             writer = null,
@@ -306,7 +306,7 @@ class CommunityPostServiceTest(
         )
         val verifyOrderCommand = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = null,
             content = null,
             hashTag = null,
             writer = null,
@@ -359,7 +359,7 @@ class CommunityPostServiceTest(
 
          val verifyCategoryCommand = SearchCommunityPostCommand(
              categoryType = CommunityCategoryType.FREE,
-             subwayLineId = null,
+             subwayLineIds = null,
              content = null,
              hashTag = null,
              writer = null,
@@ -369,7 +369,7 @@ class CommunityPostServiceTest(
          )
          val verifyCategoryCommand2 = SearchCommunityPostCommand(
              categoryType = CommunityCategoryType.ISSUE,
-             subwayLineId = null,
+             subwayLineIds = null,
              content = null,
              hashTag = null,
              writer = null,
@@ -411,7 +411,7 @@ class CommunityPostServiceTest(
 
         val verifyHashTagCommand = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = null,
             content = null,
             hashTag = "여행",
             writer = null,
@@ -421,7 +421,7 @@ class CommunityPostServiceTest(
         )
         val verifyHashTagCommand2 = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = null,
             content = null,
             hashTag = "취미",
             writer = null,
@@ -461,7 +461,7 @@ class CommunityPostServiceTest(
 
         val verifyWriterCommand = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = null,
             content = null,
             hashTag = null,
             writer = "nickname",
@@ -493,7 +493,7 @@ class CommunityPostServiceTest(
         // when
         val searchCommand1 = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = listOf(subwayLine.id),
             content = null,
             hashTag = null,
             writer = null,
@@ -506,7 +506,7 @@ class CommunityPostServiceTest(
 
         val searchCommand2 = SearchCommunityPostCommand(
             categoryType = null,
-            subwayLineId = null,
+            subwayLineIds = listOf(subwayLine.id),
             content = null,
             hashTag = null,
             writer = null,
@@ -556,7 +556,7 @@ class CommunityPostServiceTest(
 
         val result = communityPostUseCase.searchCommunityHotPosts(
             SearchCommunityHotPostCommand(
-                subwayLineId = null,
+                subwayLineIds = listOf(subwayLine.id),
                 content = null,
                 hashTag = null,
                 writer = null,
