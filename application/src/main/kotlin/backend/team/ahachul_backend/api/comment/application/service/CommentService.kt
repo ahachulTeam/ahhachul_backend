@@ -33,7 +33,6 @@ class CommentService(
 ): CommentUseCase {
 
     override fun getComments(command: GetCommentsCommand): GetCommentsDto.Response {
-
         val postWriterId = when (command.postType) {
             PostType.COMMUNITY -> communityPostReader.getCommunityPost(command.postId).createdBy
             PostType.LOST -> lostPostReader.getLostPost(command.postId).createdBy

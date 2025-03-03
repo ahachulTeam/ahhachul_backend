@@ -10,7 +10,6 @@ class CommentLikePersistence(
     private val repository: CommentLikeRepository,
 ): CommentLikeReader, CommentLikeWriter {
 
-
     override fun save(entity: CommentLikeEntity): CommentLikeEntity {
         return repository.save(entity)
     }
