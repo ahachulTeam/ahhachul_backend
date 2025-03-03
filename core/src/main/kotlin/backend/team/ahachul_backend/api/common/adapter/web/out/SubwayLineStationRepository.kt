@@ -1,4 +1,4 @@
-package backend.team.ahachul_backend.api.common.application.port.out
+package backend.team.ahachul_backend.api.common.adapter.web.out
 
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
@@ -12,4 +12,8 @@ interface SubwayLineStationRepository: JpaRepository<SubwayLineStationEntity, Lo
 
     @EntityGraph(attributePaths = ["subwayLine"])
     fun findByStation(station: StationEntity): List<SubwayLineStationEntity>
+
+    @EntityGraph(attributePaths = ["station", "subwayLine"])
+    fun findBySubwayLineIdAndStationId(subwayLineId: Long, stationId: Long): SubwayLineStationEntity?
+
 }

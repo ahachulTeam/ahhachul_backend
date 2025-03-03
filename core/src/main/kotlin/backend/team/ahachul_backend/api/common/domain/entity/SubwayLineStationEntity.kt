@@ -12,6 +12,9 @@ class SubwayLineStationEntity(
     @Column(name = "subway_line_station_id")
     var id: Long = 0,
 
+    @Column(name = "subway_line_station_code")
+    var stationCode: String? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "station_id")
     val station: StationEntity,

@@ -1,0 +1,12 @@
+=== /station/times
+
+==== 역 시간표 조회
+
+.Request
+include::{snippets}/get-station-times/http-request.adoc[]
+.Query Parameters
+include::{snippets}/get-station-times/query-parameters.adoc[]
+.Response
+include::{snippets}/get-station-times/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-station-times/response-fields.adoc[]
