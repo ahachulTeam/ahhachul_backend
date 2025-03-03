@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - feature/354
     paths-ignore:
       - 'application/**'
       - '.github/**'
@@ -13,7 +12,9 @@ on:
 
 jobs:
   build:
-    if: "!contains(github.event.commits.*.modified, 'application/')"  # application + scheduler 변경 시 빌드 방지
+    if: |
+      contains(github.event.commits.*.modified, 'scheduler/') || 
+      (contains(github.event.commits.*.modified, 'core/') && !contains(github.event.commits.*.modified, 'application/'))
     runs-on: ubuntu-latest
     env:
       MODULE_NAME: scheduler
