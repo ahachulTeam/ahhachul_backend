@@ -11,6 +11,7 @@ on:
 
 jobs:
   build:
+    if: "!contains(github.event.commits.*.modified, 'scheduler/')"  # core + scheduler 변경 시 빌드 방지
     runs-on: ubuntu-latest
     env:
       MODULE_NAME: application
