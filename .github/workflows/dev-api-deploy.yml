@@ -11,6 +11,9 @@ on:
 
 jobs:
   build:
+    if: |
+      contains(github.event.commits.*.modified, 'application/') || 
+      (contains(github.event.commits.*.modified, 'core/') && !contains(github.event.commits.*.modified, 'scheduler/'))
     runs-on: ubuntu-latest
     env:
       MODULE_NAME: application
