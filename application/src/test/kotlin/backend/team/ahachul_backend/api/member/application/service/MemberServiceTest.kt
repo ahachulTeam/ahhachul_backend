@@ -62,17 +62,15 @@ class MemberServiceTest(
             )
         }
 
-        member = memberRepository.save(
-            MemberEntity(
-                nickname = "nickname",
-                provider = ProviderType.KAKAO,
-                providerUserId = "providerUserId",
-                email = "email",
-                gender = GenderType.MALE,
-                ageRange = "20",
-                status = MemberStatusType.ACTIVE
-            )
-        )
+        member = memberRepository.save(MemberEntity(
+            nickname = "nickname",
+            provider = ProviderType.KAKAO,
+            providerUserId = "providerUserId",
+            email = "email",
+            gender = GenderType.MALE,
+            ageRange = "20",
+            status = MemberStatusType.ACTIVE
+        ))
         member!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
     }
 

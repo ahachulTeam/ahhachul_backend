@@ -60,15 +60,11 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     ),
                     responseFields(
                         *commonResponseFields(),
-                        fieldWithPath("result.memberId").type(JsonFieldType.NUMBER)
-                            .description("사용자 Identification Key"),
+                        fieldWithPath("result.memberId").type(JsonFieldType.NUMBER).description("사용자 Identification Key"),
                         fieldWithPath("result.nickname").type(JsonFieldType.STRING).description("사용자 닉네임").optional(),
                         fieldWithPath("result.email").type(JsonFieldType.STRING).description("사용자 이메일").optional(),
-                        fieldWithPath("result.gender").type("GenderType").description("사용자 성별")
-                            .attributes(getFormatAttribute("MALE, FEMALE")).optional(),
-                        fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("사용자 연령대")
-                            .attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ..."))
-                            .optional(),
+                        fieldWithPath("result.gender").type("GenderType").description("사용자 성별").attributes(getFormatAttribute("MALE, FEMALE")).optional(),
+                        fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("사용자 연령대").attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ...")).optional(),
                     )
                 )
             )
@@ -114,21 +110,15 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     ),
                     requestFields(
                         fieldWithPath("nickname").type(JsonFieldType.STRING).description("사용자 닉네임").optional(),
-                        fieldWithPath("gender").type("GenderType").description("사용자 성별")
-                            .attributes(getFormatAttribute("MALE, FEMALE")).optional(),
-                        fieldWithPath("ageRange").type(JsonFieldType.STRING).description("사용자 연령대")
-                            .attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ..."))
-                            .optional(),
+                        fieldWithPath("gender").type("GenderType").description("사용자 성별").attributes(getFormatAttribute("MALE, FEMALE")).optional(),
+                        fieldWithPath("ageRange").type(JsonFieldType.STRING).description("사용자 연령대").attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ...")).optional(),
 
                         ),
                     responseFields(
                         *commonResponseFields(),
                         fieldWithPath("result.nickname").type(JsonFieldType.STRING).description("사용자 닉네임").optional(),
-                        fieldWithPath("result.gender").type("GenderType").description("사용자 성별")
-                            .attributes(getFormatAttribute("MALE, FEMALE")).optional(),
-                        fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("사용자 연령대")
-                            .attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ..."))
-                            .optional(),
+                        fieldWithPath("result.gender").type("GenderType").description("사용자 성별").attributes(getFormatAttribute("MALE, FEMALE")).optional(),
+                        fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("사용자 연령대").attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ...")).optional(),
                     )
                 )
             )
@@ -216,22 +206,20 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
         )
 
         given(memberUseCase.bookmarkStation(any()))
-            .willReturn(response)
+                .willReturn(response)
 
-        val request = BookmarkStationDto.Request(
-            listOf(
-                BookmarkStation("발산역", "집"),
-                BookmarkStation("우장산역", "학교"),
-                BookmarkStation("화곡역", "즐겨찾는 장소"),
-            )
-        )
+        val request = BookmarkStationDto.Request(listOf(
+            BookmarkStation("발산역", "집"),
+            BookmarkStation("우장산역", "학교"),
+            BookmarkStation("화곡역", "즐겨찾는 장소"),
+        ))
 
         // when
         val result = mockMvc.perform(
-            post("/v1/members/bookmarks/stations")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .accept(MediaType.APPLICATION_JSON)
+                post("/v1/members/bookmarks/stations")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .accept(MediaType.APPLICATION_JSON)
         )
 
         // then
@@ -244,25 +232,17 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     requestFields(
                         fieldWithPath("stations").type(JsonFieldType.ARRAY).description("즐겨찾는 역 이름 및 별명 리스트"),
                         fieldWithPath("stations[].stationName").type(JsonFieldType.STRING).description("즐겨찾는 역 이름"),
-                        fieldWithPath("stations[].label").type(JsonFieldType.STRING).description("즐겨찾는 역 별명")
-                            .optional(),
+                        fieldWithPath("stations[].label").type(JsonFieldType.STRING).description("즐겨찾는 역 별명").optional(),
                     ),
                     responseFields(
                         *commonResponseFields(),
-                        fieldWithPath("result.stationInfoList").type(JsonFieldType.ARRAY)
-                            .description("즐겨찾기 한 역 정보 리스트"),
-                        fieldWithPath("result.stationInfoList[].stationId").type(JsonFieldType.NUMBER)
-                            .description("역 고유 ID"),
-                        fieldWithPath("result.stationInfoList[].stationName").type(JsonFieldType.STRING)
-                            .description("역 이름"),
-                        fieldWithPath("result.stationInfoList[].label").type(JsonFieldType.STRING).description("역 별명")
-                            .optional(),
-                        fieldWithPath("result.stationInfoList[].subwayLineInfoList").type(JsonFieldType.ARRAY)
-                            .description("해당 역이 존재하는 노선 리스트"),
-                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineId").type(JsonFieldType.NUMBER)
-                            .description("노선 고유 ID"),
-                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineName").type(JsonFieldType.STRING)
-                            .description("노선 이름"),
+                        fieldWithPath("result.stationInfoList").type(JsonFieldType.ARRAY).description("즐겨찾기 한 역 정보 리스트"),
+                        fieldWithPath("result.stationInfoList[].stationId").type(JsonFieldType.NUMBER).description("역 고유 ID"),
+                        fieldWithPath("result.stationInfoList[].stationName").type(JsonFieldType.STRING).description("역 이름"),
+                        fieldWithPath("result.stationInfoList[].label").type(JsonFieldType.STRING).description("역 별명").optional(),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList").type(JsonFieldType.ARRAY).description("해당 역이 존재하는 노선 리스트"),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 고유 ID"),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineName").type(JsonFieldType.STRING).description("노선 이름"),
                     )
                 )
             )
@@ -292,8 +272,8 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
 
         // when
         val result = mockMvc.perform(
-            get("/v1/members/bookmarks/stations")
-                .accept(MediaType.APPLICATION_JSON)
+                get("/v1/members/bookmarks/stations")
+                    .accept(MediaType.APPLICATION_JSON)
         )
 
         // then
@@ -305,20 +285,13 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     getDocsResponse(),
                     responseFields(
                         *commonResponseFields(),
-                        fieldWithPath("result.stationInfoList").type(JsonFieldType.ARRAY)
-                            .description("즐겨찾기 한 역 정보 리스트"),
-                        fieldWithPath("result.stationInfoList[].stationId").type(JsonFieldType.NUMBER)
-                            .description("역 고유 ID"),
-                        fieldWithPath("result.stationInfoList[].stationName").type(JsonFieldType.STRING)
-                            .description("역 이름"),
-                        fieldWithPath("result.stationInfoList[].label").type(JsonFieldType.STRING).description("역 별명")
-                            .optional(),
-                        fieldWithPath("result.stationInfoList[].subwayLineInfoList").type(JsonFieldType.ARRAY)
-                            .description("해당 역이 존재하는 노선 리스트"),
-                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineId").type(JsonFieldType.NUMBER)
-                            .description("노선 고유 ID"),
-                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineName").type(JsonFieldType.STRING)
-                            .description("노선 이름"),
+                        fieldWithPath("result.stationInfoList").type(JsonFieldType.ARRAY).description("즐겨찾기 한 역 정보 리스트"),
+                        fieldWithPath("result.stationInfoList[].stationId").type(JsonFieldType.NUMBER).description("역 고유 ID"),
+                        fieldWithPath("result.stationInfoList[].stationName").type(JsonFieldType.STRING).description("역 이름"),
+                        fieldWithPath("result.stationInfoList[].label").type(JsonFieldType.STRING).description("역 별명").optional(),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList").type(JsonFieldType.ARRAY).description("해당 역이 존재하는 노선 리스트"),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 고유 ID"),
+                        fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineName").type(JsonFieldType.STRING).description("노선 이름"),
                     )
                 )
             )
@@ -347,22 +320,18 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
 
         // then
         result.andExpect(status().isOk)
-            .andDo(
-                document(
-                    "search-members",
-                    getDocsRequest(),
-                    getDocsResponse(),
-                    queryParameters(
-                        parameterWithName("nickname").description("닉네임 입력"),
-                    ),
-                    responseFields(
-                        *commonResponseFields(),
-                        fieldWithPath("result.members[].id").type(JsonFieldType.NUMBER).description("회원 아이디"),
-                        fieldWithPath("result.members[].nickname").type(JsonFieldType.STRING).description("회원 닉네임"),
-                    )
+            .andDo(document("search-members",
+                getDocsRequest(),
+                getDocsResponse(),
+                queryParameters(
+                    parameterWithName("nickname").description("닉네임 입력"),
+                ),
+                responseFields(
+                    *commonResponseFields(),
+                    fieldWithPath("result.members[].id").type(JsonFieldType.NUMBER).description("회원 아이디"),
+                    fieldWithPath("result.members[].nickname").type(JsonFieldType.STRING).description("회원 닉네임"),
                 )
-            )
-
+            ))
     }
 
     @Test

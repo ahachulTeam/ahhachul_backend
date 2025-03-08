@@ -5,9 +5,9 @@ import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineSt
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
-import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.out.FcmTokenWriter
@@ -44,9 +44,9 @@ class MemberService(
         command.gender?.let { member.changeGender(it) }
         command.ageRange?.let { member.changeAgeRange(it) }
         return UpdateMemberDto.Response.of(
-            nickname = member.nickname,
-            gender = member.gender,
-            ageRange = member.ageRange
+                nickname = member.nickname,
+                gender = member.gender,
+                ageRange = member.ageRange
         )
     }
 
@@ -112,17 +112,11 @@ class MemberService(
         }
 
         return originMemberStations.indices.all {
-            originMemberStations[it].isEquals(
-                newBookmarkStationCommands[it].stationName,
-                newBookmarkStationCommands[it].label
-            )
+            originMemberStations[it].isEquals(newBookmarkStationCommands[it].stationName, newBookmarkStationCommands[it].label)
         }
     }
 
-    private fun saveNewStations(
-        member: MemberEntity,
-        bookmarkStations: List<BookmarkStationCommand>
-    ): List<MemberStationEntity> {
+    private fun saveNewStations(member: MemberEntity, bookmarkStations: List<BookmarkStationCommand>): List<MemberStationEntity> {
         return bookmarkStations
             .map {
                 val memberStation = MemberStationEntity(
@@ -158,6 +152,5 @@ class MemberService(
             )
         }
     }
-
 }
 
