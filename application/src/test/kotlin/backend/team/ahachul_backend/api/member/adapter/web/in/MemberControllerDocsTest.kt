@@ -6,7 +6,6 @@ import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCa
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
-import org.mockito.BDDMockito
 import org.mockito.BDDMockito.given
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -359,7 +358,6 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         *commonResponseFields(),
                         fieldWithPath("result.members[].id").type(JsonFieldType.NUMBER).description("회원 아이디"),
                         fieldWithPath("result.members[].nickname").type(JsonFieldType.STRING).description("회원 닉네임"),
-                    )
                 )
             )
 
