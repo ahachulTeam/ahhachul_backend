@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.repository.findByIdOrNull
 
 class MemberServiceTest(
     @Autowired val memberWriter: MemberWriter,
@@ -61,15 +62,17 @@ class MemberServiceTest(
             )
         }
 
-        member = memberRepository.save(MemberEntity(
-            nickname = "nickname",
-            provider = ProviderType.KAKAO,
-            providerUserId = "providerUserId",
-            email = "email",
-            gender = GenderType.MALE,
-            ageRange = "20",
-            status = MemberStatusType.ACTIVE
-        ))
+        member = memberRepository.save(
+            MemberEntity(
+                nickname = "nickname",
+                provider = ProviderType.KAKAO,
+                providerUserId = "providerUserId",
+                email = "email",
+                gender = GenderType.MALE,
+                ageRange = "20",
+                status = MemberStatusType.ACTIVE
+            )
+        )
         member!!.id.let { RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, it) }
     }
 
@@ -357,5 +360,32 @@ class MemberServiceTest(
         assertThat(result.stationInfoList[0].subwayLineInfoList[0].subwayLineName).isEqualTo("1호선")
         assertThat(result.stationInfoList[1].stationName).isEqualTo("발산역")
         assertThat(result.stationInfoList[1].subwayLineInfoList[0].subwayLineName).isEqualTo("5호선")
+    }
+
+    @Test
+    fun fcmTokenInsert() {
+        // given
+        val token = "TEST"
+
+        // when
+        memberUseCase.updateFcmToken(token)
+
+        // then
+        val result = memberRepository.findByIdOrNull(member!!.id)
+        assertThat(result!!.fcmToken!!.token).isEqualTo(token)
+    }
+
+    @Test
+    fun fcmTokenUpdate() {
+        // given
+        val token = "TEST"
+
+        // when
+        memberUseCase.updateFcmToken("wrong")
+        memberUseCase.updateFcmToken(token)
+
+        // then
+        val result = memberRepository.findByIdOrNull(member!!.id)
+        assertThat(result!!.fcmToken!!.token).isEqualTo(token)
     }
 }

@@ -1,8 +1,8 @@
 package backend.team.ahachul_backend.api.member.application.port.`in`
 
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
-import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
+import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
 
@@ -19,4 +19,6 @@ interface MemberUseCase {
     fun getBookmarkStation(): GetBookmarkStationDto.Response
 
     fun searchMembers(command: SearchMemberCommand): SearchMemberDto.Response
+    
+    fun updateFcmToken(fcmToken: String)
 }
