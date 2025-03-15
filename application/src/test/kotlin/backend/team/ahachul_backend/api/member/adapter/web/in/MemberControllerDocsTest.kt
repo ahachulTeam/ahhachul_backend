@@ -345,7 +345,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
 
         // when
         val result = mockMvc.perform(
-            put("/v1/members/fcm-token")
+            patch("/v1/members/fcm-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
                 .accept(MediaType.APPLICATION_JSON)
