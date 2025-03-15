@@ -59,7 +59,7 @@ class MemberController(
     }
 
     @Authentication
-    @PutMapping("/v1/members/fcm-token")
+    @PatchMapping("/v1/members/fcm-token")
     fun updateToken(
         @RequestBody request: UpdateFcmTokenDto.Request
     ): CommonResponse<*> {
