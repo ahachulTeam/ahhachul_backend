@@ -7,6 +7,7 @@ import backend.team.ahachul_backend.common.response.CommonResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
@@ -57,4 +58,12 @@ class MemberController(
         return CommonResponse.success(memberUseCase.searchMembers(request.toCommand()))
     }
 
+    @Authentication
+    @PatchMapping("/v1/members/fcm-token")
+    fun updateToken(
+        @RequestBody request: UpdateFcmTokenDto.Request
+    ): CommonResponse<*> {
+        memberUseCase.updateFcmToken(request.fcmToken)
+        return CommonResponse.success()
+    }
 }

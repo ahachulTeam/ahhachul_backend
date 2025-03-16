@@ -19,4 +19,6 @@ interface MemberUseCase {
     fun getBookmarkStation(): GetBookmarkStationDto.Response
 
     fun searchMembers(command: SearchMemberCommand): SearchMemberDto.Response
+    
+    fun updateFcmToken(fcmToken: String)
 }

@@ -42,9 +42,12 @@ class MemberEntity(
         @Enumerated(EnumType.STRING)
         var regionType: RegionType = RegionType.METROPOLITAN,
 
-        @OneToMany(mappedBy = "targetMember")
-        var memberReports: MutableList<ReportEntity> = mutableListOf()
-): BaseEntity() {
+    @OneToMany(mappedBy = "targetMember")
+    var memberReports: MutableList<ReportEntity> = mutableListOf(),
+
+    @OneToOne(mappedBy = "member")
+    var fcmToken: FcmTokenEntity? = null,
+) : BaseEntity() {
 
         companion object {
                 fun ofKakao(command: LoginMemberCommand, userInfo: KakaoMemberInfoDto): MemberEntity {

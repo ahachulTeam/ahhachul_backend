@@ -10,9 +10,11 @@ import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCa
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
+import backend.team.ahachul_backend.api.member.application.port.out.FcmTokenWriter
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationWriter
+import backend.team.ahachul_backend.api.member.domain.entity.FcmTokenEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberStationEntity
 import backend.team.ahachul_backend.common.utils.RequestUtils
@@ -26,7 +28,8 @@ class MemberService(
     private val stationReader: StationReader,
     private val memberStationWriter: MemberStationWriter,
     private val memberStationReader: MemberStationReader,
-    private val subwayLineStationReader: SubwayLineStationReader
+    private val subwayLineStationReader: SubwayLineStationReader,
+    private val fcmTokenWriter: FcmTokenWriter
 ) : MemberUseCase {
 
     override fun getMember(): GetMemberDto.Response {
@@ -87,6 +90,17 @@ class MemberService(
         }
 
         return SearchMemberDto.Response.of(members)
+    }
+
+    @Transactional
+    override fun updateFcmToken(fcmToken: String) {
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
+        val tokenEntity = member.fcmToken
+        if (tokenEntity == null) {
+            member.fcmToken = fcmTokenWriter.save(FcmTokenEntity(member = member, token = fcmToken))
+        } else {
+            tokenEntity.token = fcmToken
+        }
     }
 
     private fun isEqualsAlreadyRegisteredStation(

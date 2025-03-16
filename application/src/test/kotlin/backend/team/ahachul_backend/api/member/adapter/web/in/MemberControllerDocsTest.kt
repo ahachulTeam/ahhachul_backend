@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCa
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
 import org.junit.jupiter.api.Test
+import org.mockito.BDDMockito
 import org.mockito.BDDMockito.given
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -331,6 +332,40 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     fieldWithPath("result.members[].nickname").type(JsonFieldType.STRING).description("회원 닉네임"),
                 )
             ))
+    }
 
+    @Test
+    fun updateTokenTest() {
+        // given
+        BDDMockito.willDoNothing().given(memberUseCase).updateFcmToken(any())
+
+        val request = UpdateFcmTokenDto.Request(
+            fcmToken = "token"
+        )
+
+        // when
+        val result = mockMvc.perform(
+            patch("/v1/members/fcm-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "Update FCM Token",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestFields(
+                        fieldWithPath("fcmToken").type(JsonFieldType.STRING).description("FCM Token"),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result").optional().description("X")
+                    )
+                ),
+            )
     }
 }
