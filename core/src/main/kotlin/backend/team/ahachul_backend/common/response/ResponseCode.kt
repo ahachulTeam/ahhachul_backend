@@ -24,7 +24,7 @@ enum class ResponseCode(
     INVALID_AUTH("207", "권한이 없습니다.", HttpStatus.FORBIDDEN),
     FAILED_TO_CONNECT_TO_REDIS("208", "통신 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     ALREADY_LOGOUT_TOKEN("209", "이미 로그아웃된 토큰입니다.", HttpStatus.UNAUTHORIZED),
-
+    ALREADY_DELETE_MEMBER("210", "이미 탈퇴된 회원입니다.", HttpStatus.FORBIDDEN),
 
     // REPORT
     INVALID_REPORT_REQUEST("300", "본인의 게시물은 신고할 수 없습니다.", HttpStatus.BAD_REQUEST),

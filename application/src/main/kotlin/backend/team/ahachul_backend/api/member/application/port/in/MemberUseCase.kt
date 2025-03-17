@@ -12,6 +12,8 @@ interface MemberUseCase {
 
     fun updateMember(command: UpdateMemberCommand): UpdateMemberDto.Response
 
+    fun deleteMember(request: DeleteMemberDto.Request)
+
     fun checkNickname(command: CheckNicknameCommand): CheckNicknameDto.Response
 
     fun bookmarkStation(command: BookmarkStationCommands): GetBookmarkStationDto.Response

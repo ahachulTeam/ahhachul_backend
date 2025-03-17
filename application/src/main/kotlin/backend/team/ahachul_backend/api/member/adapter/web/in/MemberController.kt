@@ -4,16 +4,11 @@ import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
 import backend.team.ahachul_backend.common.annotation.Authentication
 import backend.team.ahachul_backend.common.response.CommonResponse
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 class MemberController(
-        private val memberUseCase: MemberUseCase
+    private val memberUseCase: MemberUseCase
 ) {
 
     @Authentication
@@ -25,14 +20,21 @@ class MemberController(
     @Authentication
     @PatchMapping("/v1/members")
     fun updateMember(
-            @RequestBody request: UpdateMemberDto.Request
+        @RequestBody request: UpdateMemberDto.Request
     ): CommonResponse<UpdateMemberDto.Response> {
         return CommonResponse.success(memberUseCase.updateMember(request.toCommand()))
     }
 
+    @Authentication
+    @DeleteMapping("/v1/members")
+    fun deleteMember(@RequestHeader("Authorization") authorizationHeader: String): CommonResponse<*> {
+        memberUseCase.deleteMember(DeleteMemberDto.Request(authorizationHeader))
+        return CommonResponse.success()
+    }
+
     @PostMapping("/v1/members/check-nickname")
     fun checkNickname(
-            @RequestBody request: CheckNicknameDto.Request
+        @RequestBody request: CheckNicknameDto.Request
     ): CommonResponse<CheckNicknameDto.Response> {
         return CommonResponse.success(memberUseCase.checkNickname(request.toCommand()))
     }
@@ -40,7 +42,7 @@ class MemberController(
     @Authentication
     @PostMapping("/v1/members/bookmarks/stations")
     fun bookmarkStation(
-            @RequestBody request: BookmarkStationDto.Request
+        @RequestBody request: BookmarkStationDto.Request
     ): CommonResponse<GetBookmarkStationDto.Response> {
         return CommonResponse.success(memberUseCase.bookmarkStation(request.toCommand()))
     }

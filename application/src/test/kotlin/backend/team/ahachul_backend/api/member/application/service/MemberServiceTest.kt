@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.common.adapter.web.out.StationRepository
 import backend.team.ahachul_backend.api.common.adapter.web.out.SubwayLineStationRepository
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
+import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.DeleteMemberDto
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberStationRepository
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
@@ -12,6 +13,7 @@ import backend.team.ahachul_backend.api.member.application.command.SearchMemberC
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
+import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberWriter
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberStationEntity
@@ -20,9 +22,12 @@ import backend.team.ahachul_backend.api.member.domain.model.MemberStatusType
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
+import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.exception.BusinessException
+import backend.team.ahachul_backend.common.exception.DomainException
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.common.utils.JwtUtils
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.*
@@ -36,12 +41,15 @@ import org.springframework.data.repository.findByIdOrNull
 
 class MemberServiceTest(
     @Autowired val memberWriter: MemberWriter,
+    @Autowired val memberReader: MemberReader,
     @Autowired val memberUseCase: MemberUseCase,
     @Autowired val memberRepository: MemberRepository,
     @Autowired val stationRepository: StationRepository,
     @Autowired val memberStationRepository: MemberStationRepository,
     @Autowired val subwayLineStationRepository: SubwayLineStationRepository,
-    @Autowired val subwayLineRepository: SubwayLineRepository
+    @Autowired val subwayLineRepository: SubwayLineRepository,
+    @Autowired val jwtUtils: JwtUtils,
+    @Autowired val authLogoutCacheUtils: AuthLogoutCacheUtils,
 ) : CommonServiceTestConfig() {
 
     var member: MemberEntity? = null
@@ -385,5 +393,83 @@ class MemberServiceTest(
         // then
         val result = memberRepository.findByIdOrNull(member!!.id)
         assertThat(result!!.fcmToken!!.token).isEqualTo(token)
+    }
+
+    @Test
+    @DisplayName("이미 탈퇴된 회원은 털퇴를 할 수 없다")
+    fun cannotDeleteUserWithDeleteUser() {
+        // given
+        val member = memberRepository.save(
+            MemberEntity(
+                nickname = "deletetNickname",
+                provider = ProviderType.KAKAO,
+                providerUserId = "providerUserId",
+                email = "email",
+                gender = GenderType.MALE,
+                ageRange = "20",
+                status = MemberStatusType.DELETE
+            )
+        )
+
+        RequestUtils.setAttribute(RequestUtils.Attribute.MEMBER_ID, member.id)
+        val token = jwtUtils.createToken(member.id.toString(), 100L)
+
+        // when // then
+        assertThatThrownBy {
+            memberUseCase.deleteMember(DeleteMemberDto.Request(token))
+        }
+            .isExactlyInstanceOf(DomainException::class.java)
+            .hasMessage(ResponseCode.ALREADY_DELETE_MEMBER.message)
+    }
+
+    @Test
+    @DisplayName("탈퇴 후, 토큰은 로그아웃된다.")
+    fun logoutTokenAfterDeleteUser() {
+        // given
+        val token = jwtUtils.createToken(member!!.id.toString(), 100L)
+
+        // when
+        memberUseCase.deleteMember(DeleteMemberDto.Request(token))
+
+        // then
+        val notLogout = authLogoutCacheUtils.isNotLogout(token)
+        assertThat(notLogout).isFalse()
+    }
+
+    @Test
+    @DisplayName("사용자를 탈퇴한다.")
+    fun deleteUser() {
+        // given
+        val token = jwtUtils.createToken(member!!.id.toString(), 100L)
+
+        // when
+        memberUseCase.deleteMember(DeleteMemberDto.Request(token))
+        val findMember = memberRepository.findById(member!!.id).get()
+
+        // then
+        assertThat(findMember.isDeleted()).isTrue()
+    }
+
+    @Test
+    @DisplayName("탈퇴 후, 사용자 조회가 불가하다.")
+    fun cannotSelectUserAfterDeleteUser() {
+        // given
+        val token = jwtUtils.createToken(member!!.id.toString(), 100L)
+        memberUseCase.deleteMember(DeleteMemberDto.Request(token))
+
+        // when & then
+        // ID로 조회
+        assertThatThrownBy {
+            memberReader.getMember(member!!.id)
+        }
+            .isExactlyInstanceOf(DomainException::class.java)
+            .hasMessage(ResponseCode.ALREADY_DELETE_MEMBER.message)
+
+        // providerUserId로 조회
+        assertThatThrownBy {
+            memberReader.findMember(member!!.providerUserId)
+        }
+            .isExactlyInstanceOf(DomainException::class.java)
+            .hasMessage(ResponseCode.ALREADY_DELETE_MEMBER.message)
     }
 }

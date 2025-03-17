@@ -5,6 +5,7 @@ import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberWriter
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.common.exception.AdapterException
+import backend.team.ahachul_backend.common.exception.DomainException
 import backend.team.ahachul_backend.common.response.ResponseCode
 import org.springframework.stereotype.Component
 
@@ -18,12 +19,22 @@ class MemberPersistence(
     }
 
     override fun getMember(memberId: Long): MemberEntity {
-        return memberRepository.findById(memberId)
-                .orElseThrow { throw AdapterException(ResponseCode.INVALID_DOMAIN) }
+        val member = memberRepository.findById(memberId)
+            .orElseThrow { throw AdapterException(ResponseCode.INVALID_DOMAIN) }
+
+        validateMember(member)
+
+        return member
     }
 
     override fun findMember(providerUserId: String): MemberEntity? {
-        return memberRepository.findByProviderUserId(providerUserId)
+        val member = memberRepository.findByProviderUserId(providerUserId)
+
+        member?.let {
+            validateMember(member)
+        }
+
+        return member
     }
 
     override fun existMember(nickname: String): Boolean {
@@ -32,5 +43,11 @@ class MemberPersistence(
 
     override fun searchMembers(command: SearchMemberCommand): List<MemberEntity> {
         return memberRepository.findByNicknameContaining(command.nickname)
+    }
+
+    private fun validateMember(member: MemberEntity) {
+        if (member.isDeleted()) {
+            throw DomainException(ResponseCode.ALREADY_DELETE_MEMBER)
+        }
     }
 }
