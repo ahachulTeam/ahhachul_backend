@@ -108,6 +108,9 @@ class AuthService(
     override fun getToken(command: GetTokenCommand): GetTokenDto.Response {
         val refreshToken = jwtUtils.verify(command.refreshToken)
 
+        val memberId = refreshToken.body.subject.toLong()
+        memberReader.getMember(memberId)
+
         if (refreshToken.body.expiration.after(Date(System.currentTimeMillis() - sevenDaysInMillis))) {
             return GetTokenDto.Response(
                 accessToken = jwtUtils.createToken(refreshToken.body.subject, jwtProperties.accessTokenExpireTime),

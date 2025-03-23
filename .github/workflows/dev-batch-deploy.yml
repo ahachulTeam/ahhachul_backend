@@ -12,9 +12,6 @@ on:
 
 jobs:
   build:
-    if: |
-      contains(github.event.commits.*.modified, 'scheduler/') || 
-      (contains(github.event.commits.*.modified, 'core/') && !contains(github.event.commits.*.modified, 'application/'))
     runs-on: ubuntu-latest
     env:
       MODULE_NAME: scheduler

@@ -125,6 +125,34 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
+    fun deleteMemberTest() {
+        // when
+        val result = mockMvc.perform(
+            delete("/v1/members")
+                .header("Authorization", "Bearer <Access Token>")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "delete-member",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰")
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result").optional().description("X")
+                    )
+                )
+            )
+    }
+
+    @Test
     fun checkNicknameTest() {
         // given
         val response = CheckNicknameDto.Response(

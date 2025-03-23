@@ -24,6 +24,17 @@ include::{snippets}/update-member/http-response.adoc[]
 .Response Fields
 include::{snippets}/update-member/response-fields.adoc[]
 
+==== 사용자 탈퇴
+
+.Request
+include::{snippets}/delete-member/http-request.adoc[]
+.Request Headers
+include::{snippets}/delete-member/request-headers.adoc[]
+.Response
+include::{snippets}/delete-member/http-response.adoc[]
+.Response Fields
+include::{snippets}/delete-member/response-fields.adoc[]
+
 ==== 사용자 닉네임 중복 체크
 
 .Request

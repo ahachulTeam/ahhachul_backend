@@ -29,7 +29,8 @@ class MemberService(
     private val memberStationWriter: MemberStationWriter,
     private val memberStationReader: MemberStationReader,
     private val subwayLineStationReader: SubwayLineStationReader,
-    private val fcmTokenWriter: FcmTokenWriter
+    private val fcmTokenWriter: FcmTokenWriter,
+    private val authLogoutCacheUtils: AuthLogoutCacheUtils
 ) : MemberUseCase {
 
     override fun getMember(): GetMemberDto.Response {
@@ -48,6 +49,14 @@ class MemberService(
                 gender = member.gender,
                 ageRange = member.ageRange
         )
+    }
+
+    @Transactional
+    override fun deleteMember(request: DeleteMemberDto.Request) {
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
+        member.delete()
+
+        authLogoutCacheUtils.logout(request.accessToken)
     }
 
     override fun checkNickname(command: CheckNicknameCommand): CheckNicknameDto.Response {
