@@ -7,7 +7,6 @@ on:
       - feature/359
     paths-ignore:
       - 'application/**'
-      - '.github/**'
       - 'scheduler/cron.Dockerfile'
   workflow_dispatch:
 

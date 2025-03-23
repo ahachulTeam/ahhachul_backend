@@ -7,7 +7,6 @@ on:
       - feature/359
     paths-ignore:
       - 'scheduler/**'
-      - '.github/**'
   workflow_dispatch:
 
 jobs:
