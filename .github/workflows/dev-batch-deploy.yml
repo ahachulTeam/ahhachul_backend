@@ -7,14 +7,18 @@ on:
       - feature/359
     paths-ignore:
       - 'application/**'
+      - '.github/**'
       - 'scheduler/cron.Dockerfile'
   workflow_dispatch:
 
 jobs:
   build:
     if: |
-      contains(github.event.commits.*.modified, 'scheduler/') || 
-      (contains(github.event.commits.*.modified, 'core/') && !contains(github.event.commits.*.modified, 'application/'))
+      contains(join(github.event.commits.*.modified, ','), 'scheduler/') || 
+      (contains(join(github.event.commits.*.modified, ','), 'core/') && !contains(join(github.event.commits.*.modified, ','), 'application/'))
+#    if: |
+#      contains(github.event.commits.*.modified, 'scheduler/') ||
+#      (contains(github.event.commits.*.modified, 'core/') && !contains(github.event.commits.*.modified, 'application/'))
     runs-on: ubuntu-latest
     env:
       MODULE_NAME: scheduler
