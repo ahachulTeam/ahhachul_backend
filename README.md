@@ -83,11 +83,11 @@
 
 
 ## 배포 파이프라인 구성
-#### 🔗 V1 : Github Action, AWS ECR, Docker
 
-<img width="517" alt="image" src="https://github.com/user-attachments/assets/baeb3a92-1c17-42bc-8ad4-482f1ef4efc0" />
+#### Github Action, AWS ECR / ECS, Docker
 
-#### 🔗 V2 : Github Action, AWS ECR / ECS, Docker
+<img width="716" alt="스크린샷 2025-05-04 오전 11 39 49" src="https://github.com/user-attachments/assets/066ed711-dd4b-4713-8ea1-df0e724b2178" />
+
 
 
 ## ERD 
