@@ -78,7 +78,7 @@ class AppleMemberClientImpl(
             .setHeaderParam("kid", properties.kid)
             .setIssuer(properties.iss)
             .setIssuedAt(localDateTimeToDate(now))
-            .setExpiration(localDateTimeToDate(now.plusMonths(6)))
+            .setExpiration(localDateTimeToDate(now.plusHours(6)))
             .setSubject(properties.sub)
             .setAudience(properties.aud)
             .signWith(getKey(), ES256)
