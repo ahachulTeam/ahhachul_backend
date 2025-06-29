@@ -68,7 +68,7 @@ class TrainService(
     }
 
     /**
-     * 외부 열차 조회 API 호출
+     * 외부 열차 조회 API를 호출하는 메서드
      */
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalTrainApiGet")
     override fun getTrainRealTimes(stationId: Long, subwayLineId: Long, upDownType: UpDownType?): List<GetTrainRealTimesDto.TrainRealTime> {
@@ -88,26 +88,6 @@ class TrainService(
         return upDownType?.let {
                 type ->  trainRealTimes.filter { it.upDownType == type }.take(4)
         } ?: trainRealTimes
-    }
-
-    /**
-     * Redis 통신 오류에 대한 FallBack 메서드
-     */
-    fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: RedisConnectionFailureException
-    ): List<GetTrainRealTimesDto.TrainRealTime> {
-        logger.error("can't connect to redis server")
-        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
-    }
-
-    /**
-     * 열차 도착 정보 API 오류에 대한 FallBack 메서드
-     */
-    fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e : CallNotPermittedException
-    ): List<GetTrainRealTimesDto.TrainRealTime> {
-        logger.error("circuit breaker opened for external train api")
-        throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
     }
 
     private fun requestTrainRealTimesAndSorting(
@@ -142,9 +122,8 @@ class TrainService(
             ?.entries?.forEach { map ->
                 val subIdx = if (map.value.size >= 2) 2 else 1  // 상행, 하행 각각 최대 두개씩 반환
 
-                val lis = map.value
-                    .map { dto ->
-                    GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
+                val lis = map.value.map { dto ->
+                        GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
                     }.sortedWith( compareBy(
                         { it.currentTrainArrivalCode.priority },
                         { it.stationOrder }
@@ -164,6 +143,20 @@ class TrainService(
         } else {
             Int.MAX_VALUE
         }
+    }
+
+    fun fallbackOnExternalTrainApiGet(
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: RedisConnectionFailureException
+    ): List<GetTrainRealTimesDto.TrainRealTime> {
+        logger.error("circuit breaker opened for redis server")
+        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
+    }
+
+    fun fallbackOnExternalTrainApiGet(
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e : CallNotPermittedException
+    ): List<GetTrainRealTimesDto.TrainRealTime> {
+        logger.error("circuit breaker opened for external train api")
+        throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
     }
 
     /**
@@ -190,28 +183,6 @@ class TrainService(
         return congestionDto
     }
 
-    /**
-     * Redis 통신 오류에 대한 FallBack 메서드
-     */
-
-    fun fallbackOnExternalCongestionApiGet(
-        command: GetCongestionCommand, e: RedisConnectionFailureException
-    ): GetCongestionDto.Response {
-        logger.error("can't connect to redis server")
-        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
-    }
-
-
-    /**
-     * 열차 혼잡도 정보 API 오류에 대한 FallBack 메서드
-     */
-    fun fallbackOnExternalCongestionApiGet(
-        command: GetCongestionCommand, e : CallNotPermittedException
-    ): GetCongestionDto.Response {
-        logger.error("circuit breaker opened for external congestion api")
-        throw CommonException(ResponseCode.FAILED_TO_GET_CONGESTION_INFO, e)
-    }
-
     private fun getCorrectTrainNum(subwayLineId: Long, trainNo: String): String {
         // API 자체에서 발생하는 열차 번호 에러 수정
         return when (trainNo[0] != subwayLineId.toString()[0]) {
@@ -224,17 +195,28 @@ class TrainService(
         success: Boolean, trainCongestion: TrainCongestionDto.Train
     ): List<GetCongestionDto.Section>  {
         if (success) {
-            val congestionList = parse(trainCongestion.congestionResult.congestionCar)
-            return congestionList.mapIndexed {
+            val congestion = trainCongestion.congestionResult.congestionCar
+            val congestions = congestion.trim().split(DELIMITER)
+            val congestionIntList = congestions.map { it.toInt() }
+            return congestionIntList.mapIndexed {
                     idx, it -> GetCongestionDto.Section.from(idx, it)
             }
         }
         return emptyList()
     }
 
-    private fun parse(congestion: String): List<Int> {
-        val congestions = congestion.trim().split(DELIMITER)
-        return congestions.map { it.toInt() }
+    fun fallbackOnExternalCongestionApiGet(
+        command: GetCongestionCommand, e: RedisConnectionFailureException
+    ): GetCongestionDto.Response {
+        logger.error("circuit breaker opened for redis server")
+        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
+    }
+
+    fun fallbackOnExternalCongestionApiGet(
+        command: GetCongestionCommand, e : CallNotPermittedException
+    ): GetCongestionDto.Response {
+        logger.error("circuit breaker opened for external congestion api")
+        throw CommonException(ResponseCode.FAILED_TO_GET_CONGESTION_INFO, e)
     }
 
     companion object {
