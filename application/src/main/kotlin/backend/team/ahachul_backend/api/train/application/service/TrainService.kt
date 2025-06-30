@@ -146,17 +146,17 @@ class TrainService(
     }
 
     fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: RedisConnectionFailureException
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: Exception
     ): List<GetTrainRealTimesDto.TrainRealTime> {
-        logger.error("circuit breaker opened for redis server")
-        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
-    }
-
-    fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e : CallNotPermittedException
-    ): List<GetTrainRealTimesDto.TrainRealTime> {
-        logger.error("circuit breaker opened for external train api")
-        throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
+        when (e) {
+            is CallNotPermittedException -> {
+                logger.error("circuit breaker opened for external train api")
+                throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
+            }
+            else -> {
+                throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
+            }
+        }
     }
 
     /**
@@ -167,11 +167,7 @@ class TrainService(
         val subwayLineId = subwayLineReader.getById(command.subwayLineId).id
         val trainNo = command.trainNo
 
-        try {
-            congestionCacheUtils.getCache(subwayLineId, trainNo)?.let { return it }
-        } catch (e: RedisConnectionFailureException) {
-            throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS)
-        }
+        congestionCacheUtils.getCache(subwayLineId, trainNo)?.let { return it }
 
         val correctTrainNum = getCorrectTrainNum(subwayLineId, trainNo)
         val response = trainCongestionClient.getCongestions(subwayLineId, correctTrainNum.toInt())
@@ -206,17 +202,17 @@ class TrainService(
     }
 
     fun fallbackOnExternalCongestionApiGet(
-        command: GetCongestionCommand, e: RedisConnectionFailureException
+        command: GetCongestionCommand, e: Exception
     ): GetCongestionDto.Response {
-        logger.error("circuit breaker opened for redis server")
-        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
-    }
-
-    fun fallbackOnExternalCongestionApiGet(
-        command: GetCongestionCommand, e : CallNotPermittedException
-    ): GetCongestionDto.Response {
-        logger.error("circuit breaker opened for external congestion api")
-        throw CommonException(ResponseCode.FAILED_TO_GET_CONGESTION_INFO, e)
+        when (e) {
+            is CallNotPermittedException -> {
+                logger.error("circuit breaker opened for external congestion api")
+                throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
+            }
+            else -> {
+                throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
+            }
+        }
     }
 
     companion object {
