@@ -42,6 +42,9 @@ class TrainService(
 
     private val logger: Logger = Logger(javaClass)
 
+    /**
+     * 특정 열차에 대한 지하철 노선 정보를 조회하는 메서드
+     */
     override fun getTrain(trainNo: String): GetTrainDto.Response {
         val (prefixTrainNo, location, organizationTrainNo) = decompositionTrainNo(trainNo)
         val train: TrainEntity
@@ -68,7 +71,7 @@ class TrainService(
     }
 
     /**
-     * 외부 열차 조회 API를 호출하는 메서드
+     * 실시간 열차 도착 정보를 조회하는 메서드
      */
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalTrainApiGet")
     override fun getTrainRealTimes(stationId: Long, subwayLineId: Long, upDownType: UpDownType?): List<GetTrainRealTimesDto.TrainRealTime> {
@@ -160,7 +163,7 @@ class TrainService(
     }
 
     /**
-     * 혼잡도 API 호출
+     * 실시간 열차 혼잡도 정보를 조회하는 메서드
      */
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalCongestionApiGet")
     override fun getTrainCongestion(command: GetCongestionCommand): GetCongestionDto.Response {
