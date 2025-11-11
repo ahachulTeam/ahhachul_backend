@@ -45,6 +45,6 @@ class CongestionCacheUtils(
 
     companion object {
         const val TRAIN_CONGESTION_REDIS_PREFIX = "TRAIN_CONGESTION:"
-        const val TRAIN_CONGESTION_REDIS_EXPIRE_SEC = 30L
+        const val TRAIN_CONGESTION_REDIS_EXPIRE_SEC = 20L
     }
 }

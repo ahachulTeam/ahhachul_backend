@@ -22,7 +22,7 @@ enum class ResponseCode(
     INVALID_OAUTH_AUTHORIZATION_CODE("205", "유효하지 않은 권한 코드입니다.", HttpStatus.UNAUTHORIZED),
     INVALID_OAUTH_ACCESS_TOKEN("206", "유효하지 않은 액세스 토큰입니다.", HttpStatus.UNAUTHORIZED),
     INVALID_AUTH("207", "권한이 없습니다.", HttpStatus.FORBIDDEN),
-    FAILED_TO_CONNECT_TO_REDIS("208", "통신 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    FAILED_TO_CONNECT_TO_REDIS("208", "외부 통신 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_LOGOUT_TOKEN("209", "이미 로그아웃된 토큰입니다.", HttpStatus.UNAUTHORIZED),
     ALREADY_DELETE_MEMBER("210", "이미 탈퇴된 회원입니다.", HttpStatus.FORBIDDEN),
 
@@ -49,8 +49,8 @@ enum class ResponseCode(
     NOT_EXIST_ARRIVAL_TRAIN("701", "열차 도착 정보가 없습니다.", HttpStatus.OK),
     INVALID_SUBWAY_LINE("702", "지원하지 않는 호선입니다.", HttpStatus.BAD_REQUEST),
     INVALID_TRAIN_NO("703", "현재 운행하지 않는 열차 번호입니다.", HttpStatus.BAD_REQUEST),
-    FAILED_TO_GET_TRAIN_INFO("704", "현재 열차 정보를 받을 수 없습니다.", HttpStatus.NOT_FOUND),
-    FAILED_TO_GET_CONGESTION_INFO("705", "현재 혼잡도 정보를 받을 수 없습니다.", HttpStatus.NOT_FOUND),
+    FAILED_TO_GET_TRAIN_INFO("704", "현재 열차 정보를 받을 수 없습니다.", HttpStatus.BAD_REQUEST),
+    FAILED_TO_GET_CONGESTION_INFO("705", "현재 혼잡도 정보를 받을 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // STATION
     EXCEED_MAXIMUM_STATION_COUNT("800", "즐겨찾는 역은 최대 4개까지 가능합니다.", HttpStatus.BAD_REQUEST),

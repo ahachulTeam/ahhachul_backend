@@ -42,6 +42,9 @@ class TrainService(
 
     private val logger: Logger = Logger(javaClass)
 
+    /**
+     * 특정 열차에 대한 지하철 노선 정보를 조회하는 메서드
+     */
     override fun getTrain(trainNo: String): GetTrainDto.Response {
         val (prefixTrainNo, location, organizationTrainNo) = decompositionTrainNo(trainNo)
         val train: TrainEntity
@@ -68,7 +71,7 @@ class TrainService(
     }
 
     /**
-     * 외부 열차 조회 API 호출
+     * 실시간 열차 도착 정보를 조회하는 메서드
      */
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalTrainApiGet")
     override fun getTrainRealTimes(stationId: Long, subwayLineId: Long, upDownType: UpDownType?): List<GetTrainRealTimesDto.TrainRealTime> {
@@ -88,26 +91,6 @@ class TrainService(
         return upDownType?.let {
                 type ->  trainRealTimes.filter { it.upDownType == type }.take(4)
         } ?: trainRealTimes
-    }
-
-    /**
-     * Redis 통신 오류에 대한 FallBack 메서드
-     */
-    fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: RedisConnectionFailureException
-    ): List<GetTrainRealTimesDto.TrainRealTime> {
-        logger.error("can't connect to redis server")
-        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
-    }
-
-    /**
-     * 열차 도착 정보 API 오류에 대한 FallBack 메서드
-     */
-    fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e : CallNotPermittedException
-    ): List<GetTrainRealTimesDto.TrainRealTime> {
-        logger.error("circuit breaker opened for external train api")
-        throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
     }
 
     private fun requestTrainRealTimesAndSorting(
@@ -142,9 +125,8 @@ class TrainService(
             ?.entries?.forEach { map ->
                 val subIdx = if (map.value.size >= 2) 2 else 1  // 상행, 하행 각각 최대 두개씩 반환
 
-                val lis = map.value
-                    .map { dto ->
-                    GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
+                val lis = map.value.map { dto ->
+                        GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
                     }.sortedWith( compareBy(
                         { it.currentTrainArrivalCode.priority },
                         { it.stationOrder }
@@ -166,19 +148,29 @@ class TrainService(
         }
     }
 
+    fun fallbackOnExternalTrainApiGet(
+        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: Exception
+    ): List<GetTrainRealTimesDto.TrainRealTime> {
+        when (e) {
+            is CallNotPermittedException -> {
+                logger.error("circuit breaker opened for external train api")
+                throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
+            }
+            else -> {
+                throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
+            }
+        }
+    }
+
     /**
-     * 혼잡도 API 호출
+     * 실시간 열차 혼잡도 정보를 조회하는 메서드
      */
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalCongestionApiGet")
     override fun getTrainCongestion(command: GetCongestionCommand): GetCongestionDto.Response {
         val subwayLineId = subwayLineReader.getById(command.subwayLineId).id
         val trainNo = command.trainNo
 
-        try {
-            congestionCacheUtils.getCache(subwayLineId, trainNo)?.let { return it }
-        } catch (e: RedisConnectionFailureException) {
-            throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS)
-        }
+        congestionCacheUtils.getCache(subwayLineId, trainNo)?.let { return it }
 
         val correctTrainNum = getCorrectTrainNum(subwayLineId, trainNo)
         val response = trainCongestionClient.getCongestions(subwayLineId, correctTrainNum.toInt())
@@ -188,28 +180,6 @@ class TrainService(
         val congestionDto = GetCongestionDto.Response.from(correctTrainNum, congestions)
         congestionCacheUtils.setCache(subwayLineId, correctTrainNum, congestionDto)
         return congestionDto
-    }
-
-    /**
-     * Redis 통신 오류에 대한 FallBack 메서드
-     */
-
-    fun fallbackOnExternalCongestionApiGet(
-        command: GetCongestionCommand, e: RedisConnectionFailureException
-    ): GetCongestionDto.Response {
-        logger.error("can't connect to redis server")
-        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
-    }
-
-
-    /**
-     * 열차 혼잡도 정보 API 오류에 대한 FallBack 메서드
-     */
-    fun fallbackOnExternalCongestionApiGet(
-        command: GetCongestionCommand, e : CallNotPermittedException
-    ): GetCongestionDto.Response {
-        logger.error("circuit breaker opened for external congestion api")
-        throw CommonException(ResponseCode.FAILED_TO_GET_CONGESTION_INFO, e)
     }
 
     private fun getCorrectTrainNum(subwayLineId: Long, trainNo: String): String {
@@ -224,17 +194,28 @@ class TrainService(
         success: Boolean, trainCongestion: TrainCongestionDto.Train
     ): List<GetCongestionDto.Section>  {
         if (success) {
-            val congestionList = parse(trainCongestion.congestionResult.congestionCar)
-            return congestionList.mapIndexed {
+            val congestion = trainCongestion.congestionResult.congestionCar
+            val congestions = congestion.trim().split(DELIMITER)
+            val congestionIntList = congestions.map { it.toInt() }
+            return congestionIntList.mapIndexed {
                     idx, it -> GetCongestionDto.Section.from(idx, it)
             }
         }
         return emptyList()
     }
 
-    private fun parse(congestion: String): List<Int> {
-        val congestions = congestion.trim().split(DELIMITER)
-        return congestions.map { it.toInt() }
+    fun fallbackOnExternalCongestionApiGet(
+        command: GetCongestionCommand, e: Exception
+    ): GetCongestionDto.Response {
+        when (e) {
+            is CallNotPermittedException -> {
+                logger.error("circuit breaker opened for external congestion api")
+                throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
+            }
+            else -> {
+                throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
+            }
+        }
     }
 
     companion object {
