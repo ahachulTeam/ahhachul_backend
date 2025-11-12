@@ -1,15 +1,7 @@
 package backend.team.ahachul_backend.stream
 
-import backend.team.ahachul_backend.api.lost.application.port.out.LostPostWriter
-import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
-import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
-import backend.team.ahachul_backend.api.lost.domain.model.Lost112Data
 import backend.team.ahachul_backend.common.client.RedisClient
-import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.logging.Logger
-import backend.team.ahachul_backend.common.storage.CategoryStorage
-import backend.team.ahachul_backend.common.storage.SubwayLineStorage
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.data.redis.connection.stream.*
 import org.springframework.scheduling.annotation.Scheduled
@@ -38,12 +30,9 @@ import java.time.Duration
 @Component
 class StreamRetryScheduler(
     private val redisClient: RedisClient,
-    private val lostPostWriter: LostPostWriter,
-    private val subwayLineStorage: SubwayLineStorage,
-    private val categoryStorage: CategoryStorage
+    private val lostPostUtil: Lost112Service
 ): InitializingBean {
 
-    private val objectMapper = ObjectMapper()
     private val logger = Logger(javaClass)
     private lateinit var streamKey: String
     private lateinit var consumerGroupName: String
@@ -84,23 +73,14 @@ class StreamRetryScheduler(
                 continue
             }
 
-            // 다른 컨슈머는 한대만 둔다.
-            val idleConsumerName = idleConsumers[0]
-            val targetConsumer = Consumer.from(consumerGroupName, idleConsumerName)
-
+            val targetConsumer = Consumer.from(consumerGroupName, idleConsumers[0])
             for (pendingMessage: PendingMessage in eligible) {
-                // 직접 streamId로 메시지를 읽어온다.
                 val message: MapRecord<String, String, String>? = redisClient
                     .findStreamMessageById(streamKey, pendingMessage.idAsString)
 
                 runCatching {
                     message?.value?.let {
-                        val jsonStr = objectMapper.writeValueAsString(message.value)
-                        val lost112Data = objectMapper.readValue(jsonStr, Lost112Data::class.java)
-                        val subwayLine = getSubwayLineEntity(lost112Data.receiptPlace)
-                        val category = getCategory(lost112Data.categoryName)
-                        val lostPost = LostPostEntity.ofLost112(lost112Data, subwayLine, category, lost112Data.imageUrl)
-                        lostPostWriter.save(lostPost)
+                        lostPostUtil.convertAndSaveLostPost(it)
                     }
                 }.onSuccess {
                     redisClient.claimStreamMessage(streamKey, targetConsumer, backOff, pendingMessage.id)
@@ -111,18 +91,6 @@ class StreamRetryScheduler(
             }
         }
     }
-
-    // 리팩토링 : 별도 공통 메서드로 분리
-    private fun getSubwayLineEntity(receivedPlace: String): SubwayLineEntity? {
-        val subwayLineName = subwayLineStorage.extractSubWayLine(receivedPlace)
-        return subwayLineStorage.getSubwayLineEntityByName(subwayLineName)
-    }
-
-    private fun getCategory(categoryName: String): CategoryEntity? {
-        val primaryCategoryName = categoryStorage.extractPrimaryCategory(categoryName)
-        return categoryStorage.getCategoryByName(primaryCategoryName)
-    }
-
 
     // 리팩토링 : 공통 properties로 빼야 함
     @Throws(Exception::class)
