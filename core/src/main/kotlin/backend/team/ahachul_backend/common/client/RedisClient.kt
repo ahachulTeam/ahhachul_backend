@@ -6,8 +6,10 @@ import io.lettuce.core.RedisBusyException
 import io.lettuce.core.XGroupCreateArgs
 import io.lettuce.core.XReadArgs
 import io.lettuce.core.api.sync.RedisCommands
-import org.springframework.data.redis.connection.stream.ObjectRecord
+import org.springframework.data.domain.Range
+import org.springframework.data.redis.connection.stream.*
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.redis.serializer.StringRedisSerializer
 import org.springframework.data.redis.stream.StreamMessageListenerContainer
 import org.springframework.stereotype.Component
 import java.time.Duration
@@ -56,8 +58,8 @@ class RedisClient(
         return redisTemplate.hasKey(key)
     }
 
-    fun ackStream(key: String, consumerGroupName: String, recordId: String?) {
-        this.redisTemplate.opsForStream<Any, Any>().acknowledge(key, consumerGroupName, recordId)
+    fun ackStream(key: String, consumerGroupName: String, recordId: RecordId?) {
+        this.redisTemplate.opsForStream<String, String>().acknowledge(key, consumerGroupName, recordId)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -78,14 +80,50 @@ class RedisClient(
         }
     }
 
-    fun createStreamMessageListenerContainer(): StreamMessageListenerContainer<String, ObjectRecord<String, String>> {
-        val options: StreamMessageListenerContainer.StreamMessageListenerContainerOptions<String, ObjectRecord<String, String>> =
-            StreamMessageListenerContainer.StreamMessageListenerContainerOptions
-                .builder()
-                .targetType(String::class.java)
-                .pollTimeout(Duration.ofSeconds(2))
-                .build()
+    fun createStreamMessageListenerContainer(): StreamMessageListenerContainer<String, MapRecord<String, String, String>> {
+        val options = StreamMessageListenerContainer.StreamMessageListenerContainerOptions.builder()
+            .hashKeySerializer<String, String>(StringRedisSerializer())
+            .hashValueSerializer<String, String>(StringRedisSerializer())
+            .pollTimeout(Duration.ofMillis(20))
+            .build()
 
         return StreamMessageListenerContainer.create(redisTemplate.connectionFactory, options)
+    }
+
+    fun findPendingMessages(streamKey: String, consumerGroupName: String, consumerName: String): PendingMessages {
+        val range: Range<RecordId> = Range.unbounded()
+        return redisTemplate.opsForStream<String, String>()
+            .pending(streamKey, Consumer.from(consumerGroupName, consumerName), range, 100L)
+    }
+
+    fun pickIdleConsumers(n: Int, streamKey: String, consumerGroupName: String): List<String> {
+        val consumers: StreamInfo.XInfoConsumers = redisTemplate.opsForStream<String, String>()
+            .consumers(streamKey, consumerGroupName) // XINFO CONSUMERS
+
+        if (consumers.isEmpty) {
+            return listOf()
+        }
+
+        // pending 개수 오름차순 → idle 큰 순으로 정렬해 n개 뽑기
+        val sortedList = consumers.sortedWith(
+            compareBy<StreamInfo.XInfoConsumer> { it.pendingCount() }
+                .thenByDescending { it.idleTimeMs() }
+        )
+        return sortedList.take(n).map { it.consumerName() }
+    }
+
+    fun claimStreamMessage(
+        streamKey: String, consumer: Consumer, minIdleTime: Duration, recordId: RecordId,
+    ): List<MapRecord<String, String, String>> {
+        return redisTemplate.opsForStream<String, String>().claim(
+            streamKey, consumer.group, consumer.name, minIdleTime, recordId
+        )
+    }
+
+    fun findStreamMessageById(streamKey: String, id: String): MapRecord<String, String, String>? {
+        return redisTemplate
+            .opsForStream<String, String>()
+            .range(streamKey, Range.closed(id, id))
+            ?.firstOrNull()
     }
 }

@@ -12,7 +12,7 @@ import backend.team.ahachul_backend.common.storage.SubwayLineStorage
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.data.redis.connection.stream.Consumer
-import org.springframework.data.redis.connection.stream.ObjectRecord
+import org.springframework.data.redis.connection.stream.MapRecord
 import org.springframework.data.redis.connection.stream.ReadOffset
 import org.springframework.data.redis.connection.stream.StreamOffset
 import org.springframework.data.redis.stream.StreamListener
@@ -29,23 +29,24 @@ class LostPostConsumer(
     private val lostPostWriter: LostPostWriter,
     private val subwayLineStorage: SubwayLineStorage,
     private val categoryStorage: CategoryStorage
-): StreamListener<String, ObjectRecord<String, String>>, InitializingBean {  // stream key, stream value type
+): StreamListener<String, MapRecord<String, String, String>>, InitializingBean {  // stream key, stream value type
 
     private val logger: Logger = Logger(javaClass)
 
-    private lateinit var listenerContainer: StreamMessageListenerContainer<String, ObjectRecord<String, String>>
+    private lateinit var listenerContainer: StreamMessageListenerContainer<String, MapRecord<String, String, String>>
     private lateinit var subscription: Subscription
 
     private lateinit var streamKey: String
     private lateinit var consumerGroupName: String
     private lateinit var consumerName: String
 
-    override fun onMessage(message: ObjectRecord<String, String>?) {
-        val recordId = message?.id?.value
+    override fun onMessage(message: MapRecord<String, String, String>?) {
+        val recordId = message?.id
 
         runCatching {
             message?.value?.let {
-                val lost112Data = objectMapper.readValue(it, Lost112Data::class.java)
+                val jsonStr = objectMapper.writeValueAsString(it)
+                val lost112Data = objectMapper.readValue(jsonStr, Lost112Data::class.java)
                 val subwayLine = getSubwayLineEntity(lost112Data.receiptPlace)
                 val category = getCategory(lost112Data.categoryName)
                 val lostPost = LostPostEntity.ofLost112(lost112Data, subwayLine, category, lost112Data.imageUrl)
@@ -55,7 +56,6 @@ class LostPostConsumer(
             redisClient.ackStream(streamKey, consumerGroupName, recordId)
         }.onFailure {
             logger.error("Process failed. Keep pending. id=${message?.id?.value}", it)
-            throw it
         }
     }
 
