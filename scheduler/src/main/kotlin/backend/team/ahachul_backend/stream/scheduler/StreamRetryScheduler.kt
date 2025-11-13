@@ -13,20 +13,21 @@ import java.time.Duration
  * 1. 방안 1 - 실패한 것들은 특정 자료구조에 저장(예약 시간과 함께) & 아예 메시지 삭제
  * - 별도 스프링 스케줄러에서 1분마다 자료구조를 탐색하면서 예약 시간이 된 것들을 꺼내서 다시 원본 스트림으로 produce
  *
- * 2. 방안 2(pending DLQ?) - ACK를 안날리면 자동으로 pending 처리가 돼서 다시 시도할 수 있음
+ * 2. 방안 2 - ACK를 안날리면 자동으로 Redis에서 pending 처리가 돼서 다시 시도할 수 있음
  * - 근데 계속 시도하는 건 의미가 없으니까, 시간을 늘려가면서 회복할 시간을 주고 재시도 하는게 합리적
  *
- *  스케줄러에서 주기적으로 각 “재시도 회차(deliveryCount)”에 맞는 최소 유휴시간(minIdle)을 계산해서 XAUTOCLAIM 호출.
- *  elapsedTimeSinceLastDelivery : 메시지가 소비자에게 마지막으로 전달된 이후 경과된 시간(밀리초 단위)
- *  새로 XAUTOCLAIM(또는 XCLAIM) 하면 그 순간 소유권이 바뀌고 idle=0 으로 리셋됨.
- *  deliveredCount(=재시도 회차) : 같은 메시지가 다시 전달/클레임 될 때마다 Redis가 자동으로 +1 해줌
- *  XAUTOCLAIM(minIdle=...) : “이 스트림에서 idle ≥ minIdle인 pending 메시지만 내게 주세요.” 다음 재시도까지 기다려야 하는 최소 대기시간
- *
- *  deliveryCount = X(1)인 애들 & idle >= backOff인 애들만 찾는다. 리트 -> 1분
- *  deliveryCount = X(2)인 애들 & idle >= backOff인 애들만 찾는다. 리트 -> 2분
- *  deliveryCount = X(3)인 애들 & idle >= backOff인 애들만 찾는다. 리트 -> 4분
- *  deliveryCount = X(4)인 애들 & idle >= backOff인 애들만 찾는다. 리트 -> 8분
- *  deliveryCount = X(5)인 애들 & idle >= backOff인 애들만 찾는다. 리트 -> 16분
+ *  스케줄러에서 아래 두가지 필드를 이용해 1, 2, 4, 8 .. 형식으로 간격을 두고 재시도 수행
+ *  1. elapsedTimeSinceLastDelivery : 메시지가 소비자에게 마지막으로 전달된 이후 경과된 시간(밀리초 단위), XAUTOCLAIM 이후 초기화됌
+ *  2. deliveredCount(재시도 회차) : 같은 메시지가 다시 전달/클레임 될 때마다 Redis가 자동으로 +1
+*
+ *  조건 : deliveryCount = X인 애들 & idle >= backOff(2^(x-1))인 메시지들을 처리한다.
+ *  T = 0분 : idle = 0 retry = 1
+ *  T = 1분 : idle = 1 retry = 1, 실패 -> 이후 3분(+2분)에 수행이 되어야 함 -> idle = 0
+ *  T = 2분 : idle = 1 retry = 2
+ *  T = 3분 : idle = 2 retry = 2, 실패 -> 이후 7분(+4분)에 수행이 되어야 함 -> idle = 0
+ *  T = 4분 : idle = 1 retry = 3
+ *  ...
+ *  T = 7분 : idle = 4 retry = 3, 이후 15분(+8)에 수행이 되어야 함
  */
 @Component
 class StreamRetryScheduler(
@@ -57,7 +58,7 @@ class StreamRetryScheduler(
 
         for (attempt in 1.. maxRetry) {  // 최대 리트 횟수를 5번이라고 했을 때
             val minutes = 1L * (1L shl (attempt - 1))
-            val backOff = Duration.ofMinutes(minutes)
+            val backOff = Duration.ofMillis(minutes)
 
             val eligible: List<PendingMessage> = pendingMessages
                 .filter { it.totalDeliveryCount == attempt.toLong() && it.elapsedTimeSinceLastDelivery >= backOff }
@@ -78,12 +79,14 @@ class StreamRetryScheduler(
                 val message: MapRecord<String, String, String>? = redisClient
                     .findStreamMessageById(streamKey, pendingMessage.idAsString)
 
+                // elapsedTimeSinceLastDelivery 초기화, 실패 시 deliveredCount + 1
+                redisClient.claimStreamMessage(streamKey, targetConsumer, backOff, pendingMessage.id)
+
                 runCatching {
                     message?.value?.let {
                         lostPostUtil.convertAndSaveLostPost(it)
                     }
                 }.onSuccess {
-                    redisClient.claimStreamMessage(streamKey, targetConsumer, backOff, pendingMessage.id)
                     redisClient.ackStream(streamKey, consumerGroupName, pendingMessage.id)
                 }.onFailure {
                     logger.error("Process failed. Keep pending. id=${pendingMessage.id}}", it)
