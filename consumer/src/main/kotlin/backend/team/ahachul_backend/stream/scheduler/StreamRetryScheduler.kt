@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.common.client.RedisClient
 import backend.team.ahachul_backend.common.logging.Logger
 import backend.team.ahachul_backend.stream.service.Lost112Service
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.connection.stream.*
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -33,12 +34,19 @@ import java.time.Duration
 class StreamRetryScheduler(
     private val redisClient: RedisClient,
     private val lostPostUtil: Lost112Service
-): InitializingBean {
+) {
 
     private val logger = Logger(javaClass)
+
+    @Value("\${stream.key}")
     private lateinit var streamKey: String
+
+    @Value("\${stream.consumer-group-name}")
     private lateinit var consumerGroupName: String
+
+    @Value("\${stream.consumer-name}")
     private lateinit var consumerName: String
+
     private val maxRetry = 5
 
     @Scheduled(fixedDelay = 60000)
@@ -93,12 +101,5 @@ class StreamRetryScheduler(
                 }
             }
         }
-    }
-
-    @Throws(Exception::class)
-    override fun afterPropertiesSet() {
-        streamKey = "lostpost-stream"
-        consumerGroupName = "ahachul"
-        consumerName = "ahachul-server"
     }
 }

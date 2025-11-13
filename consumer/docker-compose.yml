@@ -1,0 +1,14 @@
+services:
+  consumer1:
+    image: ahachul-consumer:latest
+    environment:
+      - KEY=lostpost-stream
+      - CONSUMER_GROUP_NAME=ahachul-lostpost
+      - CONSUMER_NAME=ahachul-lostpost-consumer-1
+
+  consumer2:
+    image: ahachul-consumer:latest
+    environment:
+      - KEY=lostpost-stream
+      - CONSUMER_GROUP_NAME=ahachul-lostpost
+      - CONSUMER_NAME=ahachul-lostpost-consumer-2
