@@ -1,4 +1,4 @@
-package backend.team.ahachul_backend.stream
+package backend.team.ahachul_backend.stream.service
 
 import backend.team.ahachul_backend.api.lost.application.port.out.LostPostWriter
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity

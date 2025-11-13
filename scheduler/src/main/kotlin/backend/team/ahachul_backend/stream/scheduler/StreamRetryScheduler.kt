@@ -1,7 +1,8 @@
-package backend.team.ahachul_backend.stream
+package backend.team.ahachul_backend.stream.scheduler
 
 import backend.team.ahachul_backend.common.client.RedisClient
 import backend.team.ahachul_backend.common.logging.Logger
+import backend.team.ahachul_backend.stream.service.Lost112Service
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.data.redis.connection.stream.*
 import org.springframework.scheduling.annotation.Scheduled
@@ -12,8 +13,8 @@ import java.time.Duration
  * 1. 방안 1 - 실패한 것들은 특정 자료구조에 저장(예약 시간과 함께) & 아예 메시지 삭제
  * - 별도 스프링 스케줄러에서 1분마다 자료구조를 탐색하면서 예약 시간이 된 것들을 꺼내서 다시 원본 스트림으로 produce
  *
- * 2. 방안 2(pending DLQ?) - 어짜피 ACK를 안날리면 자동으로 pending 처리가 돼서 다시 시도할 수 있음
- * - 근데 계속 다시 시도하는 건 의미가 없으니까.. 시간을 지수 형태로 늘려가면서 재시도해야 함. 어떻게 구현?
+ * 2. 방안 2(pending DLQ?) - ACK를 안날리면 자동으로 pending 처리가 돼서 다시 시도할 수 있음
+ * - 근데 계속 시도하는 건 의미가 없으니까, 시간을 늘려가면서 회복할 시간을 주고 재시도 하는게 합리적
  *
  *  스케줄러에서 주기적으로 각 “재시도 회차(deliveryCount)”에 맞는 최소 유휴시간(minIdle)을 계산해서 XAUTOCLAIM 호출.
  *  elapsedTimeSinceLastDelivery : 메시지가 소비자에게 마지막으로 전달된 이후 경과된 시간(밀리초 단위)
