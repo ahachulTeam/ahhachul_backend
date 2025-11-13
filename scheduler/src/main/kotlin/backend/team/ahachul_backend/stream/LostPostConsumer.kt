@@ -18,7 +18,7 @@ import java.time.Duration
 class LostPostConsumer(
     private val redisClient: RedisClient,
     private val lostPostUtil: Lost112Service
-): StreamListener<String, MapRecord<String, String, String>>, InitializingBean {  // stream key, stream value type
+): StreamListener<String, MapRecord<String, String, String>>, InitializingBean {
 
     private val logger: Logger = Logger(javaClass)
 

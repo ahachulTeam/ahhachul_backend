@@ -39,7 +39,7 @@ class StreamRetryScheduler(
     private lateinit var consumerName: String
     private val maxRetry = 5
 
-    @Scheduled(fixedDelay = 600000)
+    @Scheduled(fixedDelay = 60000)
     fun reclaimAndRetry() {
         // pending 상태인 메시지들을 가져온다.
         val pendingMessages: PendingMessages = redisClient.findPendingMessages(
@@ -50,12 +50,11 @@ class StreamRetryScheduler(
             return
         }
 
-        // 가장 여유가 있는 최대 3개의 컨슈머들을 찾아서 XAUTOCLAIM 을 통해 pending 메시지가 다시 시행되도록 할당한다.
+        // 여유가 있는 컨슈머들을 찾아서 XAUTOCLAIM 을 통해 소유권을 이전하고 처리 후 ack를 날린다. (기존 consumer가 죽으면 ack 불가)
         val idleConsumers = redisClient.pickIdleConsumers(3, streamKey, consumerGroupName)
             .ifEmpty { listOf(consumerName) }
 
-        // → “다른 컨슈머로 소유권 이전”을 위해 XAUTOCLAIM/XCLAIM을 사용 : 만약 기존 consumer가 죽으면 ack를 날릴 수 X
-        for (attempt in 1.. 5) {  // 최대 리트 횟수를 5번이라고 했을 때
+        for (attempt in 1.. maxRetry) {  // 최대 리트 횟수를 5번이라고 했을 때
             val minutes = 1L * (1L shl (attempt - 1))
             val backOff = Duration.ofMinutes(minutes)
 
@@ -67,8 +66,8 @@ class StreamRetryScheduler(
                 continue
             }
 
-            // 1. 특정 회차에 도달하면(예: maxRetry 초과) 알림만 보내고 재시도(Claim) 생략 -> 개발자 수동 처리 정책
-            if (attempt > maxRetry) {
+            // 특정 회차에 도달하면(예: maxRetry 초과) 알림만 보내고 재시도(Claim) 생략 -> 개발자 수동 처리 정책
+            if (attempt >= maxRetry) {
                 logger.error("Exceeded max retry. Pending IDs: ${eligible.map { it.id }.joinToString()}")
                 continue
             }
@@ -92,7 +91,6 @@ class StreamRetryScheduler(
         }
     }
 
-    // 리팩토링 : 공통 properties로 빼야 함
     @Throws(Exception::class)
     override fun afterPropertiesSet() {
         streamKey = "lostpost-stream"
