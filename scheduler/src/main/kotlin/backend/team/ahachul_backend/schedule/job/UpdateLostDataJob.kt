@@ -3,18 +3,17 @@ package backend.team.ahachul_backend.schedule.job
 import backend.team.ahachul_backend.api.lost.application.port.out.LostPostWriter
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
+import backend.team.ahachul_backend.api.lost.domain.model.Lost112Data
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.logging.Logger
 import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.storage.CategoryStorage
 import backend.team.ahachul_backend.common.storage.SubwayLineStorage
-import backend.team.ahachul_backend.api.lost.domain.model.Lost112Data
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import org.quartz.JobExecutionContext
 import org.springframework.scheduling.quartz.QuartzJobBean
-import org.springframework.stereotype.Component
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.DefaultTransactionDefinition
 import java.io.BufferedReader
@@ -22,7 +21,8 @@ import java.io.FileReader
 import java.io.IOException
 
 
-@Component
+// @Component
+@Deprecated("해당 Job은 현재 미사용 중, redis streams로 대체")
 class UpdateLostDataJob(
     private val lostPostWriter: LostPostWriter,
     private val subwayLineStorage: SubwayLineStorage,

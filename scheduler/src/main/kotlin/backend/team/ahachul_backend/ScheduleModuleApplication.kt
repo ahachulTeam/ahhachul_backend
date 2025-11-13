@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
 @EnableConfigurationProperties
-@EnableScheduling
 class ScheduleModuleApplication
 
 fun main(args: Array<String>) {

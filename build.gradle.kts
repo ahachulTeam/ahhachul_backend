@@ -239,3 +239,20 @@ project(":scheduler") {
         enabled = false
     }
 }
+
+/**
+ * 컨슈머 모듈
+ */
+project(":consumer") {
+    dependencies {
+        implementation(project(":core"))
+    }
+
+    tasks.getByName<Jar>("bootJar") {
+        enabled = true
+    }
+
+    tasks.getByName<Jar>("jar") {
+        enabled = false
+    }
+}
