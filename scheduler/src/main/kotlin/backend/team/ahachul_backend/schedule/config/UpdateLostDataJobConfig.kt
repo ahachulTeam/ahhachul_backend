@@ -5,7 +5,8 @@ import backend.team.ahachul_backend.schedule.job.UpdateLostDataJob
 import org.quartz.*
 import org.springframework.stereotype.Component
 
-@Component
+// @Component
+@Deprecated("해당 Job은 현재 미사용 중, redis streams로 대체")
 class UpdateLostDataJobConfig: AbstractJobConfig() {
 
     override fun getJobDetail(): JobDetail {
