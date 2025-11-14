@@ -97,7 +97,21 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }} \
-            --parameters commands=["${{ env.DEPLOY_COMMAND }}"] \
+            --parameters commands=["""
+                  docker stop cron-app || true && \
+                  docker rm cron-app || true && \
+                  docker pull ${{ env.ECR_REPOSITORY_URI }}/cron:latest && \
+                  docker run -d \
+                    --name cron-app \
+                    -e access-key=${{ env.S3_ACCESS_KEY }} \
+                    -e secret-key=${{ env.S3_SECRET_KEY }} \
+                    -e region=${{ env.S3_REGION }} \
+                    -e bucket-name=${{ env.S3_BUCKET_NAME }} \
+                    -e host=${{ env.REDIS_HOST }} \
+                    -e port=${{ env.REDIS_PORT }} \
+                    -e stream=${{ env.REDIS_STREAM }} \
+                    ${{ env.ECR_REPOSITORY_URI }}/cron:latest
+                """] \
             --comment "Deploy new Docker container" \
             --query "Command.CommandId" \
             --output text \
