@@ -73,8 +73,8 @@ jobs:
 
       - name: Build Spring container image
         run: |
-          docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}/ahachul-consumer:latest -f Dockerfile .
-          docker push ${{ env.ECR_REPOSITORY_URI }}/ahachul-consumer:latest
+          docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}:latest -f Dockerfile .
+          docker push ${{ env.ECR_REPOSITORY_URI }}:latest
 
   deploy:
     runs-on: ubuntu-latest
