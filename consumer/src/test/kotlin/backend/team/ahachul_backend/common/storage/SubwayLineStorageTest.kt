@@ -1,15 +1,14 @@
 package backend.team.ahachul_backend.common.storage
 
+import backend.team.ahachul_backend.common.config.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
 class SubwayLineStorageTest(
     @Autowired private val subwayLineStorage: SubwayLineStorage
-) {
+): CommonServiceTestConfig( ){
 
     @Test
     @DisplayName("호선 정보만 추출해서 반환한다.")

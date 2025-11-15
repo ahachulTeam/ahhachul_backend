@@ -2,6 +2,12 @@ package backend.team.ahachul_backend.common.client
 
 import backend.team.ahachul_backend.common.logging.Logger
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.lettuce.core.api.async.RedisAsyncCommands
+import io.lettuce.core.codec.StringCodec
+import io.lettuce.core.output.StatusOutput
+import io.lettuce.core.protocol.CommandArgs
+import io.lettuce.core.protocol.CommandKeyword
+import io.lettuce.core.protocol.CommandType
 import org.springframework.data.domain.Range
 import org.springframework.data.redis.connection.stream.*
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -60,14 +66,37 @@ class RedisClient(
 
     @Suppress("UNCHECKED_CAST")
     fun createStreamConsumerGroup(streamKey: String, consumerGroupName: String) {
-        val streamOps = redisTemplate.opsForStream<String, String>()
+        val streamExists = redisTemplate.hasKey(streamKey)
 
-        val existingGroups = streamOps.groups(streamKey)
-        val groupExists = existingGroups.any { it.groupName() == consumerGroupName }
+        if (!streamExists) {
+            val native = redisTemplate.connectionFactory!!
+                .connection
+                .nativeConnection as RedisAsyncCommands<String, String>
 
-        if (!groupExists) {
-            streamOps.createGroup(streamKey, ReadOffset.from("0"), consumerGroupName)
+            val args = CommandArgs<String, String>(StringCodec.UTF8)
+                .add(CommandKeyword.CREATE)
+                .add(streamKey)
+                .add(consumerGroupName)
+                .add("0")
+                .add("MKSTREAM")
+
+            native.dispatch(
+                CommandType.XGROUP,
+                StatusOutput(StringCodec.UTF8),
+                args
+            )
+
+        } else {
+            if (!isStreamConsumerGroupExist(streamKey, consumerGroupName)) {
+                redisTemplate.opsForStream<String, String>()
+                    .createGroup(streamKey, ReadOffset.from("0"), consumerGroupName)
+            }
         }
+    }
+
+    private fun isStreamConsumerGroupExist(streamKey: String, consumerGroupName: String): Boolean {
+        val groups = redisTemplate.opsForStream<String, String>().groups(streamKey)
+        return groups.any { it.groupName() == consumerGroupName }
     }
 
     fun createStreamMessageListenerContainer(): StreamMessageListenerContainer<String, MapRecord<String, String, String>> {

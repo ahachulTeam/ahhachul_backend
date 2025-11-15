@@ -1,16 +1,15 @@
 package backend.team.ahachul_backend.common.storage
 
 
+import backend.team.ahachul_backend.common.config.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
 class CategoryStorageTest(
     @Autowired private val categoryStorage: CategoryStorage
-) {
+): CommonServiceTestConfig() {
 
     @Test
     @DisplayName("주요 카테고리만 추출해서 반환한다.")
