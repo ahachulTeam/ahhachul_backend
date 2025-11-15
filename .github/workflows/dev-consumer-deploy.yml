@@ -61,7 +61,7 @@ jobs:
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_BATCH_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_CONSUMER_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Download build artifact (JAR and Dockerfile)
         uses: actions/download-artifact@v4
@@ -85,7 +85,7 @@ jobs:
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_BATCH_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_CONSUMER_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
