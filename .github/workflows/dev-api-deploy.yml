@@ -2,7 +2,8 @@ name: CI/CD Pipeline for Dev API
 
 on:
   push:
-    branches: []
+    branches-ignore:
+      - '**'
     paths-ignore:
       - 'scheduler/**'
       - '.github/**'
