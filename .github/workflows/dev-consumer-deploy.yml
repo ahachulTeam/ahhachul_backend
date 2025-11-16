@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - develop
-      - feature/352
     paths-ignore:
       - 'application/**'
+      - '.github/**'
       - 'scheduler/**'
   workflow_dispatch:
 
