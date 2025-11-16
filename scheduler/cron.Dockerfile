@@ -1,4 +1,4 @@
-FROM python:3.7-slim
+FROM python:3.11-slim
 
 # 작업 디렉터리 설정
 WORKDIR /app
@@ -18,7 +18,7 @@ RUN mkdir -p /app/script && \
     chmod +x /app/script/new.sh
 
 # 크론탭 설정
-RUN echo "0 15 * * * /app/script/new.sh >> /var/log/cron.log 2>&1" | crontab -
+RUN echo "*/5 * * * * /app/script/new.sh >> /var/log/cron.log 2>&1" | crontab -
 
 # 크론 데몬 실행
 CMD ["cron", "-f"]

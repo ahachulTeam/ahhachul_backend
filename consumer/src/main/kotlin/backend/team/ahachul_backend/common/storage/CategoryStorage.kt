@@ -16,6 +16,9 @@ class CategoryStorage(
 
     fun extractPrimaryCategory(categoryName: String): String{
         val idx = categoryName.indexOf(">")
+        if (idx < 0) {
+            return categoryName
+        }
         val primaryCategory = categoryName.substring(0, idx)
         return primaryCategory.trim()
     }

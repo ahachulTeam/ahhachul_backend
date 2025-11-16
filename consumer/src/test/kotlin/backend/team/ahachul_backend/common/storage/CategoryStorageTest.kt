@@ -1,6 +1,7 @@
 package backend.team.ahachul_backend.common.storage
 
-import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
+
+import backend.team.ahachul_backend.common.config.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

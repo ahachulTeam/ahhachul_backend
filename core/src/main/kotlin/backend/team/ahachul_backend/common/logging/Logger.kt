@@ -25,6 +25,10 @@ class Logger(
         logger.error { message }
     }
 
+    fun error(message: String?, ex: Throwable) {
+        logger.error(ex) { message }
+    }
+
     fun error(message: String?, code: ResponseCode, ex: Exception) {
         logger.error(ex) { makeMessage(message, code) }
     }

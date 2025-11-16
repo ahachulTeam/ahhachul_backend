@@ -1,24 +1,26 @@
-name: CI/CD Pipeline for Dev Cron
+name: CI/CD Pipeline for Dev Consumer
 
 on:
   push:
     branches:
       - develop
-    paths:
-      - 'scheduler/cron.Dockerfile'
+      - feature/352
+    paths-ignore:
+      - 'application/**'
+      - 'scheduler/**'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      MODULE_NAME: scheduler
+      MODULE_NAME: consumer
     steps:
       - name: Parse combined secrets
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_BATCH_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_CONSUMER_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -26,12 +28,29 @@ jobs:
           token: ${{ env.TOKEN_GITHUB }}
           submodules: true
 
-      - name: Upload build artifact (Dockerfile)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v1
+        with:
+          java-version: 17
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        shell: bash
+
+      - name: Build with Gradle
+        run: SPRING_PROFILES_ACTIVE=test ./gradlew :${{ env.MODULE_NAME }}:clean :${{ env.MODULE_NAME }}:build
+        shell: bash
+
+      - name: Debug working directory
+        run: pwd && ls -al ./${{ env.MODULE_NAME }}/src/main/resources/
+
+      - name: Upload build artifact (JAR and Dockerfile)
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
-            ./${{ env.MODULE_NAME }}/*.Dockerfile
+            ./${{ env.MODULE_NAME }}/build/libs/*.jar
+            ./${{ env.MODULE_NAME }}/Dockerfile
 
   upload-docker-image:
     runs-on: ubuntu-latest
@@ -41,9 +60,9 @@ jobs:
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_BATCH_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_CONSUMER_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
-      - name: Download build artifact (Dockerfile)
+      - name: Download build artifact (JAR and Dockerfile)
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
@@ -52,10 +71,10 @@ jobs:
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPOSITORY_URI }}
 
-      - name: Build Cron Job container image
+      - name: Build Spring container image
         run: |
-          docker build -t ${{ env.ECR_REPOSITORY_URI }}/cron:latest -f cron.Dockerfile .
-          docker push ${{ env.ECR_REPOSITORY_URI }}/cron:latest
+          docker build --build-arg PROFILE=${{ env.ENVIRONMENT }} -t ${{ env.ECR_REPOSITORY_URI }}:latest -f Dockerfile .
+          docker push ${{ env.ECR_REPOSITORY_URI }}:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -65,7 +84,7 @@ jobs:
         id: parse_secrets
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_BATCH_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_CONSUMER_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -94,29 +113,34 @@ jobs:
       - name: Deploy to EC2 using SSM
         id: deploy-ssm
         run: |
+          CONSUMER1="${{ env.CONSUMER }}-1"
+          CONSUMER2="${{ env.CONSUMER }}-2"
+      
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }} \
-            --parameters commands=["""
-                  docker stop cron-app || true && \
-                  docker rm cron-app || true && \
-                  docker pull ${{ env.ECR_REPOSITORY_URI }}/cron:latest && \
-                  docker run -d \
-                    --name cron-app \
-                    -e access-key=${{ env.S3_ACCESS_KEY }} \
-                    -e secret-key=${{ env.S3_SECRET_KEY }} \
-                    -e region=${{ env.S3_REGION }} \
-                    -e bucket-name=${{ env.S3_BUCKET_NAME }} \
-                    -e host=${{ env.REDIS_HOST }} \
-                    -e port=${{ env.REDIS_PORT }} \
-                    -e stream=${{ env.REDIS_STREAM }} \
-                    ${{ env.ECR_REPOSITORY_URI }}/cron:latest
-                """] \
-            --comment "Deploy new Docker container" \
+            --parameters commands=["\"""
+              docker pull ${{ env.ECR_REPOSITORY_URI }}:latest && \
+              docker stop ${CONSUMER1} ${CONSUMER2} || true && \
+              docker rm ${CONSUMER1} ${CONSUMER2} || true && \
+              docker run -d \
+                --name ${CONSUMER1} \
+                -e KEY=${{ env.KEY }} \
+                -e CONSUMER_GROUP_NAME=${{ env.CONSUMER_GROUP_NAME }} \
+                -e CONSUMER_NAME=${CONSUMER1} \
+                ${{ env.ECR_REPOSITORY_URI }}:latest && \
+              docker run -d \
+                --name ${CONSUMER2} \
+                -e KEY=${{ env.KEY }} \
+                -e CONSUMER_GROUP_NAME=${{ env.CONSUMER_GROUP_NAME }} \
+                -e CONSUMER_NAME=${CONSUMER2} \
+                ${{ env.ECR_REPOSITORY_URI }}:latest
+            "\"""] \
+            --comment "Deploy lostpost consumers" \
             --query "Command.CommandId" \
             --output text \
             --region ${{ env.AWS_REGION }})
-
+          
           if [ -z "$COMMAND_ID" ]; then
             echo "Failed to send command"
             exit 1

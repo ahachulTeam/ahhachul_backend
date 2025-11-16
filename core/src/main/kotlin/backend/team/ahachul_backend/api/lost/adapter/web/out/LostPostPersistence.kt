@@ -4,11 +4,15 @@ import backend.team.ahachul_backend.api.lost.application.port.out.LostPostReader
 import backend.team.ahachul_backend.api.lost.application.port.out.LostPostWriter
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetRecommendLostPostsCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetSliceLostPostsCommand
+import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
+import backend.team.ahachul_backend.api.lost.domain.model.Lost112Data
+import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.response.ResponseCode
 import org.springframework.data.domain.Slice
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 @Component
 class LostPostPersistence(
@@ -16,6 +20,7 @@ class LostPostPersistence(
     private val customLostPostRepository: CustomLostPostRepository
 ): LostPostWriter, LostPostReader {
 
+    @Transactional
     override fun save(lostPostEntity: LostPostEntity): LostPostEntity {
         return lostPostRepository.save(lostPostEntity)
     }

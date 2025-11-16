@@ -117,7 +117,15 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets Key=InstanceIds,Values=${{ steps.get-instance-id.outputs.instance_id }} \
-            --parameters commands=["${{ env.DEPLOY_COMMAND }}"] \
+            --parameters commands=["""
+              docker stop batch-app || true && \
+              docker rm batch-app || true && \
+              docker pull ${{ env.ECR_REPOSITORY_URI }}/app:latest && \
+              docker run -d \
+                --name batch-app \
+                -p 8080:8080 \
+                ${{ env.ECR_REPOSITORY_URI }}/app:latest
+            """] \
             --comment "Deploy new Docker container" \
             --query "Command.CommandId" \
             --output text \
