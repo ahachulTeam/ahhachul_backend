@@ -75,7 +75,7 @@ class CustomLostPostRepository(
                 lostTypeEq(command.lostType),
                 categoryEq(command.category),
                 typeNotEq(LostPostType.DELETED),
-                booleanMatch(command.keyword),
+                naturalMatch(command.keyword),
                 createdAtBeforeOrEqual(
                     command.lostType,
                     command.date,
@@ -157,18 +157,21 @@ class CustomLostPostRepository(
         }
 
     /**
-     * n-gram(default 2) parsing + search boolean mode(+)
+     * n-gram parsing(default 2) + natural language search
      */
-    private fun booleanMatch(keyword: String?): BooleanExpression? {
+    private fun naturalMatch(keyword: String?): BooleanExpression? {
         if (keyword.isNullOrBlank()) return null
 
-        val booleanQuery = "+$keyword"
-        return Expressions.numberTemplate(
-            Double::class.java,
-            "match_boolean({0}, {1}, {2})",
-            lostPostEntity.title,
-            lostPostEntity.content,
-            booleanQuery
-        ).gt(0)
+        return runCatching {
+            Expressions.numberTemplate(
+                Double::class.java,
+                "match_natural({0}, {1}, {2})",
+                lostPostEntity.title,
+                lostPostEntity.content,
+                keyword
+            ).gt(0)
+        }.getOrElse {
+            titleAndContentLike(keyword)
+        }
     }
 }
