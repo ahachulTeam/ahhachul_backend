@@ -9,7 +9,9 @@ import backend.team.ahachul_backend.api.lost.domain.model.LostOrigin
 import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
+import backend.team.ahachul_backend.common.config.MatchFunctionContributor
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
+import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.jdbc.core.JdbcTemplate
@@ -72,13 +74,13 @@ class CustomLostPostRepository(
                 subwayLinesEq(command.subwayLines),
                 lostTypeEq(command.lostType),
                 categoryEq(command.category),
-                titleAndContentLike(command.keyword),
+                typeNotEq(LostPostType.DELETED),
+                naturalMatch(command.keyword),
                 createdAtBeforeOrEqual(
                     command.lostType,
                     command.date,
                     command.lostPostId
-                ),
-                typeNotEq(LostPostType.DELETED)
+                )
             )
             .orderBy(*orderSpecifier.toTypedArray())
             .limit((command.pageSize + 1).toLong())
@@ -125,6 +127,7 @@ class CustomLostPostRepository(
     private fun categoryNotEq(category: CategoryEntity?) =
         category?.let { lostPostEntity.category.ne(category) }
 
+    @Deprecated("changed to full-text-search", ReplaceWith("booleanMatch(keyword)"))
     private fun titleAndContentLike(keyword: String?) =
         keyword?.let {
             lostPostEntity.title.contains(keyword)
@@ -133,7 +136,6 @@ class CustomLostPostRepository(
 
     private fun typeNotEq(type: LostPostType?) =
         type?.let { lostPostEntity.type.ne(type) }
-
 
     private fun createdAtBeforeOrEqual(lostType: LostType, localDateTime: LocalDateTime?, id: Long?) =
         if (lostType == LostType.ACQUIRE) {
@@ -153,4 +155,23 @@ class CustomLostPostRepository(
                 }
             }
         }
+
+    /**
+     * n-gram parsing(default 2) + natural language search
+     */
+    private fun naturalMatch(keyword: String?): BooleanExpression? {
+        if (keyword.isNullOrBlank()) return null
+
+        return runCatching {
+            Expressions.numberTemplate(
+                Double::class.java,
+                "match_natural({0}, {1}, {2})",
+                lostPostEntity.title,
+                lostPostEntity.content,
+                keyword
+            ).gt(0)
+        }.getOrElse {
+            titleAndContentLike(keyword)
+        }
+    }
 }
