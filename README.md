@@ -31,7 +31,8 @@
 ## 개발 스택
 
 - Spring Boot, Kotlin
-- Mysql, JPA, Data JPA, QueryDSL
+- JPA, Data JPA, QueryDSL
+- AWS RDS(MySQL), ElastiCache(Redis)
 - Spring REST Docs, Junit5, Mockito
 - Flyway
 
@@ -41,17 +42,22 @@
 
 > core
 
-엔티티, 레포지토리(영속성 계층) 관련 로직이 담긴 모듈입니다. <br>
+엔티티, 레포지토리(영속성 계층) 관련 의존성과 로직이 담긴 모듈입니다. <br>
 `flyway` 의존성은 해당 모듈에만 존재합니다.
 
 > application
 
-컨트롤러(뷰 계층)와 서비스 관련 로직이 담긴 모듈입니다.  <br>
+컨트롤러(뷰 계층)와 서비스 관련 의존성과 로직이 담긴 모듈입니다.  <br>
 코어 패키지를 공유하고 있으며, `RestDocs` 관련 의존성과 패키지는 해당 모듈에 존재합니다.
 
 > scheduler
 
-스케줄러 관련 의존성, 패키지가 담긴 모듈입니다.  <br>
+스케줄러 관련 의존성과 로직이 담긴 모듈입니다.  <br>
+코어 패키지를 공유하고 있습니다.
+
+> consumer
+
+스트림 컨슈머 관련 의존성과 로직이 담긴 모듈입니다. <br>
 코어 패키지를 공유하고 있습니다.
 
 ```javascript
@@ -86,7 +92,8 @@
 
 #### Github Action, AWS ECR / ECS, Docker
 
-<img width="716" alt="스크린샷 2025-05-04 오전 11 39 49" src="https://github.com/user-attachments/assets/066ed711-dd4b-4713-8ea1-df0e724b2178" />
+<img width="836" height="482" alt="스크린샷 2025-11-18 오후 3 55 54" src="https://github.com/user-attachments/assets/61b29c06-e5fa-4634-b108-b840aa03d09a" />
+" />
 
 
 
