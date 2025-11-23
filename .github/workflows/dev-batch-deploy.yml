@@ -8,6 +8,7 @@ on:
       - 'application/**'
       - '.github/**'
       - 'scheduler/cron.Dockerfile'
+      - 'consumer/**'
   workflow_dispatch:
 
 jobs:

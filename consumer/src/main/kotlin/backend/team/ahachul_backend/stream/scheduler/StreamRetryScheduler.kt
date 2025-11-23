@@ -47,9 +47,10 @@ class StreamRetryScheduler(
     @Value("\${stream.consumer-name}")
     private lateinit var consumerName: String
 
+    private val initRetrySecond = 5L
     private val maxRetry = 5
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 5000)
     fun reclaimAndRetry() {
         // pending 상태인 메시지들을 가져온다.
         val pendingMessages: PendingMessages = redisClient.findPendingMessages(
@@ -65,8 +66,8 @@ class StreamRetryScheduler(
             .ifEmpty { listOf(consumerName) }
 
         for (attempt in 1.. maxRetry) {  // 최대 리트 횟수를 5번이라고 했을 때
-            val minutes = 1L * (1L shl (attempt - 1))
-            val backOff = Duration.ofMillis(minutes)
+            val seconds = initRetrySecond * (1L shl (attempt - 1))
+            val backOff = Duration.ofMillis(seconds * 1000)
 
             val eligible: List<PendingMessage> = pendingMessages
                 .filter { it.totalDeliveryCount == attempt.toLong() && it.elapsedTimeSinceLastDelivery >= backOff }
@@ -76,7 +77,7 @@ class StreamRetryScheduler(
                 continue
             }
 
-            // 특정 회차에 도달하면(예: maxRetry 초과) 알림만 보내고 재시도(Claim) 생략 -> 개발자 수동 처리 정책
+            // TODO: 특정 회차에 도달하면(예: maxRetry 초과) failed stream 전송 -> 알림 보낸 후 개발자 수동 처리
             if (attempt >= maxRetry) {
                 logger.error("Exceeded max retry. Pending IDs: ${eligible.map { it.id }.joinToString()}")
                 continue
