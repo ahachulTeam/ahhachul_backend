@@ -69,8 +69,8 @@ subprojects {
 
         // https://www.testcontainers.org/
         testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
-        testImplementation("org.testcontainers:testcontainers:1.18.1")
-        testImplementation("org.testcontainers:junit-jupiter:1.18.1")
+        testImplementation("org.testcontainers:testcontainers:1.20.4")
+        testImplementation("org.testcontainers:junit-jupiter:1.20.4")
 
         runtimeOnly("com.mysql:mysql-connector-j")
         implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -106,6 +106,14 @@ subprojects {
 
     tasks.withType<Test> {
         useJUnitPlatform()
+        // Docker 29+ 환경에서 Testcontainers의 Docker API 버전 불일치를 방지합니다.
+        systemProperty("api.version", System.getProperty("api.version", "1.44"))
+        systemProperty("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
+        systemProperty("spring.profiles.active", System.getProperty("spring.profiles.active", "test"))
+        // PR test에서 외부 시크릿 환경변수가 주입되어도 Flyway가 활성화되지 않도록 고정합니다.
+        systemProperty("spring.flyway.enabled", System.getProperty("spring.flyway.enabled", "false"))
+        // test 환경에서 data.sql 자동 실행으로 인한 스키마 불일치를 방지합니다.
+        systemProperty("spring.sql.init.mode", System.getProperty("spring.sql.init.mode", "never"))
     }
 }
 
