@@ -6,10 +6,15 @@
 
 - Common: `docs/governance/CONVENTIONS_COMMON.md`
 - Backend (this repo): `docs/governance/CONVENTIONS_BE.md`
+- Backend runtime governance:
+  - `docs/BE_RULEBOOK.md`
+  - `docs/BE_VALIDATOR_CHECKLIST.md`
+  - `docs/BE_SPRINT_BOARD.md`
 - Frontend (`ahachul_web` repo): `/Users/createahb21/Documents/Programming/repositories/@Ahhachul/ahachul_web/docs/refactor/CONVENTIONS_FE.md`
 
 ## Precedence
 
 1. Repo-specific conventions (`CONVENTIONS_BE`)
-2. Shared conventions (`CONVENTIONS_COMMON`)
-3. Domain rulebooks/checklists (`BACKEND_DB_INFRA_*`)
+2. Backend runtime governance (`BE_RULEBOOK`, `BE_VALIDATOR_CHECKLIST`, `BE_SPRINT_BOARD`)
+3. Shared conventions (`CONVENTIONS_COMMON`)
+4. Domain rulebooks/checklists (`BACKEND_DB_INFRA_*`)
