@@ -25,6 +25,20 @@
 4. Parse combined secrets 단계에 `::add-mask::` 적용 및 안전한 키/값 주입 방식 사용
 5. PR Test에서 submodule checkout은 비활성화(`submodules: false`)하여 1차 안정성 확보
 
+## Iteration 2 (Fail)
+- run: `22111610850` (`push`)
+- status: failed (jobs 0)
+- observed symptom:
+  - workflow name이 `PR Test`가 아닌 파일 경로(`.github/workflows/pr-test.yml`)로 표시
+  - 실행 job이 생성되지 않음
+- inferred root cause:
+  - secrets context를 step-level `if:`에서 직접 참조한 구성이 workflow validation에서 문제를 유발
+
+## Iteration 2 Fixes
+1. step-level `if: ${{ secrets... }}` 제거
+2. run script 내부에서 `DEV_API_META_DATA` empty guard 처리
+3. checkout의 token 입력은 default behavior로 단순화
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정

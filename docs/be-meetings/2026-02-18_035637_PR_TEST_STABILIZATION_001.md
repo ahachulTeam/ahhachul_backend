@@ -46,3 +46,11 @@
 2. PR Test 재실행
 3. 실패 시 로그 기반 보정 반복
 4. 연속 성공 확인 후 최종 보고
+
+## Addendum (Iteration 2)
+- 추가 실패 run: `22111610850` (`push`, jobs 0)
+- 판단:
+  - step-level `if`에서 secrets context 직접 참조가 workflow validation 리스크를 만들 수 있음
+- 보정:
+  - `if` 제거 후 run script 내부 empty guard로 대체
+  - checkout token 설정 단순화(기본 토큰 경로)

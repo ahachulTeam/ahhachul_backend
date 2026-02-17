@@ -15,11 +15,15 @@ jobs:
       pull-requests: write
     steps:
       - name: Parse combined secrets
-        if: ${{ secrets.DEV_API_META_DATA != '' }}
         env:
           DEV_API_META_DATA: ${{ secrets.DEV_API_META_DATA }}
         run: |
           echo "Extracting secrets..."
+          if [ -z "$DEV_API_META_DATA" ]; then
+            echo "DEV_API_META_DATA is empty. Skip parsing."
+            exit 0
+          fi
+
           while IFS= read -r row; do
             key="$(echo "$row" | jq -r '.key')"
             value="$(echo "$row" | jq -r '.value')"
@@ -31,7 +35,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          token: ${{ github.token }}
           submodules: false
 
       - name: Set up JDK 17
