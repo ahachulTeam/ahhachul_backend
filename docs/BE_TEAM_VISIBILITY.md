@@ -4,15 +4,15 @@
 - BE 다역할 협업 상태를 단일 문서/파일 세트로 추적합니다.
 
 ## Source of Truth
-- runtime status: `docs/governance/BE_TEAM_STATUS.json`
-- handoff history: `docs/governance/BE_HANDOFF_LOG.ndjson`
-- sprint backlog: `docs/governance/BE_SPRINT_BOARD.md`
-- milestone narrative: `docs/governance/BE_WORKLOG.md`
+- runtime status: `docs/BE_TEAM_STATUS.json`
+- handoff history: `docs/BE_HANDOFF_LOG.ndjson`
+- sprint backlog: `docs/BE_SPRINT_BOARD.md`
+- milestone narrative: `docs/BE_WORKLOG.md`
 
 ## 빠른 확인 명령
 ```bash
-cat docs/governance/BE_TEAM_STATUS.json
-tail -n 20 docs/governance/BE_HANDOFF_LOG.ndjson
+cat docs/BE_TEAM_STATUS.json
+tail -n 20 docs/BE_HANDOFF_LOG.ndjson
 ```
 
 ## Update Contract

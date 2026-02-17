@@ -7,9 +7,9 @@
 - Common: `docs/governance/CONVENTIONS_COMMON.md`
 - Backend (this repo): `docs/governance/CONVENTIONS_BE.md`
 - Backend runtime governance:
-  - `docs/governance/BE_RULEBOOK.md`
-  - `docs/governance/BE_VALIDATOR_CHECKLIST.md`
-  - `docs/governance/BE_SPRINT_BOARD.md`
+  - `docs/BE_RULEBOOK.md`
+  - `docs/BE_VALIDATOR_CHECKLIST.md`
+  - `docs/BE_SPRINT_BOARD.md`
 - Frontend (`ahachul_web` repo): `/Users/createahb21/Documents/Programming/repositories/@Ahhachul/ahachul_web/docs/refactor/CONVENTIONS_FE.md`
 
 ## Precedence

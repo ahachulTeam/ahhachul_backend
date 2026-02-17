@@ -20,7 +20,7 @@ Owner: BE Lead + Technical Writer
 
 ## 3. Rulebook 운영 규칙
 - 본 문서 수정 시 같은 커밋에 `BE_RULEBOOK_CHANGELOG.md`를 반드시 갱신합니다.
-- BE 회의록은 `docs/governance/be-meetings`에 `YYYY-MM-DD_HHMMSS_<TOPIC>.md` 형식으로 저장합니다.
+- BE 회의록은 `docs/be-meetings`에 `YYYY-MM-DD_HHMMSS_<TOPIC>.md` 형식으로 저장합니다.
 - 회의 파일 추가 시 `BE_MEETING_LOG.md` 인덱스를 동기화합니다.
 - PR 기본 규칙:
   - base branch: `codex/main`
