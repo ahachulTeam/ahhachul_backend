@@ -105,3 +105,14 @@
   - workflow step 환경변수만으로는 Gradle test worker JVM까지 profile 주입이 보장되지 않음
 - 보정:
   - `tasks.withType<Test>`에 `spring.profiles.active=test` system property 강제 주입
+
+## Addendum (Iteration 8)
+- 추가 실패 run: `22112606186` (`pull_request`)
+- 로그 핵심:
+  - test worker 시작 커맨드에 `-Dspring.profiles.active=test` 존재
+  - 실행 로그에 `The following 1 profile is active: "test"` 반복
+  - 그럼에도 Flyway migration이 실행되어 H2 문법 오류로 테스트 대량 실패(164 중 103 fail)
+- 판단:
+  - profile 미적용 이슈는 해소되었고, 외부 주입 설정으로 인해 `spring.flyway.enabled`가 재활성화되는 환경 오염 가능성이 높음
+- 보정:
+  - `tasks.withType<Test>`에 `spring.flyway.enabled=false` system property 강제 주입

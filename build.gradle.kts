@@ -110,6 +110,8 @@ subprojects {
         systemProperty("api.version", System.getProperty("api.version", "1.44"))
         systemProperty("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
         systemProperty("spring.profiles.active", System.getProperty("spring.profiles.active", "test"))
+        // PR test에서 외부 시크릿 환경변수가 주입되어도 Flyway가 활성화되지 않도록 고정합니다.
+        systemProperty("spring.flyway.enabled", System.getProperty("spring.flyway.enabled", "false"))
     }
 }
 

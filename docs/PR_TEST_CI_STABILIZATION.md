@@ -119,6 +119,21 @@
 1. Gradle `tasks.withType<Test>`에 `spring.profiles.active=test` system property 강제 주입
 2. test worker JVM 수준에서 profile 확정
 
+## Iteration 8 (Fail)
+- run: `22112606186` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - test worker 시작 커맨드에 `-Dspring.profiles.active=test`가 명시됨
+  - 로그에 `The following 1 profile is active: "test"` 반복 출력
+  - 그럼에도 Flyway migration `V202306110345__update_lost.sql` 실행 및 H2 문법 오류로 103개 테스트 실패
+- inferred root cause:
+  - test profile 활성화는 되었지만, 외부 주입 설정(예: secrets 기반 `SPRING_*`)에 의해 `spring.flyway.enabled`가 다시 활성화되는 환경 오염 발생
+
+## Iteration 8 Fixes
+1. Gradle `tasks.withType<Test>`에 `spring.flyway.enabled=false` system property 강제 주입
+2. CI secrets 오염 여부와 무관하게 test JVM에서 Flyway 비활성 상태를 보장
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정
