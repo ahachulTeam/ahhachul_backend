@@ -39,9 +39,6 @@ aws sts get-caller-identity
 # backend 기본 검증(레포 루트 기준)
 ./gradlew test
 
-# backend application 로컬 실행(추가 env 없이)
-./gradlew :application:bootRun --args='--spring.profiles.active=local'
-
 # data repo 기본 실행 예시
 python main.py -o ca
 python main.py -o un
@@ -52,3 +49,4 @@ python main.py -o ad -d 20260101
 - AWS 계정 불일치 상태에서 실제 리소스 접근이 필요한 명령을 실행하려는 경우 즉시 중단.
 - 시크릿 값이 필요하지만 안전한 소스(ahachul_secret/env) 없이 하드코딩하려는 경우 즉시 중단.
 - Flyway 없이 DB 수동 변경으로 진행하려는 경우 즉시 중단.
+
