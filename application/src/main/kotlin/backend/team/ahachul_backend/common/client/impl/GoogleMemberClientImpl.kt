@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.*
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 import java.util.*
 
@@ -32,7 +33,11 @@ class GoogleMemberClientImpl(
             contentType = MediaType.APPLICATION_FORM_URLENCODED
         }
         val httpEntity = HttpEntity(getHttpBodyParams(code, origin), headers)
-        val response = restTemplate.exchange(provider.tokenUri, HttpMethod.POST, httpEntity, String::class.java)
+        val response = try {
+            restTemplate.exchange(provider.tokenUri, HttpMethod.POST, httpEntity, String::class.java)
+        } catch (e: HttpClientErrorException) {
+            throw CommonException(ResponseCode.INVALID_OAUTH_AUTHORIZATION_CODE, e)
+        }
 
         if (response.statusCode == HttpStatus.OK) {
             return objectMapper.readValue(response.body, GoogleAccessTokenDto::class.java).accessToken
@@ -55,7 +60,11 @@ class GoogleMemberClientImpl(
             setBearerAuth(accessToken)
         }
         val httpEntity = HttpEntity<Any>(headers)
-        val response = restTemplate.exchange(provider.userInfoUri!!, HttpMethod.GET, httpEntity, String::class.java)
+        val response = try {
+            restTemplate.exchange(provider.userInfoUri!!, HttpMethod.GET, httpEntity, String::class.java)
+        } catch (e: HttpClientErrorException) {
+            throw CommonException(ResponseCode.INVALID_OAUTH_ACCESS_TOKEN, e)
+        }
 
         if (response.statusCode == HttpStatus.OK) {
             return objectMapper.readValue(response.body, GoogleUserInfoDto::class.java)

@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.common.response.CommonResponse
 import backend.team.ahachul_backend.common.response.ResponseCode
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -22,6 +23,16 @@ class CommonExceptionHandler {
                 ex = e
         )
         return ResponseEntity(CommonResponse.fail(), HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
+    fun methodNotSupportedException(e: HttpRequestMethodNotSupportedException): ResponseEntity<CommonResponse<Unit>> {
+        logger.error(
+                message = e.message,
+                code = ResponseCode.BAD_REQUEST,
+                ex = e
+        )
+        return ResponseEntity(CommonResponse.fail(ResponseCode.BAD_REQUEST), HttpStatus.METHOD_NOT_ALLOWED)
     }
 
     @ExceptionHandler(CommonException::class)
