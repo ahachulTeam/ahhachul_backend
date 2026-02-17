@@ -134,6 +134,21 @@
 1. Gradle `tasks.withType<Test>`에 `spring.flyway.enabled=false` system property 강제 주입
 2. CI secrets 오염 여부와 무관하게 test JVM에서 Flyway 비활성 상태를 보장
 
+## Iteration 9 (Fail)
+- run: `22112919805` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - Flyway 오류는 사라짐
+  - `DataSourceScriptDatabaseInitializer`가 core 모듈 `data.sql` 실행 시도
+  - `Table "TB_MEMBER" not found`로 초기화 실패
+- inferred root cause:
+  - secrets parse로 주입된 `SPRING_*` 환경변수가 test 설정(`spring.sql.init.mode=never`, `ddl-auto=create-drop`)을 덮어써 SQL init 경로가 재활성화됨
+
+## Iteration 9 Fixes
+1. `pr-test.yml`의 Parse secrets 단계에서 `SPRING_*` 키 전체 주입 차단
+2. Gradle `tasks.withType<Test>`에 `spring.sql.init.mode=never` system property 강제 주입
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정

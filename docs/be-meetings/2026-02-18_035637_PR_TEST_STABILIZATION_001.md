@@ -116,3 +116,14 @@
   - profile 미적용 이슈는 해소되었고, 외부 주입 설정으로 인해 `spring.flyway.enabled`가 재활성화되는 환경 오염 가능성이 높음
 - 보정:
   - `tasks.withType<Test>`에 `spring.flyway.enabled=false` system property 강제 주입
+
+## Addendum (Iteration 9)
+- 추가 실패 run: `22112919805` (`pull_request`)
+- 로그 핵심:
+  - Flyway 실패는 사라졌으나 `DataSourceScriptDatabaseInitializer` 경로에서 실패
+  - core 모듈 `data.sql` 실행 중 `Table "TB_MEMBER" not found` 발생
+- 판단:
+  - secrets parse로 주입된 `SPRING_*` 환경변수가 test 설정(`sql.init.mode=never`)을 덮어써 SQL init이 재활성화됨
+- 보정:
+  - `pr-test.yml` Parse 단계에서 `SPRING_*` 키 전체 차단
+  - `tasks.withType<Test>`에 `spring.sql.init.mode=never` system property 강제 주입

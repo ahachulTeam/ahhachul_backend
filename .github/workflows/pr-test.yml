@@ -28,7 +28,7 @@ jobs:
             key="$(echo "$row" | jq -r '.key')"
             value="$(echo "$row" | jq -r '.value')"
 
-            if [[ "$key" == DOCKER_HOST || "$key" == DOCKER_API_VERSION || "$key" == TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE ]]; then
+            if [[ "$key" == SPRING_* || "$key" == DOCKER_HOST || "$key" == DOCKER_API_VERSION || "$key" == TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE ]]; then
               echo "Skip unsafe runtime key: $key"
               continue
             fi

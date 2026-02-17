@@ -112,6 +112,8 @@ subprojects {
         systemProperty("spring.profiles.active", System.getProperty("spring.profiles.active", "test"))
         // PR test에서 외부 시크릿 환경변수가 주입되어도 Flyway가 활성화되지 않도록 고정합니다.
         systemProperty("spring.flyway.enabled", System.getProperty("spring.flyway.enabled", "false"))
+        // test 환경에서 data.sql 자동 실행으로 인한 스키마 불일치를 방지합니다.
+        systemProperty("spring.sql.init.mode", System.getProperty("spring.sql.init.mode", "never"))
     }
 }
 
