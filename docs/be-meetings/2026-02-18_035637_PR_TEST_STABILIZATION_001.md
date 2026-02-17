@@ -75,3 +75,13 @@
 - 보정:
   - Parse 단계에서 `DOCKER_*`, `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` 주입 차단
   - 테스트 전 Docker 런타임 변수 강제 정규화 및 값 출력 단계 추가
+
+## Addendum (Iteration 5)
+- 추가 실패 run: `22111991079` (`pull_request`)
+- 로그 핵심:
+  - 워크플로 환경 변수는 `DOCKER_HOST=unix:///var/run/docker.sock`, `DOCKER_API_VERSION=1.44`로 정상
+  - Testcontainers 내부는 여전히 `client version 1.32`로 요청
+- 판단:
+  - Docker API 버전 값이 test JVM system property까지 전달되지 않아 docker-java 기본값 경로가 유지
+- 보정:
+  - `tasks.withType<Test>`에 `api.version` 및 `DOCKER_HOST` system property 강제 주입

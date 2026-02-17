@@ -75,6 +75,21 @@
    - `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`
 3. 디버깅 가시성 확보를 위해 Docker 관련 변수 출력 단계 추가
 
+## Iteration 5 (Fail)
+- run: `22111991079` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - Docker runtime 변수 출력은 정상 (`DOCKER_HOST=unix:///var/run/docker.sock`, `DOCKER_API_VERSION=1.44`)
+  - Testcontainers 내부 클라이언트는 여전히 `client version 1.32`로 접속 시도
+- inferred root cause:
+  - Docker API 버전 설정이 테스트 JVM(system property)까지 전달되지 않음
+
+## Iteration 5 Fixes
+1. Gradle `tasks.withType<Test>`에 Test JVM system property 강제 주입
+   - `api.version=1.44`
+   - `DOCKER_HOST=unix:///var/run/docker.sock` (환경 변수 미설정 시 fallback)
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정
