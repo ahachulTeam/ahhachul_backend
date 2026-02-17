@@ -9,15 +9,26 @@ class ContainerTest: BeforeAllCallback {
     companion object {
         private const val REDIS_IMAGE = "redis:7.2-rc1-alpine"
         private const val REDIS_PORT = 6379
+        @Volatile
+        private var redis: GenericContainer<Nothing>? = null
+        private val lock = Any()
+
+        private fun getOrStartRedisContainer(): GenericContainer<Nothing> {
+            redis?.let { return it }
+            synchronized(lock) {
+                redis?.let { return it }
+                val container = GenericContainer<Nothing>(DockerImageName.parse(REDIS_IMAGE))
+                container.withExposedPorts(REDIS_PORT)
+                container.start()
+                redis = container
+                return container
+            }
+        }
     }
 
-    private lateinit var redis: GenericContainer<Nothing>
-
     override fun beforeAll(context: ExtensionContext?) {
-        redis = GenericContainer<Nothing>(DockerImageName.parse(REDIS_IMAGE))
-            .withExposedPorts(REDIS_PORT)
-        redis.start()
-        System.setProperty("spring.data.redis.host", redis.host)
-        System.setProperty("spring.data.redis.port", redis.getMappedPort(REDIS_PORT).toString())
+        val redisContainer = getOrStartRedisContainer()
+        System.setProperty("spring.data.redis.host", redisContainer.host)
+        System.setProperty("spring.data.redis.port", redisContainer.getMappedPort(REDIS_PORT).toString())
     }
 }

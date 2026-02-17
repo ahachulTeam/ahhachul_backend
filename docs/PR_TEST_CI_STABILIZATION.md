@@ -164,6 +164,25 @@
 1. `pr-test.yml`에서 `Parse combined secrets` 단계 제거
 2. PR 테스트는 저장소 내 test 설정만 사용하도록 고정해 환경 오염 경로 제거
 
+## Iteration 11 (Fail: Stuck)
+- run: `22113485237` (`pull_request`)
+- status: cancelled (manual, after prolonged in-progress)
+- failure point: `Test with Gradle` 단계 장기 정체
+- evidence:
+  - `Compile Test Kotlin` 완료 후 `Test with Gradle`가 25분 이상 `in_progress` 유지
+  - job/log API에서 진행 로그를 제공하지 못한 채 상태가 고정
+- inferred root cause:
+  - 테스트 클래스 단위 Redis Testcontainer 반복 기동으로 전체 수행 시간이 급증
+  - `--info` 기반 과다 로그 출력이 장기 실행 시 관찰/회수 효율을 저하시킴
+
+## Iteration 11 Fixes
+1. Redis Testcontainer 기동 전략 개선
+   - `application`, `consumer` 테스트 `ContainerTest`를 JVM당 1회 singleton 기동으로 변경
+   - 클래스별 재기동 제거로 테스트 컨텍스트/컨테이너 churn 감소
+2. `pr-test.yml` 실행 안정화
+   - job `timeout-minutes: 45` 추가
+   - 테스트 명령을 `./gradlew --no-daemon test`로 변경 (`--info` 제거)
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정

@@ -139,3 +139,17 @@
 - 보정:
   - `pr-test.yml`에서 `Parse combined secrets` 단계 제거
   - PR Test는 repository 내부 `application-test.yml`만 기준으로 실행
+
+## Addendum (Iteration 11)
+- 추가 실패 run: `22113485237` (`pull_request`)
+- 로그 핵심:
+  - `Compile Test Kotlin`까지 정상 종료
+  - `Test with Gradle` 단계가 25분 이상 `in_progress`로 지속되어 수동 취소
+  - 상태 API/로그 API에서 완료 판정 가능한 결과를 반환하지 못함
+- 판단:
+  - 테스트 클래스 단위 Redis Testcontainer 반복 기동으로 실행 시간이 과도하게 증가했을 가능성이 높음
+  - `--info` 상세 로그로 장시간 실행 시 추적 효율이 떨어짐
+- 보정:
+  - `application`/`consumer` 테스트 `ContainerTest`를 singleton 기동으로 변경 (JVM당 1회)
+  - `pr-test.yml`에 `timeout-minutes: 45` 추가
+  - 테스트 명령을 `./gradlew --no-daemon test`로 조정
