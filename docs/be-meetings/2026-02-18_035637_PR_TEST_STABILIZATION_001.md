@@ -167,3 +167,14 @@
   - `.gitignore`에 모듈 test config 예외 경로 추가
   - `application/consumer/core/scheduler/src/test/resources/application-test.yml`를 민감정보 제거 더미값으로 저장소에 명시 추가
   - PR Test를 외부 secret 부재 조건에서도 독립 실행 가능하도록 정렬
+
+## Addendum (Iteration 13)
+- 검증 run: `22114860183` (`pull_request`)
+- 결과:
+  - attempt 1: success
+  - attempt 2 (rerun): success
+- 관찰:
+  - `:application:test`, `:consumer:test` 모두 정상 통과
+  - `KakaoMemberClientImpl` NPE 및 연쇄 `OutOfMemoryError` 재발 없음
+- 결론:
+  - 테스트 설정의 외부 secret 의존 제거가 유효했고, 동일 커밋 연속 성공으로 안정화 기준 충족

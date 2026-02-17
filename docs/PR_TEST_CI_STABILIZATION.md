@@ -202,6 +202,19 @@
    - `oauth`, `jwt`, `public-data`, `cloud.aws.credentials` 등 필수 바인딩 키를 더미 값으로 고정
 3. PR Test가 `ahachul_secret` 부재 환경에서도 독립적으로 부팅/바인딩되도록 정렬
 
+## Iteration 13 (Success)
+- run: `22114860183` (`pull_request`)
+- result:
+  - attempt 1: success
+  - attempt 2 (manual rerun): success
+- evidence:
+  - `:application:test` 통과
+  - `:consumer:test` 통과
+  - 최종 `BUILD SUCCESSFUL`
+- conclusion:
+  - `ahachul_secret` 부재 환경에서도 test profile 바인딩 불안정성이 해소됨
+  - 동일 커밋 연속 성공으로 PR Test 안정화 기준 충족
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정
