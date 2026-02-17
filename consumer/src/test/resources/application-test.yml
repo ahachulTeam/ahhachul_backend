@@ -1,0 +1,101 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      naming:
+        physical-strategy: backend.team.ahachul_backend.common.config.PhysicalNamingStrategy
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+    database-platform: H2
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: never
+
+  flyway:
+    enabled: false
+
+jwt:
+  secret-key: "0123456789012345678901234567890123456789012345678901234567890123"
+  access-token-expire-time: 3600
+  refresh-token-expire-time: 259200
+
+oauth:
+  client:
+    kakao:
+      client-id: "test-kakao-client-id"
+      redirect-uri-path: "/login/callback?type=KAKAO"
+      response-type: "code"
+    google:
+      client-id: "test-google-client-id"
+      client-secret: "test-google-client-secret"
+      redirect-uri-path: "/login/callback?type=GOOGLE"
+      scope: "profile email"
+      response-type: "code"
+      access-type: "offline"
+    apple:
+      client-id: "test-apple-client-id"
+      redirect-uri-path: "/login/callback?type=APPLE"
+      response-type: "code"
+      scope: "openid"
+
+  provider:
+    kakao:
+      login-uri: "https://example.com/oauth/kakao/authorize"
+      token-uri: "https://example.com/oauth/kakao/token"
+      user-info-uri: "https://example.com/oauth/kakao/user"
+    google:
+      login-uri: "https://example.com/oauth/google/authorize"
+      token-uri: "https://example.com/oauth/google/token"
+      user-info-uri: "https://example.com/oauth/google/user"
+    apple:
+      login-uri: "https://example.com/oauth/apple/authorize"
+      token-uri: "https://example.com/oauth/apple/token"
+
+  properties:
+    apple:
+      kid: "TESTKID123"
+      iss: "TESTISSUER123"
+      sub: "test.apple.client"
+      aud: "https://appleid.apple.com"
+
+cloud:
+  aws:
+    credentials:
+      access-key: "test-access-key"
+      secret-key: "test-secret-key"
+      bucket-name: "test-bucket"
+      region: "ap-northeast-2"
+
+public-data:
+  real-time-station-arrival-prefix-uri: "https://example.com/subway"
+  real-time-station-arrival-suffix-uri: "/json/realtimeStationArrival"
+  real-time-station-arrival-token: "test-token"
+  real-time-congestion-url: "https://example.com/congestion"
+  real-time-congestion-app-key: "test-app-key"
+  station-times-prefix-uri: "https://example.com/station-times"
+  station-times-suffix-uri: "/json/SearchSTNTimeTableByIDService"
+
+resilience4j:
+  circuit-breaker:
+    failure-rate-threshold: 10
+    slow-call-duration-threshold: 500
+    slow-call-rate-threshold: 10
+    wait-duration-in-open-state: 30000
+    minimum-number-of-calls: 50
+    sliding-window-size: 100
+    permitted-number-of-calls-in-half-open-state: 10
+
+socket-server:
+  port: 5001
+  config-path: "./scheduler/src/main/resources/logback-spring.xml"
+
+stream:
+  key: "lostpost-stream"
+  consumer-group-name: "ahachul-lostpost-consumer"
+  consumer-name: "ahachul-lostpost-consumer-1"

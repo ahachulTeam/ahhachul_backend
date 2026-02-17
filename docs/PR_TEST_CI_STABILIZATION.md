@@ -183,6 +183,25 @@
    - job `timeout-minutes: 45` 추가
    - 테스트 명령을 `./gradlew --no-daemon test`로 변경 (`--info` 제거)
 
+## Iteration 12 (Fail)
+- run: `22114433524` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - `copyTestSecret`가 `NO-SOURCE`로 실행되어 테스트 시크릿 파일이 복사되지 않음
+  - `KakaoMemberClientImpl.kt:32`에서 `NullPointerException` 재발 (`oauth.client.kakao` 미바인딩)
+  - 연쇄 실패 중 `OutOfMemoryError` 발생 (`89 tests completed, 52 failed`)
+- inferred root cause:
+  - CI 환경에는 `../ahachul_secret`가 없어 test profile 설정 파일을 외부 복사에 의존하면 항상 불완전 상태가 됨
+  - `.gitignore`의 `application-test.yml` 전역 패턴으로 모듈별 `src/test/resources/application-test.yml` 버전 관리가 차단됨
+
+## Iteration 12 Fixes
+1. `.gitignore`에 모듈 테스트 설정 파일 예외 규칙 추가
+   - `application/consumer/core/scheduler/src/test/resources/application-test.yml`
+2. 위 4개 경로에 민감정보 제거된 표준 `application-test.yml` 추가
+   - `oauth`, `jwt`, `public-data`, `cloud.aws.credentials` 등 필수 바인딩 키를 더미 값으로 고정
+3. PR Test가 `ahachul_secret` 부재 환경에서도 독립적으로 부팅/바인딩되도록 정렬
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정

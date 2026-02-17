@@ -153,3 +153,17 @@
   - `application`/`consumer` 테스트 `ContainerTest`를 singleton 기동으로 변경 (JVM당 1회)
   - `pr-test.yml`에 `timeout-minutes: 45` 추가
   - 테스트 명령을 `./gradlew --no-daemon test`로 조정
+
+## Addendum (Iteration 12)
+- 추가 실패 run: `22114433524` (`pull_request`)
+- 로그 핵심:
+  - `copyTestSecret`가 `NO-SOURCE`로 실행되어 test secret 파일 미복사
+  - `KakaoMemberClientImpl.kt:32` `NullPointerException` 재발
+  - 다수 연쇄 실패 후 `OutOfMemoryError` 발생 (`89 tests completed, 52 failed`)
+- 판단:
+  - CI는 `../ahachul_secret`가 없으므로 외부 복사 기반 test profile 전략은 구조적으로 불안정
+  - `.gitignore`의 `application-test.yml` 전역 ignore 규칙이 모듈별 test 설정 파일의 버전 관리를 막고 있었음
+- 보정:
+  - `.gitignore`에 모듈 test config 예외 경로 추가
+  - `application/consumer/core/scheduler/src/test/resources/application-test.yml`를 민감정보 제거 더미값으로 저장소에 명시 추가
+  - PR Test를 외부 secret 부재 조건에서도 독립 실행 가능하도록 정렬
