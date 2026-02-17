@@ -54,6 +54,27 @@
    - `org.testcontainers:testcontainers:1.20.4`
    - `org.testcontainers:junit-jupiter:1.20.4`
 
+## Iteration 4 (Fail)
+- run: `22111846394` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - Docker route: `unix://localhost:2375`
+  - `client version 1.32 is too old. Minimum supported API version is 1.44`
+- root cause:
+  - Docker/Testcontainers 관련 환경변수(`DOCKER_HOST`, `DOCKER_API_VERSION`)가 런타임에서 오염되어 잘못된 값으로 고정됨
+
+## Iteration 4 Fixes
+1. secrets parse 단계에서 아래 키는 주입 차단
+   - `DOCKER_HOST`
+   - `DOCKER_API_VERSION`
+   - `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE`
+2. Testcontainers 실행 전 Docker 런타임 변수 강제 정규화
+   - `DOCKER_HOST=unix:///var/run/docker.sock`
+   - `DOCKER_API_VERSION=1.44`
+   - `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`
+3. 디버깅 가시성 확보를 위해 Docker 관련 변수 출력 단계 추가
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정

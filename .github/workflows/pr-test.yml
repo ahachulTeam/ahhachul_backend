@@ -28,9 +28,26 @@ jobs:
             key="$(echo "$row" | jq -r '.key')"
             value="$(echo "$row" | jq -r '.value')"
 
+            if [[ "$key" == DOCKER_HOST || "$key" == DOCKER_API_VERSION || "$key" == TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE ]]; then
+              echo "Skip unsafe runtime key: $key"
+              continue
+            fi
+
             echo "::add-mask::$value"
             printf '%s=%s\n' "$key" "$value" >> "$GITHUB_ENV"
           done < <(echo "$DEV_API_META_DATA" | jq -c 'to_entries[]')
+
+      - name: Normalize Docker runtime for Testcontainers
+        run: |
+          echo "DOCKER_HOST=unix:///var/run/docker.sock" >> "$GITHUB_ENV"
+          echo "DOCKER_API_VERSION=1.44" >> "$GITHUB_ENV"
+          echo "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock" >> "$GITHUB_ENV"
+
+      - name: Print Docker runtime variables
+        run: |
+          echo "DOCKER_HOST=${DOCKER_HOST}"
+          echo "DOCKER_API_VERSION=${DOCKER_API_VERSION}"
+          echo "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=${TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE}"
 
       - name: Checkout source code
         uses: actions/checkout@v4

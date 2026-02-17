@@ -64,3 +64,14 @@
   - Testcontainers 버전(`1.18.1`)과 runner Docker 엔진 API 호환성 불일치
 - 보정:
   - `org.testcontainers:testcontainers` 및 `junit-jupiter`를 `1.20.4`로 상향
+
+## Addendum (Iteration 4)
+- 추가 실패 run: `22111846394` (`pull_request`)
+- 로그 핵심:
+  - Docker route가 `unix://localhost:2375`로 고정
+  - 여전히 `client version 1.32` 사용
+- 판단:
+  - Docker/Testcontainers 관련 환경변수가 런타임에 오염되어 잘못된 endpoint/api 버전 사용
+- 보정:
+  - Parse 단계에서 `DOCKER_*`, `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` 주입 차단
+  - 테스트 전 Docker 런타임 변수 강제 정규화 및 값 출력 단계 추가
