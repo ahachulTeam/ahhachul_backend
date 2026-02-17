@@ -5,7 +5,7 @@ Scope: Ahhachul backend stack
 
 ## A. 시작 전(Pre-flight)
 - [ ] 현재 AWS 계정이 Ahhachul 계정인지 확인했다.
-- [ ] `aws sts get-caller-identity` 결과가 금지 계정(`419547990266`, `hb.lee@bodycodi.com`)이 아님을 확인했다.
+- [ ] `aws sts get-caller-identity` 결과가 금지 계정(개인/타사 계정 식별값)이 아님을 확인했다.
 - [ ] 작업 대상 레포(`ahhachul_backend`, `ahachul_data`, `ahachul_secret`)와 영향 범위를 명확히 했다.
 - [ ] API/DB/시크릿 변경 여부를 미리 분류했다.
 

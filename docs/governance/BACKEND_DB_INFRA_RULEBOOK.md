@@ -6,7 +6,7 @@ Owner: Codex + createhb21
 
 ## 0. 계정/보안 최우선 규칙
 - 금지: Ahhachul 작업에서 터미널 기본 `default` AWS 계정(회사 계정) 사용.
-- 확인된 금지 계정: `Account 419547990266`, `ARN hb.lee@bodycodi.com`.
+- 확인된 금지 계정: 개인/타사 계정 식별값(문서 비노출).
 - 원칙: Ahhachul 전용 프로필/자격증명만 사용하고, 작업 시작 전에 항상 STS로 계정 확인.
 - 실행 전 체크:
   - `aws sts get-caller-identity`
