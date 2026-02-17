@@ -90,6 +90,21 @@
    - `api.version=1.44`
    - `DOCKER_HOST=unix:///var/run/docker.sock` (환경 변수 미설정 시 fallback)
 
+## Iteration 6 (Fail)
+- run: `22112173940` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - Docker/Testcontainers 단계는 정상 통과
+  - Flyway migration 실패: `V202306110345__update_lost.sql`
+  - H2 syntax error: `MODIFY member_id BIGINT NULL`
+- inferred root cause:
+  - CI test 실행 시 `test` profile이 적용되지 않아(`activeProfiles=[]`) Flyway가 활성 경로로 진입
+
+## Iteration 6 Fixes
+1. `Test with Gradle` step에 `SPRING_PROFILES_ACTIVE=test` 명시
+2. 테스트 실행 환경을 로컬 테스트 규약(`application-test.yml`, `flyway.enabled=false`)과 정렬
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정

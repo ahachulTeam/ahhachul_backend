@@ -85,3 +85,13 @@
   - Docker API 버전 값이 test JVM system property까지 전달되지 않아 docker-java 기본값 경로가 유지
 - 보정:
   - `tasks.withType<Test>`에 `api.version` 및 `DOCKER_HOST` system property 강제 주입
+
+## Addendum (Iteration 6)
+- 추가 실패 run: `22112173940` (`pull_request`)
+- 로그 핵심:
+  - Testcontainers 관련 실패는 해소됨
+  - Flyway migration `V202306110345__update_lost.sql`가 H2 문법 오류(`MODIFY ...`)로 실패
+- 판단:
+  - CI test step에서 `test` profile 미적용 상태로 실행되어 Flyway 경로 진입
+- 보정:
+  - `Test with Gradle` step에 `SPRING_PROFILES_ACTIVE=test` 명시

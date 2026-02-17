@@ -66,6 +66,8 @@ jobs:
         run: ./gradlew compileTestKotlin
 
       - name: Test with Gradle
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: ./gradlew --info test
 
       - name: Publish Unit Test Results
