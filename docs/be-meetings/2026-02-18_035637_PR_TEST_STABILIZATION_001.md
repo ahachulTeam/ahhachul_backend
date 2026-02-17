@@ -95,3 +95,13 @@
   - CI test step에서 `test` profile 미적용 상태로 실행되어 Flyway 경로 진입
 - 보정:
   - `Test with Gradle` step에 `SPRING_PROFILES_ACTIVE=test` 명시
+
+## Addendum (Iteration 7)
+- 추가 실패 run: `22112382829` (`pull_request`)
+- 로그 핵심:
+  - 여전히 `activeProfiles=[]` 상태
+  - Flyway migration `V202306110345__update_lost.sql`가 동일한 H2 문법 오류로 실패
+- 판단:
+  - workflow step 환경변수만으로는 Gradle test worker JVM까지 profile 주입이 보장되지 않음
+- 보정:
+  - `tasks.withType<Test>`에 `spring.profiles.active=test` system property 강제 주입

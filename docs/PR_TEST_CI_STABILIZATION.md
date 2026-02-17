@@ -105,6 +105,20 @@
 1. `Test with Gradle` step에 `SPRING_PROFILES_ACTIVE=test` 명시
 2. 테스트 실행 환경을 로컬 테스트 규약(`application-test.yml`, `flyway.enabled=false`)과 정렬
 
+## Iteration 7 (Fail)
+- run: `22112382829` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - 여전히 `activeProfiles=[]`
+  - Flyway migration `V202306110345__update_lost.sql`가 H2 문법 오류로 실패
+- inferred root cause:
+  - workflow env 주입만으로는 test worker JVM까지 profile 값이 안정적으로 전달되지 않음
+
+## Iteration 7 Fixes
+1. Gradle `tasks.withType<Test>`에 `spring.profiles.active=test` system property 강제 주입
+2. test worker JVM 수준에서 profile 확정
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정

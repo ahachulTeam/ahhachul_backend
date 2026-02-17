@@ -109,6 +109,7 @@ subprojects {
         // Docker 29+ 환경에서 Testcontainers의 Docker API 버전 불일치를 방지합니다.
         systemProperty("api.version", System.getProperty("api.version", "1.44"))
         systemProperty("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
+        systemProperty("spring.profiles.active", System.getProperty("spring.profiles.active", "test"))
     }
 }
 
