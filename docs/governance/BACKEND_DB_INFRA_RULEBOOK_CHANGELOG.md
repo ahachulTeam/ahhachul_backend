@@ -5,4 +5,4 @@
 - `ahhachul_backend`, `ahachul_data`, `ahachul_secret` 기준 아키텍처/컨벤션/운영 규칙 통합.
 - AWS 계정 안전 규칙(회사 default 계정 사용 금지) 명문화.
 - 실행 점검용 `BACKEND_DB_INFRA_EXECUTION_CHECKLIST.md` 추가.
-
+- `BACKEND_DB_INFRA_EXECUTION_CHECKLIST.md`에 backend local 표준 실행 명령(`:application:bootRun --spring.profiles.active=local`) 추가.

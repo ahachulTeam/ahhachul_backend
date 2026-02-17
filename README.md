@@ -95,6 +95,23 @@
 <img width="836" height="482" alt="스크린샷 2025-11-18 오후 3 55 54" src="https://github.com/user-attachments/assets/61b29c06-e5fa-4634-b108-b840aa03d09a" />
 " />
 
+## 로컬 실행(표준)
+
+### application 모듈
+
+```bash
+./gradlew :application:bootRun --args='--spring.profiles.active=local'
+```
+
+- 추가 env 없이 실행 가능합니다.
+- `local` 기본 DB는 `jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE` 입니다.
+- `HASHTAG_SOCKET` 로깅은 기본적으로 `localhost:5001`을 사용합니다.
+- 8080 포트가 이미 사용 중이면 다음처럼 포트를 지정합니다.
+
+```bash
+./gradlew :application:bootRun --args='--spring.profiles.active=local --server.port=18080'
+```
+
 
 
 ## ERD 
