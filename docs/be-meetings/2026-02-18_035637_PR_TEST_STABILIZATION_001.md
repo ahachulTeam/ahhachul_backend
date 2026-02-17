@@ -127,3 +127,15 @@
 - 보정:
   - `pr-test.yml` Parse 단계에서 `SPRING_*` 키 전체 차단
   - `tasks.withType<Test>`에 `spring.sql.init.mode=never` system property 강제 주입
+
+## Addendum (Iteration 10)
+- 추가 실패 run: `22113129584` (`pull_request`)
+- 로그 핵심:
+  - `KakaoMemberClientImpl.<init>(KakaoMemberClientImpl.kt:32)`에서 `NullPointerException`
+  - `oAuthProperties.client["kakao"]!!` 평가 시점 Bean 생성 실패
+  - `AuthService`/`AuthController` 의존성으로 다수 테스트가 연쇄 실패
+- 판단:
+  - Parse secrets로 주입된 env가 OAuth 프로퍼티 바인딩까지 오염시켜 test 기본 설정 로딩 결과를 불안정하게 만듦
+- 보정:
+  - `pr-test.yml`에서 `Parse combined secrets` 단계 제거
+  - PR Test는 repository 내부 `application-test.yml`만 기준으로 실행

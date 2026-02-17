@@ -14,29 +14,6 @@ jobs:
       checks: write
       pull-requests: write
     steps:
-      - name: Parse combined secrets
-        env:
-          DEV_API_META_DATA: ${{ secrets.DEV_API_META_DATA }}
-        run: |
-          echo "Extracting secrets..."
-          if [ -z "$DEV_API_META_DATA" ]; then
-            echo "DEV_API_META_DATA is empty. Skip parsing."
-            exit 0
-          fi
-
-          while IFS= read -r row; do
-            key="$(echo "$row" | jq -r '.key')"
-            value="$(echo "$row" | jq -r '.value')"
-
-            if [[ "$key" == SPRING_* || "$key" == DOCKER_HOST || "$key" == DOCKER_API_VERSION || "$key" == TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE ]]; then
-              echo "Skip unsafe runtime key: $key"
-              continue
-            fi
-
-            echo "::add-mask::$value"
-            printf '%s=%s\n' "$key" "$value" >> "$GITHUB_ENV"
-          done < <(echo "$DEV_API_META_DATA" | jq -c 'to_entries[]')
-
       - name: Normalize Docker runtime for Testcontainers
         run: |
           echo "DOCKER_HOST=unix:///var/run/docker.sock" >> "$GITHUB_ENV"
