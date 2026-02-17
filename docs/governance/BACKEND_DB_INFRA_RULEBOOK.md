@@ -59,9 +59,11 @@ Owner: Codex + createhb21
 - Secret은 코드 레포에 하드코딩 금지.
 
 ### 1.8 협업 규칙(기존 팀 룰)
-- 브랜치 전략: `main` → `develop` → `feature/#issue`, `hotfix`.
-- 이슈 템플릿 기반 작업(`bug`, `feature`, `refactor`, `discussion`).
-- 기존 커밋 문화: gitmoji + 이슈 번호.
+- BE 작업 타겟 브랜치: `codex/main`
+- 작업 브랜치: `codex/*` (태스크 단위 분리)
+- PR 기본 규칙: 레포별 분리, 한국어 본문, assignee `createhb21`
+- 이슈 템플릿 기반 작업(`bug`, `feature`, `refactor`, `discussion`)
+- 기존 커밋 문화: gitmoji + 이슈 번호
 
 ## 2. ahachul_data 아키텍처/컨벤션
 
@@ -123,4 +125,3 @@ Owner: Codex + createhb21
 - 변경하지 않은 코드의 주석/docstring/타입 어노테이션 임의 수정 금지.
 - API 계약/응답 포맷/에러 코드 일관성 우선.
 - 작업 전후 체크는 반드시 `BACKEND_DB_INFRA_EXECUTION_CHECKLIST.md`를 따른다.
-

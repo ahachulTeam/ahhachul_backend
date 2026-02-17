@@ -8,10 +8,9 @@
 
 ## Branch Strategy
 
-- `main`
-- `develop`
-- `feature/<#issue number>`
-- `hotfix`
+- target branch: `codex/main`
+- working branch: `codex/*` (태스크별 분리)
+- PR: 레포별 분리 + 한국어 본문 + assignee `createhb21`
 
 ## Architecture Rules
 
