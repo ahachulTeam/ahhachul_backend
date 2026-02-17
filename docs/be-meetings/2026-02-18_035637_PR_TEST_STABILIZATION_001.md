@@ -54,3 +54,13 @@
 - 보정:
   - `if` 제거 후 run script 내부 empty guard로 대체
   - checkout token 설정 단순화(기본 토큰 경로)
+
+## Addendum (Iteration 3)
+- 추가 실패 run: `22111678992` (`pull_request`)
+- 로그 핵심:
+  - `Could not find a valid Docker environment`
+  - `client version 1.32 is too old. Minimum supported API version is 1.44`
+- 판단:
+  - Testcontainers 버전(`1.18.1`)과 runner Docker 엔진 API 호환성 불일치
+- 보정:
+  - `org.testcontainers:testcontainers` 및 `junit-jupiter`를 `1.20.4`로 상향

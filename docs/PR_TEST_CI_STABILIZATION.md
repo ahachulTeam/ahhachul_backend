@@ -39,6 +39,21 @@
 2. run script 내부에서 `DEV_API_META_DATA` empty guard 처리
 3. checkout의 token 입력은 default behavior로 단순화
 
+## Iteration 3 (Fail)
+- run: `22111678992` (`pull_request`)
+- status: failed
+- failure point: `Test with Gradle`
+- evidence:
+  - `Could not find a valid Docker environment`
+  - `client version 1.32 is too old. Minimum supported API version is 1.44`
+- root cause:
+  - Testcontainers(`1.18.1`)의 Docker client API 호환 범위가 현재 runner Docker 엔진과 불일치
+
+## Iteration 3 Fixes
+1. Testcontainers 버전 상향
+   - `org.testcontainers:testcontainers:1.20.4`
+   - `org.testcontainers:junit-jupiter:1.20.4`
+
 ## Verification Plan
 1. 수정 커밋 푸시 후 PR Test 재실행
 2. 실패 시 run 로그 기준 추가 보정
