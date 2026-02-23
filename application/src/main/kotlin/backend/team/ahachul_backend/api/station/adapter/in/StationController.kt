@@ -22,4 +22,10 @@ class StationController(
         val result = stationUseCase.getStationTimesSummary(request.toCommand())
         return CommonResponse.success(result)
     }
+
+    @GetMapping("/v2/stations/times/last-train-risk")
+    fun getLastTrainRisk(request: GetStationTimesDto.LastTrainRiskRequest): CommonResponse<GetStationTimesDto.LastTrainRiskResponse> {
+        val result = stationUseCase.getLastTrainRisk(request.toCommand())
+        return CommonResponse.success(result)
+    }
 }

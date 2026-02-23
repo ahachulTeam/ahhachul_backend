@@ -145,4 +145,60 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                 )
             )
     }
+
+    @Test
+    fun getLastTrainRisk() {
+        val response = GetStationTimesDto.LastTrainRiskResponse(
+            stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+            upDownType = UpDownType.DOWN,
+            walkingMinutes = 15,
+            nowAt = "2026-02-23T23:10:00+09:00",
+            lastDepartureTime = "23:58:00",
+            minutesToLastTrain = 48,
+            isLastTrainRisk = false,
+            riskLevel = GetStationTimesDto.LastTrainRiskLevel.SAFE,
+            message = "현재 기준 막차 여유가 있습니다.",
+        )
+
+        given(stationUseCase.getLastTrainRisk(any()))
+            .willReturn(response)
+
+        val result = mockMvc.perform(
+            get("/v2/stations/times/last-train-risk")
+                .queryParam("stationId", 622.toString())
+                .queryParam("subwayLineId", 3.toString())
+                .queryParam("upDownType", UpDownType.DOWN.name)
+                .queryParam("stationTimeWeekType", StationTimeWeekType.WEEKDAY.name)
+                .queryParam("walkingMinutes", "15")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-station-last-train-risk",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("stationId").description("정류장 ID"),
+                        parameterWithName("subwayLineId").description("지하철 노선 ID"),
+                        parameterWithName("upDownType").description("상행(UP), 하행(DOWN)"),
+                        parameterWithName("stationTimeWeekType").description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)"),
+                        parameterWithName("walkingMinutes").description("도보 이동 시간(분)")
+                    ),
+                    PayloadDocumentation.responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.stationTimeWeekType").type(JsonFieldType.STRING).description("요일 구분"),
+                        fieldWithPath("result.upDownType").type(JsonFieldType.STRING).description("상행/하행"),
+                        fieldWithPath("result.walkingMinutes").type(JsonFieldType.NUMBER).description("도보 이동 시간(분)"),
+                        fieldWithPath("result.nowAt").type(JsonFieldType.STRING).description("계산 기준 시각"),
+                        fieldWithPath("result.lastDepartureTime").type(JsonFieldType.STRING).optional().description("막차 출발시각 - hh:mm:ss"),
+                        fieldWithPath("result.minutesToLastTrain").type(JsonFieldType.NUMBER).description("막차까지 남은 분"),
+                        fieldWithPath("result.isLastTrainRisk").type(JsonFieldType.BOOLEAN).description("막차 위험 여부"),
+                        fieldWithPath("result.riskLevel").type(JsonFieldType.STRING).description("위험도(SAFE/WARN/RISK)"),
+                        fieldWithPath("result.message").type(JsonFieldType.STRING).description("안내 문구"),
+                    )
+                )
+            )
+    }
 }
