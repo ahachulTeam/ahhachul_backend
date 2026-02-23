@@ -10,7 +10,7 @@
   - `docs/BE_RULEBOOK.md`
   - `docs/BE_VALIDATOR_CHECKLIST.md`
   - `docs/BE_SPRINT_BOARD.md`
-- Frontend (`ahachul_web` repo): `/Users/createahb21/Documents/Programming/repositories/@Ahhachul/ahachul_web/docs/refactor/CONVENTIONS_FE.md`
+- Frontend (`ahachul_web` repo): `ahachul_web/docs/CONVENTIONS_FE.md`
 
 ## Precedence
 

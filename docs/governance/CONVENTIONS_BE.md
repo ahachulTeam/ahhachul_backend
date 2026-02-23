@@ -8,9 +8,15 @@
 
 ## Branch Strategy
 
-- target branch: `codex/main`
-- working branch: `codex/*` (태스크별 분리)
-- PR: 레포별 분리 + 한국어 본문 + assignee `createhb21`
+- Upstream branch model:
+  - `main`
+  - `develop`
+  - `feature/<#issue number>`
+  - `hotfix`
+- Codex task execution model:
+  - target branch: `codex/main`
+  - working branch: `codex/*` (태스크별 분리)
+  - PR: 레포별 분리 + 한국어 본문 + assignee `createhb21`
 
 ## Architecture Rules
 
