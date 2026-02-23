@@ -1,7 +1,8 @@
 package backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto
 
 import backend.team.ahachul_backend.api.comment.application.command.CreateCommentCommand
-import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
+import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity
+import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
 import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.response.ResponseCode

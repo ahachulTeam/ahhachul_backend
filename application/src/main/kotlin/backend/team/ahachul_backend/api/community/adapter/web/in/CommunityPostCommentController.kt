@@ -1,7 +1,10 @@
 package backend.team.ahachul_backend.api.community.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.CreateCommentDto
+import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.DeleteCommentDto
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.GetCommentsDto
+import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.UpdateCommentDto
+import backend.team.ahachul_backend.api.comment.application.command.DeleteCommentCommand
 import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
 import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.common.annotation.Authentication
@@ -23,5 +26,24 @@ class CommunityPostCommentController(
     @PostMapping("/v1/community-posts/{postId}/comments")
     fun createCommunityPostComment(@PathVariable postId: Long, @RequestBody request: CreateCommentDto.Request): CommonResponse<CreateCommentDto.Response> {
         return CommonResponse.success(commentUseCase.createComment(request.toCommand(postId, PostType.COMMUNITY)))
+    }
+
+    @Authentication
+    @PatchMapping("/v1/community-posts/{postId}/comments/{commentId}")
+    fun updateCommunityPostComment(
+        @PathVariable postId: Long,
+        @PathVariable commentId: Long,
+        @RequestBody request: UpdateCommentDto.Request,
+    ): CommonResponse<UpdateCommentDto.Response> {
+        return CommonResponse.success(commentUseCase.updateComment(request.toCommand(commentId, postId, PostType.COMMUNITY)))
+    }
+
+    @Authentication
+    @DeleteMapping("/v1/community-posts/{postId}/comments/{commentId}")
+    fun deleteCommunityPostComment(
+        @PathVariable postId: Long,
+        @PathVariable commentId: Long,
+    ): CommonResponse<DeleteCommentDto.Response> {
+        return CommonResponse.success(commentUseCase.deleteComment(DeleteCommentCommand(commentId, postId, PostType.COMMUNITY)))
     }
 }

@@ -94,6 +94,11 @@ class CommentService(
     override fun updateComment(command: UpdateCommentCommand): UpdateCommentDto.Response {
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val comment = commentReader.getById(command.id)
+        val scopedPostId = command.postId
+        val scopedPostType = command.postType
+        if (scopedPostId != null && scopedPostType != null) {
+            comment.validateBelongsTo(scopedPostType, scopedPostId)
+        }
         comment.checkMe(memberId)
         comment.update(command.content)
         return UpdateCommentDto.Response.from(comment)
@@ -103,6 +108,11 @@ class CommentService(
     override fun deleteComment(command: DeleteCommentCommand): DeleteCommentDto.Response {
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val comment = commentReader.getById(command.id)
+        val scopedPostId = command.postId
+        val scopedPostType = command.postType
+        if (scopedPostId != null && scopedPostType != null) {
+            comment.validateBelongsTo(scopedPostType, scopedPostId)
+        }
         comment.checkMe(memberId)
         comment.delete()
         return DeleteCommentDto.Response(comment.id)

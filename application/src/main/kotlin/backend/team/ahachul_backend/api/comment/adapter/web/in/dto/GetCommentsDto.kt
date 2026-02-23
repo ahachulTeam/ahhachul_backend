@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 class GetCommentsDto {
 
     data class Request(
-        val sort: String
+        val sort: String? = null
     ) {
         fun toCommand(postId: Long, postType: PostType): GetCommentsCommand {
             return GetCommentsCommand(
@@ -20,8 +20,14 @@ class GetCommentsDto {
         }
 
         private fun toSort(): Sort {
-            val parts = sort.split(",")
-            return Sort.by(Sort.Direction.fromString(parts[1]), parts[0])
+            val normalizedSort = sort?.trim().takeUnless { it.isNullOrBlank() } ?: "createdAt,asc"
+            val parts = normalizedSort.split(",")
+            val property = parts.getOrNull(0)?.takeUnless { it.isBlank() } ?: "createdAt"
+            val direction = runCatching {
+                Sort.Direction.fromString(parts.getOrNull(1)?.trim() ?: "asc")
+            }.getOrDefault(Sort.Direction.ASC)
+
+            return Sort.by(direction, property)
         }
     }
 

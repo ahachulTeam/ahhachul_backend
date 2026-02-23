@@ -1,13 +1,16 @@
 package backend.team.ahachul_backend.api.comment.domain.entity
 
 import backend.team.ahachul_backend.api.comment.application.command.CreateCommentCommand
-import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
+import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.api.comment.domain.model.CommentType
 import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
+import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintPostEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.common.domain.entity.BaseEntity
+import backend.team.ahachul_backend.common.exception.CommonException
+import backend.team.ahachul_backend.common.response.ResponseCode
 import jakarta.persistence.*
 
 @Entity
@@ -68,5 +71,17 @@ class CommentEntity(
 
     fun delete() {
         status = CommentType.DELETED
+    }
+
+    fun validateBelongsTo(postType: PostType, postId: Long) {
+        val isMatched = when (postType) {
+            PostType.COMMUNITY -> communityPost?.id == postId
+            PostType.LOST -> lostPost?.id == postId
+            PostType.COMPLAINT -> complaintPost?.id == postId
+        }
+
+        if (!isMatched) {
+            throw CommonException(ResponseCode.POST_NOT_FOUND)
+        }
     }
 }

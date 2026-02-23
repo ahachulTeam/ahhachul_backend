@@ -2,16 +2,19 @@ package backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto
 
 import backend.team.ahachul_backend.api.comment.application.command.UpdateCommentCommand
 import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity
+import backend.team.ahachul_backend.api.comment.domain.model.PostType
 
 class UpdateCommentDto {
 
     data class Request(
         val content: String,
     ) {
-        fun toCommand(id: Long): UpdateCommentCommand {
+        fun toCommand(id: Long, postId: Long? = null, postType: PostType? = null): UpdateCommentCommand {
             return UpdateCommentCommand(
                 id = id,
-                content = content
+                content = content,
+                postId = postId,
+                postType = postType,
             )
         }
     }

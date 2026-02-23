@@ -25,10 +25,13 @@ import backend.team.ahachul_backend.api.member.domain.model.MemberStatusType
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
+import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -205,6 +208,33 @@ class CommentServiceTest(
     }
 
     @Test
+    @DisplayName("코멘트 수정 - 게시글 스코프 불일치 예외")
+    fun 코멘트_수정_게시글_스코프_불일치_예외() {
+        // given
+        val createCommentCommand = CreateCommentCommand(
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
+            upperCommentId = null,
+            content = "내용",
+            visibility = CommentVisibility.PUBLIC
+        )
+        val comment = commentUseCase.createComment(createCommentCommand)
+
+        val updateCommentCommand = UpdateCommentCommand(
+            id = comment.id,
+            content = "수정된 내용",
+            postId = lostPost.id,
+            postType = PostType.LOST
+        )
+
+        // when & then
+        val throwable = catchThrowable { commentUseCase.updateComment(updateCommentCommand) }
+
+        assertThat(throwable).isInstanceOf(CommonException::class.java)
+        assertThat((throwable as CommonException).code).isEqualTo(ResponseCode.POST_NOT_FOUND)
+    }
+
+    @Test
     @DisplayName("코멘트 삭제")
     fun 코멘트_삭제() {
         // given
@@ -230,6 +260,32 @@ class CommentServiceTest(
         val comment = commentRepository.findById(result.id).get()
 
         assertThat(comment.status).isEqualTo(CommentType.DELETED)
+    }
+
+    @Test
+    @DisplayName("코멘트 삭제 - 게시글 스코프 불일치 예외")
+    fun 코멘트_삭제_게시글_스코프_불일치_예외() {
+        // given
+        val createCommentCommand = CreateCommentCommand(
+            postId = communityPost.id,
+            postType = PostType.COMMUNITY,
+            upperCommentId = null,
+            content = "내용",
+            visibility = CommentVisibility.PUBLIC
+        )
+        val comment = commentUseCase.createComment(createCommentCommand)
+
+        val deleteCommentCommand = DeleteCommentCommand(
+            id = comment.id,
+            postId = lostPost.id,
+            postType = PostType.LOST
+        )
+
+        // when & then
+        val throwable = catchThrowable { commentUseCase.deleteComment(deleteCommentCommand) }
+
+        assertThat(throwable).isInstanceOf(CommonException::class.java)
+        assertThat((throwable as CommonException).code).isEqualTo(ResponseCode.POST_NOT_FOUND)
     }
 
     @Test
