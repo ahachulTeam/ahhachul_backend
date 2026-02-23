@@ -28,4 +28,10 @@ class StationController(
         val result = stationUseCase.getLastTrainRisk(request.toCommand())
         return CommonResponse.success(result)
     }
+
+    @GetMapping("/v2/stations/quick-exits")
+    fun getQuickExits(request: GetStationTimesDto.QuickExitRequest): CommonResponse<GetStationTimesDto.QuickExitResponse> {
+        val result = stationUseCase.getQuickExits(request.toCommand())
+        return CommonResponse.success(result)
+    }
 }

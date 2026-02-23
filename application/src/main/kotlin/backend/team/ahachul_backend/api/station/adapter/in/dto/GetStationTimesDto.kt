@@ -1,6 +1,7 @@
 package backend.team.ahachul_backend.api.station.adapter.`in`.dto
 
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationLastTrainRiskCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationQuickExitCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
 import backend.team.ahachul_backend.api.train.domain.model.TrainType
@@ -93,7 +94,40 @@ class GetStationTimesDto {
         val message: String,
     )
 
+    data class QuickExitRequest(
+        val stationId: Long,
+        val subwayLineId: Long,
+        val upDownType: UpDownType,
+    ) {
+        fun toCommand(): GetStationQuickExitCommand {
+            return GetStationQuickExitCommand(
+                stationId = stationId,
+                subwayLineId = subwayLineId,
+                upDownType = upDownType,
+            )
+        }
+    }
+
+    data class QuickExitResponse(
+        val stationId: Long,
+        val subwayLineId: Long,
+        val upDownType: UpDownType,
+        val recommendations: List<QuickExitRecommendation>,
+    )
+
+    data class QuickExitRecommendation(
+        val carNo: String,
+        val exitNo: String,
+        val directionHint: String,
+        val walkingBenefitMinutes: Int,
+        val confidenceLevel: QuickExitConfidenceLevel,
+    )
+
     enum class LastTrainRiskLevel {
         SAFE, WARN, RISK
+    }
+
+    enum class QuickExitConfidenceLevel {
+        HIGH, MEDIUM, LOW
     }
 }

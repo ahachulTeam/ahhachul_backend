@@ -201,4 +201,58 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                 )
             )
     }
+
+    @Test
+    fun getQuickExits() {
+        val response = GetStationTimesDto.QuickExitResponse(
+            stationId = 622,
+            subwayLineId = 3,
+            upDownType = UpDownType.DOWN,
+            recommendations = listOf(
+                GetStationTimesDto.QuickExitRecommendation(
+                    carNo = "5-2",
+                    exitNo = "3",
+                    directionHint = "환승 통로 우측",
+                    walkingBenefitMinutes = 2,
+                    confidenceLevel = GetStationTimesDto.QuickExitConfidenceLevel.MEDIUM,
+                )
+            ),
+        )
+
+        given(stationUseCase.getQuickExits(any()))
+            .willReturn(response)
+
+        val result = mockMvc.perform(
+            get("/v2/stations/quick-exits")
+                .queryParam("stationId", 622.toString())
+                .queryParam("subwayLineId", 3.toString())
+                .queryParam("upDownType", UpDownType.DOWN.name)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-station-quick-exits",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("stationId").description("정류장 ID"),
+                        parameterWithName("subwayLineId").description("지하철 노선 ID"),
+                        parameterWithName("upDownType").description("상행(UP), 하행(DOWN)"),
+                    ),
+                    PayloadDocumentation.responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("정류장 ID"),
+                        fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.upDownType").type(JsonFieldType.STRING).description("상행/하행"),
+                        fieldWithPath("result.recommendations[].carNo").type(JsonFieldType.STRING).description("추천 탑승 칸"),
+                        fieldWithPath("result.recommendations[].exitNo").type(JsonFieldType.STRING).description("추천 출구 번호"),
+                        fieldWithPath("result.recommendations[].directionHint").type(JsonFieldType.STRING).description("동선 힌트"),
+                        fieldWithPath("result.recommendations[].walkingBenefitMinutes").type(JsonFieldType.NUMBER).description("예상 단축 시간(분)"),
+                        fieldWithPath("result.recommendations[].confidenceLevel").type(JsonFieldType.STRING).description("신뢰도(HIGH/MEDIUM/LOW)"),
+                    )
+                )
+            )
+    }
 }

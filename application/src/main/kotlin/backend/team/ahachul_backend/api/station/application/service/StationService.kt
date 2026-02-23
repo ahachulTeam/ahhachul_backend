@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineSt
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimesDto
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationLastTrainRiskCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationQuickExitCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
 import backend.team.ahachul_backend.api.train.domain.model.UpDownType
@@ -96,6 +97,21 @@ class StationService(
             isLastTrainRisk = calculated.isLastTrainRisk,
             riskLevel = calculated.riskLevel,
             message = calculated.message,
+        )
+    }
+
+    override fun getQuickExits(command: GetStationQuickExitCommand): GetStationTimesDto.QuickExitResponse {
+        val recommendations = StationQuickExitRecommendationCalculator.recommend(
+            stationId = command.stationId,
+            subwayLineId = command.subwayLineId,
+            upDownType = command.upDownType,
+        )
+
+        return GetStationTimesDto.QuickExitResponse(
+            stationId = command.stationId,
+            subwayLineId = command.subwayLineId,
+            upDownType = command.upDownType,
+            recommendations = recommendations,
         )
     }
 
