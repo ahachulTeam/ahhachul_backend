@@ -25,6 +25,8 @@ enum class ResponseCode(
     FAILED_TO_CONNECT_TO_REDIS("208", "외부 통신 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_LOGOUT_TOKEN("209", "이미 로그아웃된 토큰입니다.", HttpStatus.UNAUTHORIZED),
     ALREADY_DELETE_MEMBER("210", "이미 탈퇴된 회원입니다.", HttpStatus.FORBIDDEN),
+    INVALID_NICKNAME_FORMAT("211", "닉네임 형식이 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
+    DUPLICATE_NICKNAME("212", "이미 사용 중인 닉네임입니다.", HttpStatus.BAD_REQUEST),
 
     // REPORT
     INVALID_REPORT_REQUEST("300", "본인의 게시물은 신고할 수 없습니다.", HttpStatus.BAD_REQUEST),
@@ -56,6 +58,7 @@ enum class ResponseCode(
     EXCEED_MAXIMUM_STATION_COUNT("800", "즐겨찾는 역은 최대 4개까지 가능합니다.", HttpStatus.BAD_REQUEST),
     NOT_EXIST_PUBLIC_STATION_CODE("801", "공공 지하철 역 코드가 존재하지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FAILED_STATION_TIMES_API("802", "역 시간표 API를 조회하는데 실패하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    DUPLICATE_BOOKMARK_STATION("803", "중복된 역은 즐겨찾기에 등록할 수 없습니다.", HttpStatus.BAD_REQUEST),
     INVALID_STATION_TIMES_API_RESPONSE("804", "역 시간표 API 응답 값이 올바르지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FAILED_TO_GET_STATION_TIMES("805", "현재 역 시간 정보를 받을 수 없습니다.", HttpStatus.NOT_FOUND),
 

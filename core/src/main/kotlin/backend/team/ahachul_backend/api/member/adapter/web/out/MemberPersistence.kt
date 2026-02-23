@@ -41,6 +41,10 @@ class MemberPersistence(
         return memberRepository.existsByNickname(nickname)
     }
 
+    override fun existMemberByNicknameExceptMemberId(nickname: String, memberId: Long): Boolean {
+        return memberRepository.existsByNicknameAndIdNot(nickname, memberId)
+    }
+
     override fun searchMembers(command: SearchMemberCommand): List<MemberEntity> {
         return memberRepository.findByNicknameContaining(command.nickname)
     }

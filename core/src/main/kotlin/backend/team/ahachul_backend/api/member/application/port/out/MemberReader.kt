@@ -11,5 +11,7 @@ interface MemberReader {
 
     fun existMember(nickname: String): Boolean
 
+    fun existMemberByNicknameExceptMemberId(nickname: String, memberId: Long): Boolean
+
     fun searchMembers(command: SearchMemberCommand): List<MemberEntity>
 }

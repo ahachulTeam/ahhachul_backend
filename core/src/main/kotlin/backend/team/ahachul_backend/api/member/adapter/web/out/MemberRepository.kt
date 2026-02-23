@@ -9,5 +9,7 @@ interface MemberRepository: JpaRepository<MemberEntity, Long> {
 
     fun existsByNickname(nickname: String): Boolean
 
+    fun existsByNicknameAndIdNot(nickname: String, id: Long): Boolean
+
     fun findByNicknameContaining(nickname: String): MutableList<MemberEntity>
 }

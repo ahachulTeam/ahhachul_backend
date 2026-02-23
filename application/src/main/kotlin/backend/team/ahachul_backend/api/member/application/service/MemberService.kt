@@ -17,9 +17,12 @@ import backend.team.ahachul_backend.api.member.application.port.out.MemberStatio
 import backend.team.ahachul_backend.api.member.domain.entity.FcmTokenEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberStationEntity
+import backend.team.ahachul_backend.common.exception.BusinessException
+import backend.team.ahachul_backend.common.response.ResponseCode
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.text.Normalizer
 
 @Service
 @Transactional(readOnly = true)
@@ -32,6 +35,11 @@ class MemberService(
     private val fcmTokenWriter: FcmTokenWriter,
     private val authLogoutCacheUtils: AuthLogoutCacheUtils
 ) : MemberUseCase {
+    companion object {
+        private const val NICKNAME_MIN_LENGTH = 2
+        private const val NICKNAME_MAX_LENGTH = 10
+        private val NICKNAME_REGEX = Regex("^[가-힣a-zA-Z0-9_]+$")
+    }
 
     override fun getMember(): GetMemberDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
@@ -41,7 +49,20 @@ class MemberService(
     @Transactional
     override fun updateMember(command: UpdateMemberCommand): UpdateMemberDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
-        command.nickname?.let { member.changeNickname(it) }
+        command.nickname?.let {
+            val normalizedNickname = normalizeInput(it)
+            validateNickname(normalizedNickname)
+
+            val isChangedNickname = member.nickname != normalizedNickname
+            if (
+                isChangedNickname &&
+                memberReader.existMemberByNicknameExceptMemberId(normalizedNickname, member.id)
+            ) {
+                throw BusinessException(ResponseCode.DUPLICATE_NICKNAME)
+            }
+
+            member.changeNickname(normalizedNickname)
+        }
         command.gender?.let { member.changeGender(it) }
         command.ageRange?.let { member.changeAgeRange(it) }
         return UpdateMemberDto.Response.of(
@@ -60,13 +81,18 @@ class MemberService(
     }
 
     override fun checkNickname(command: CheckNicknameCommand): CheckNicknameDto.Response {
+        val normalizedNickname = normalizeInput(command.nickname)
+        validateNickname(normalizedNickname)
+
         return CheckNicknameDto.Response.of(
-            available = !memberReader.existMember(command.nickname)
+            available = !memberReader.existMember(normalizedNickname)
         )
     }
 
     @Transactional
     override fun bookmarkStation(command: BookmarkStationCommands): GetBookmarkStationDto.Response {
+        validateDuplicateBookmarkStations(command.stations)
+
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
         val bookmarkStations = memberStationReader.getByMember(member)
 
@@ -121,7 +147,10 @@ class MemberService(
         }
 
         return originMemberStations.indices.all {
-            originMemberStations[it].isEquals(newBookmarkStationCommands[it].stationName, newBookmarkStationCommands[it].label)
+            originMemberStations[it].isEquals(
+                normalizeInput(newBookmarkStationCommands[it].stationName),
+                newBookmarkStationCommands[it].label
+            )
         }
     }
 
@@ -130,7 +159,7 @@ class MemberService(
             .map {
                 val memberStation = MemberStationEntity(
                     member = member,
-                    station = stationReader.getByName(it.stationName),
+                    station = stationReader.getByName(normalizeInput(it.stationName)),
                     label = it.label
                 )
                 memberStationWriter.save(memberStation)
@@ -161,5 +190,25 @@ class MemberService(
             )
         }
     }
-}
 
+    private fun validateNickname(nickname: String) {
+        if (nickname.length !in NICKNAME_MIN_LENGTH..NICKNAME_MAX_LENGTH) {
+            throw BusinessException(ResponseCode.INVALID_NICKNAME_FORMAT)
+        }
+
+        if (!NICKNAME_REGEX.matches(nickname)) {
+            throw BusinessException(ResponseCode.INVALID_NICKNAME_FORMAT)
+        }
+    }
+
+    private fun validateDuplicateBookmarkStations(stations: List<BookmarkStationCommand>) {
+        val normalizedStationNames = stations.map { normalizeInput(it.stationName) }
+        if (normalizedStationNames.distinct().size != normalizedStationNames.size) {
+            throw BusinessException(ResponseCode.DUPLICATE_BOOKMARK_STATION)
+        }
+    }
+
+    private fun normalizeInput(value: String): String {
+        return Normalizer.normalize(value, Normalizer.Form.NFC).trim()
+    }
+}

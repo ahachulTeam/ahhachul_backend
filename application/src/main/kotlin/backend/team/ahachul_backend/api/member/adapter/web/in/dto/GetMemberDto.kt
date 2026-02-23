@@ -8,6 +8,7 @@ class GetMemberDto {
             val memberId: Long,
             val nickname: String?,
             val email: String?,
+            val maskedEmail: String? = null,
             val gender: GenderType?,
             val ageRange: String?
     ) {
@@ -17,9 +18,29 @@ class GetMemberDto {
                         memberId = memberEntity.id,
                         nickname = memberEntity.nickname,
                         email = memberEntity.email,
+                        maskedEmail = maskEmail(memberEntity.email),
                         gender = memberEntity.gender,
                         ageRange = memberEntity.ageRange
                 )
+            }
+
+            private fun maskEmail(email: String?): String? {
+                val value = email?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+                val parts = value.split("@")
+                if (parts.size != 2) {
+                    return value
+                }
+
+                val local = parts[0]
+                val domain = parts[1]
+                if (local.isEmpty() || domain.isEmpty()) {
+                    return value
+                }
+
+                val visibleCount = if (local.length <= 2) 1 else 2
+                val maskedCount = maxOf(local.length - visibleCount, 1)
+                val maskedLocal = local.take(visibleCount) + "*".repeat(maskedCount)
+                return "$maskedLocal@$domain"
             }
         }
     }

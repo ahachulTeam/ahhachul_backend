@@ -74,7 +74,7 @@ class MemberServiceTest(
             nickname = "nickname",
             provider = ProviderType.KAKAO,
             providerUserId = "providerUserId",
-            email = "email",
+            email = "email@mail.com",
             gender = GenderType.MALE,
             ageRange = "20",
             status = MemberStatusType.ACTIVE
@@ -112,7 +112,8 @@ class MemberServiceTest(
 
         // then
         assertThat(result.memberId).isEqualTo(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
-        assertThat(result.email).isEqualTo("email")
+        assertThat(result.email).isEqualTo("email@mail.com")
+        assertThat(result.maskedEmail).isEqualTo("em***@mail.com")
         assertThat(result.gender).isEqualTo(GenderType.MALE)
         assertThat(result.ageRange).isEqualTo("20")
     }
@@ -139,6 +140,42 @@ class MemberServiceTest(
     }
 
     @Test
+    @DisplayName("사용자 정보 수정 시 닉네임이 중복이면 실패한다")
+    fun 사용자_정보_수정_닉네임_중복_실패() {
+        // given
+        val command = UpdateMemberCommand(
+            nickname = "nickname1",
+            gender = null,
+            ageRange = null
+        )
+
+        // when + then
+        assertThatThrownBy {
+            memberUseCase.updateMember(command)
+        }
+            .isExactlyInstanceOf(BusinessException::class.java)
+            .hasMessage(ResponseCode.DUPLICATE_NICKNAME.message)
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 시 닉네임 형식이 올바르지 않으면 실패한다")
+    fun 사용자_정보_수정_닉네임_형식_실패() {
+        // given
+        val command = UpdateMemberCommand(
+            nickname = "닉네임!",
+            gender = null,
+            ageRange = null
+        )
+
+        // when + then
+        assertThatThrownBy {
+            memberUseCase.updateMember(command)
+        }
+            .isExactlyInstanceOf(BusinessException::class.java)
+            .hasMessage(ResponseCode.INVALID_NICKNAME_FORMAT.message)
+    }
+
+    @Test
     @DisplayName("사용자 닉네임 사용 가능 여부 체크")
     fun 사용자_닉네임_사용가능_여부_체크() {
         // given
@@ -156,6 +193,22 @@ class MemberServiceTest(
         // then
         assertThat(availableResult.available).isEqualTo(true)
         assertThat(unavailableResult.available).isEqualTo(false)
+    }
+
+    @Test
+    @DisplayName("사용자 닉네임 사용 가능 여부 체크 시 닉네임 형식이 올바르지 않으면 실패한다")
+    fun 사용자_닉네임_사용가능_여부_체크_닉네임_형식_실패() {
+        // given
+        val command = CheckNicknameCommand(
+            nickname = "a"
+        )
+
+        // when + then
+        assertThatThrownBy {
+            memberUseCase.checkNickname(command)
+        }
+            .isExactlyInstanceOf(BusinessException::class.java)
+            .hasMessage(ResponseCode.INVALID_NICKNAME_FORMAT.message)
     }
 
     @Test
@@ -328,6 +381,26 @@ class MemberServiceTest(
         }
             .isExactlyInstanceOf(BusinessException::class.java)
             .hasMessage(ResponseCode.EXCEED_MAXIMUM_STATION_COUNT.message)
+    }
+
+    @Test
+    fun 즐겨찾는_역_중복_등록이면_실패() {
+        // given
+        stationRepository.save(StationEntity(name = "시청역"))
+
+        val command = BookmarkStationCommands(
+            stations = listOf(
+                BookmarkStationCommand("시청역", "집"),
+                BookmarkStationCommand(" 시청역 ", "회사"),
+            )
+        )
+
+        // when + then
+        assertThatThrownBy {
+            memberUseCase.bookmarkStation(command)
+        }
+            .isExactlyInstanceOf(BusinessException::class.java)
+            .hasMessage(ResponseCode.DUPLICATE_BOOKMARK_STATION.message)
     }
 
     @Test
