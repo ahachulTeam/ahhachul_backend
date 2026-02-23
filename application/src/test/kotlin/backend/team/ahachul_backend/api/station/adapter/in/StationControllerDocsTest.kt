@@ -84,8 +84,65 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                     )
                 )
             )
-
-
     }
 
+    @Test
+    fun getStationTimesSummary() {
+        // given
+        val response = GetStationTimesDto.SummaryResponse(
+            stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+            summaries = listOf(
+                GetStationTimesDto.UpDownSummary(
+                    upDownType = UpDownType.UP,
+                    firstDepartureTime = "05:31:00",
+                    lastDepartureTime = "23:58:00",
+                    firstDestinationStationName = "대화",
+                    lastDestinationStationName = "오금",
+                ),
+                GetStationTimesDto.UpDownSummary(
+                    upDownType = UpDownType.DOWN,
+                    firstDepartureTime = "05:36:00",
+                    lastDepartureTime = "23:54:00",
+                    firstDestinationStationName = "수서",
+                    lastDestinationStationName = "구파발",
+                )
+            ),
+        )
+
+        given(stationUseCase.getStationTimesSummary(any()))
+            .willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v2/stations/times/summary")
+                .queryParam("stationId", 622.toString())
+                .queryParam("subwayLineId", 3.toString())
+                .queryParam("stationTimeWeekType", StationTimeWeekType.WEEKDAY.name)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-station-times-summary",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("stationId").description("정류장 ID"),
+                        parameterWithName("subwayLineId").description("지하철 노선 ID"),
+                        parameterWithName("stationTimeWeekType").description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)")
+                    ),
+                    PayloadDocumentation.responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.stationTimeWeekType").type(JsonFieldType.STRING).description("요일 구분"),
+                        fieldWithPath("result.summaries[].upDownType").type(JsonFieldType.STRING).description("상행(UP), 하행(DOWN)"),
+                        fieldWithPath("result.summaries[].firstDepartureTime").type(JsonFieldType.STRING).optional().description("첫차 출발시간 - hh:mm:ss"),
+                        fieldWithPath("result.summaries[].lastDepartureTime").type(JsonFieldType.STRING).optional().description("막차 출발시간 - hh:mm:ss"),
+                        fieldWithPath("result.summaries[].firstDestinationStationName").type(JsonFieldType.STRING).optional().description("첫차 종착역명"),
+                        fieldWithPath("result.summaries[].lastDestinationStationName").type(JsonFieldType.STRING).optional().description("막차 종착역명"),
+                    )
+                )
+            )
+    }
 }

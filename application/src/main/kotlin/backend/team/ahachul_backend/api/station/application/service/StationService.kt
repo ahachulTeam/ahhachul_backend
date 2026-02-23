@@ -4,6 +4,8 @@ import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineSt
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimesDto
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
+import backend.team.ahachul_backend.api.train.domain.model.UpDownType
 import backend.team.ahachul_backend.common.client.SeoulTrainClient
 import backend.team.ahachul_backend.common.config.CircuitBreakerConfig.Companion.CUSTOM_CIRCUIT_BREAKER
 import backend.team.ahachul_backend.common.exception.BusinessException
@@ -28,12 +30,46 @@ class StationService(
 
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesApiGet")
     override fun getStationTimes(command: GetStationTimesCommand): GetStationTimesDto.Response {
+        return GetStationTimesDto.Response(loadStationTimes(command))
+    }
+
+    @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesSummaryApiGet")
+    override fun getStationTimesSummary(command: GetStationTimesSummaryCommand): GetStationTimesDto.SummaryResponse {
+        val summaries = UpDownType.values().map { upDownType ->
+            val stationTimes = loadStationTimes(
+                GetStationTimesCommand(
+                    stationId = command.stationId,
+                    subwayLineId = command.subwayLineId,
+                    upDownType = upDownType,
+                    stationTimeWeekType = command.stationTimeWeekType,
+                )
+            )
+            val sortedByDepartureTime = stationTimes.sortedBy { it.departureTime }
+            val firstTrain = sortedByDepartureTime.firstOrNull()
+            val lastTrain = sortedByDepartureTime.lastOrNull()
+
+            GetStationTimesDto.UpDownSummary(
+                upDownType = upDownType,
+                firstDepartureTime = firstTrain?.departureTime,
+                lastDepartureTime = lastTrain?.departureTime,
+                firstDestinationStationName = firstTrain?.arrivalStationName,
+                lastDestinationStationName = lastTrain?.arrivalStationName,
+            )
+        }
+
+        return GetStationTimesDto.SummaryResponse(
+            stationTimeWeekType = command.stationTimeWeekType,
+            summaries = summaries,
+        )
+    }
+
+    private fun loadStationTimes(command: GetStationTimesCommand): List<GetStationTimesDto.StationTimes> {
         val subwayLineStation = subwayLineStationReader.findBySubwayLineIdAndStationId(command.subwayLineId, command.stationId)
         val stationCode = subwayLineStation.stationCode ?: throw BusinessException(ResponseCode.NOT_EXIST_PUBLIC_STATION_CODE)
 
         val cacheCommand = command.toCacheCommand(stationCode)
         stationTimesCacheUtils.getStationTimesByCache(cacheCommand)?.let {
-            return GetStationTimesDto.Response(it)
+            return it
         }
 
         val response = seoulTrainClient.getStationTimesByApi(command.toRequest(stationCode))
@@ -43,8 +79,7 @@ class StationService(
 
         val stationTimes = response.toStationTimes()
         stationTimesCacheUtils.setStationTimesCache(cacheCommand, stationTimes)
-
-        return GetStationTimesDto.Response(stationTimes)
+        return stationTimes
     }
 
     /**
@@ -64,6 +99,26 @@ class StationService(
         command: GetStationTimesCommand, e : CallNotPermittedException
     ): GetStationTimesDto.Response {
         logger.error("circuit breaker opened for external station times api")
+        throw CommonException(ResponseCode.FAILED_TO_GET_STATION_TIMES, e)
+    }
+
+    /**
+     * Redis 통신 오류에 대한 첫차/막차 요약 FallBack 메서드
+     */
+    fun fallbackOnExternalStationTimesSummaryApiGet(
+        command: GetStationTimesSummaryCommand, e: RedisConnectionFailureException
+    ): GetStationTimesDto.SummaryResponse {
+        logger.error("can't connect to redis server")
+        throw CommonException(ResponseCode.FAILED_TO_CONNECT_TO_REDIS, e)
+    }
+
+    /**
+     * 열차 도착 정보 API 오류에 대한 첫차/막차 요약 FallBack 메서드
+     */
+    fun fallbackOnExternalStationTimesSummaryApiGet(
+        command: GetStationTimesSummaryCommand, e : CallNotPermittedException
+    ): GetStationTimesDto.SummaryResponse {
+        logger.error("circuit breaker opened for external station times summary api")
         throw CommonException(ResponseCode.FAILED_TO_GET_STATION_TIMES, e)
     }
 }

@@ -16,4 +16,10 @@ class StationController(
         val result = stationUseCase.getStationTimes(request.toCommand())
         return CommonResponse.success(result)
     }
+
+    @GetMapping("/v2/stations/times/summary")
+    fun getStationTimesSummary(request: GetStationTimesDto.SummaryRequest): CommonResponse<GetStationTimesDto.SummaryResponse> {
+        val result = stationUseCase.getStationTimesSummary(request.toCommand())
+        return CommonResponse.success(result)
+    }
 }
