@@ -8,6 +8,7 @@ import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimes
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.StationTimeWeekType
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
 import backend.team.ahachul_backend.api.train.domain.model.TrainType
 import backend.team.ahachul_backend.api.train.domain.model.UpDownType
 import backend.team.ahachul_backend.common.client.SeoulTrainClient
@@ -346,6 +347,130 @@ class StationServiceTest(
             .containsExactly(
                 tuple("00:00:00", "05:30:00", "대화", "수서", TrainType.GENERAL),
             )
+    }
+
+    @Test
+    @DisplayName("역 시간표 외부 API 실패 시 첫차/막차 요약은 빈 값으로 안전하게 응답한다.")
+    fun getStationTimesSummaryWithApiFailFallbackToEmpty() {
+        // given
+        val subwayLine = subwayLineRepository.save(
+            SubwayLineEntity(
+                name = "2호선",
+                regionType = RegionType.METROPOLITAN
+            )
+        )
+        val station = stationRepository.save(
+            StationEntity(
+                name = "강남"
+            )
+        )
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                stationCode = "0222",
+                subwayLine = subwayLine,
+                station = station
+            )
+        )
+
+        val command = GetStationTimesSummaryCommand(
+            stationId = station.id,
+            subwayLineId = subwayLine.id,
+            stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+        )
+
+        given(stationTimesCacheUtils.getStationTimesByCache(any()))
+            .willReturn(null)
+        given(seoulTrainClient.getStationTimesByApi(any()))
+            .willThrow(BusinessException(ResponseCode.FAILED_STATION_TIMES_API))
+
+        // when
+        val result = stationUseCase.getStationTimesSummary(command)
+
+        // then
+        assertThat(result.summaries).hasSize(2)
+        assertThat(result.summaries)
+            .extracting("firstDepartureTime", "lastDepartureTime")
+            .containsExactly(
+                tuple(null, null),
+                tuple(null, null),
+            )
+    }
+
+    @Test
+    @DisplayName("상하행 중 일부만 실패해도 첫차/막차 요약은 가능한 방향 데이터를 유지한다.")
+    fun getStationTimesSummaryWithPartialFail() {
+        // given
+        val subwayLine = subwayLineRepository.save(
+            SubwayLineEntity(
+                name = "2호선",
+                regionType = RegionType.METROPOLITAN
+            )
+        )
+        val station = stationRepository.save(
+            StationEntity(
+                name = "강남"
+            )
+        )
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                stationCode = "0222",
+                subwayLine = subwayLine,
+                station = station
+            )
+        )
+
+        val command = GetStationTimesSummaryCommand(
+            stationId = station.id,
+            subwayLineId = subwayLine.id,
+            stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+        )
+
+        given(stationTimesCacheUtils.getStationTimesByCache(any()))
+            .willReturn(null)
+        given(seoulTrainClient.getStationTimesByApi(any()))
+            .willThrow(BusinessException(ResponseCode.FAILED_STATION_TIMES_API))
+            .willReturn(
+                Response(
+                    StationTimesTable(
+                        totalCount = 1,
+                        result = StationTimesResult(
+                            code = "INFO-000",
+                            message = "정상 처리되었습니다",
+                        ),
+                        rows = listOf(
+                            StationTimeRow(
+                                lineNum = "02호선",
+                                frCode = "222",
+                                stationCd = "0222",
+                                stationNm = "강남",
+                                trainNo = "2001",
+                                arrivetime = "00:00:00",
+                                lefttime = "05:30:00",
+                                originstation = "0000",
+                                deststation = "0000",
+                                subwaysname = "강남",
+                                subwayename = "성수",
+                                weekTag = "1",
+                                inoutTag = "2",
+                                flFlag = "",
+                                deststation2 = "",
+                                expressYn = "G",
+                                branchLine = "",
+                            )
+                        ),
+                    )
+                )
+            )
+
+        // when
+        val result = stationUseCase.getStationTimesSummary(command)
+        val summaryByType = result.summaries.associateBy { it.upDownType }
+
+        // then
+        assertThat(summaryByType[UpDownType.UP]?.firstDepartureTime).isNull()
+        assertThat(summaryByType[UpDownType.UP]?.lastDepartureTime).isNull()
+        assertThat(summaryByType[UpDownType.DOWN]?.firstDepartureTime).isEqualTo("05:30:00")
+        assertThat(summaryByType[UpDownType.DOWN]?.lastDepartureTime).isEqualTo("05:30:00")
     }
 
     private fun <T> any(): T {

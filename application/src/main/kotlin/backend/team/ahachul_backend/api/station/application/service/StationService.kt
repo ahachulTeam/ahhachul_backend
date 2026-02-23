@@ -39,7 +39,7 @@ class StationService(
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesSummaryApiGet")
     override fun getStationTimesSummary(command: GetStationTimesSummaryCommand): GetStationTimesDto.SummaryResponse {
         val summaries = UpDownType.values().map { upDownType ->
-            val stationTimes = loadStationTimes(
+            val stationTimes = loadStationTimesForSummary(
                 GetStationTimesCommand(
                     stationId = command.stationId,
                     subwayLineId = command.subwayLineId,
@@ -64,6 +64,21 @@ class StationService(
             stationTimeWeekType = command.stationTimeWeekType,
             summaries = summaries,
         )
+    }
+
+    private fun loadStationTimesForSummary(command: GetStationTimesCommand): List<GetStationTimesDto.StationTimes> {
+        return try {
+            loadStationTimes(command)
+        } catch (e: BusinessException) {
+            if (e.code == ResponseCode.FAILED_STATION_TIMES_API ||
+                e.code == ResponseCode.INVALID_STATION_TIMES_API_RESPONSE
+            ) {
+                logger.error("station times summary fallback to empty list", e)
+                emptyList()
+            } else {
+                throw e
+            }
+        }
     }
 
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesLastTrainRiskApiGet")
