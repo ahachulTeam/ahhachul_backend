@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.common.application.port.out.StationReade
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetCongestionDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesDto
+import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesV2Dto
 import backend.team.ahachul_backend.api.train.application.port.`in`.TrainUseCase
 import backend.team.ahachul_backend.api.train.application.port.`in`.command.GetCongestionCommand
 import backend.team.ahachul_backend.api.train.application.port.out.TrainReader
@@ -24,6 +25,8 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.springframework.data.redis.RedisConnectionFailureException
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+import kotlin.math.max
 import org.springframework.transaction.annotation.Transactional
 
 @Service
@@ -67,6 +70,42 @@ class TrainService(
             trainNo.dropLast(3),
             trainNo[trainNo.length - 3].digitToInt(),
             trainNo.takeLast(2),
+        )
+    }
+
+    override fun getTrainRealTimesV2(
+        stationId: Long,
+        subwayLineId: Long,
+        upDownType: UpDownType?,
+        limit: Int?,
+    ): GetTrainRealTimesV2Dto.Response {
+        val safeLimit = (limit ?: 2).coerceIn(1, 4)
+        val generatedAt = OffsetDateTime.now()
+
+        val trainRealTimes = getTrainRealTimes(stationId, subwayLineId, upDownType)
+            .take(safeLimit)
+            .map { train ->
+                val etaSec = max(train.currentArrivalTime * 60, 0)
+                val etaMinDisplay = max((etaSec + 59) / 60, 0)
+                GetTrainRealTimesV2Dto.TrainRealTimeV2(
+                    trainNo = train.trainNum,
+                    upDownType = train.upDownType,
+                    arrivalCode = train.currentTrainArrivalCode.name,
+                    etaSec = etaSec,
+                    etaMinDisplay = etaMinDisplay,
+                    destinationStationDirection = train.destinationStationDirection,
+                    nextStationDirection = train.nextStationDirection,
+                )
+            }
+
+        return GetTrainRealTimesV2Dto.Response(
+            generatedAt = generatedAt.toString(),
+            dataSource = "API",
+            isStale = false,
+            lastExternalRecptnAt = generatedAt.toString(),
+            freshnessSec = 0,
+            confidenceLevel = "HIGH",
+            trainRealTimes = trainRealTimes,
         )
     }
 

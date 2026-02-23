@@ -3,6 +3,7 @@ package backend.team.ahachul_backend.api.train.adapter.`in`
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetCongestionDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesDto
+import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesV2Dto
 import backend.team.ahachul_backend.api.train.application.port.`in`.TrainUseCase
 import backend.team.ahachul_backend.common.annotation.Authentication
 import backend.team.ahachul_backend.common.response.CommonResponse
@@ -23,6 +24,17 @@ class TrainController(
     fun getTrainRealTimes(request: GetTrainRealTimesDto.Request): CommonResponse<GetTrainRealTimesDto.Response> {
         val result = trainUseCase.getTrainRealTimes(request.stationId, request.subwayLineId, request.upDownType)
         return CommonResponse.success(GetTrainRealTimesDto.Response(result))
+    }
+
+    @GetMapping("/v2/trains/real-times")
+    fun getTrainRealTimesV2(request: GetTrainRealTimesV2Dto.Request): CommonResponse<GetTrainRealTimesV2Dto.Response> {
+        val result = trainUseCase.getTrainRealTimesV2(
+            request.stationId,
+            request.subwayLineId,
+            request.upDownType,
+            request.limit,
+        )
+        return CommonResponse.success(result)
     }
 
     @Authentication
