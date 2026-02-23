@@ -23,10 +23,8 @@ import backend.team.ahachul_backend.common.persistence.SubwayLineReader
 import backend.team.ahachul_backend.common.response.ResponseCode
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
-import org.springframework.data.redis.RedisConnectionFailureException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
-import kotlin.math.max
 import org.springframework.transaction.annotation.Transactional
 
 @Service
@@ -81,30 +79,35 @@ class TrainService(
     ): GetTrainRealTimesV2Dto.Response {
         val safeLimit = (limit ?: 2).coerceIn(1, 4)
         val generatedAt = OffsetDateTime.now()
-
-        val trainRealTimes = getTrainRealTimes(stationId, subwayLineId, upDownType)
+        val rawTrainRealTimes = getTrainRealTimes(stationId, subwayLineId, upDownType)
             .take(safeLimit)
-            .map { train ->
-                val etaSec = max(train.currentArrivalTime * 60, 0)
-                val etaMinDisplay = max((etaSec + 59) / 60, 0)
-                GetTrainRealTimesV2Dto.TrainRealTimeV2(
-                    trainNo = train.trainNum,
-                    upDownType = train.upDownType,
-                    arrivalCode = train.currentTrainArrivalCode.name,
-                    etaSec = etaSec,
-                    etaMinDisplay = etaMinDisplay,
-                    destinationStationDirection = train.destinationStationDirection,
-                    nextStationDirection = train.nextStationDirection,
-                )
-            }
+
+        val meta = TrainRealtimeV2Calculator.resolveMeta(
+            generatedAt = generatedAt,
+            recptnAtRawList = rawTrainRealTimes.map { it.externalRecptnAt },
+        )
+
+        val trainRealTimes = rawTrainRealTimes.map { train ->
+            val etaSec = TrainRealtimeV2Calculator.calculateEtaSec(train.rawEtaSec, meta.freshnessSec)
+            val etaMinDisplay = TrainRealtimeV2Calculator.calculateEtaMinDisplay(etaSec)
+            GetTrainRealTimesV2Dto.TrainRealTimeV2(
+                trainNo = train.trainNum,
+                upDownType = train.upDownType,
+                arrivalCode = train.currentTrainArrivalCode.name,
+                etaSec = etaSec,
+                etaMinDisplay = etaMinDisplay,
+                destinationStationDirection = train.destinationStationDirection,
+                nextStationDirection = train.nextStationDirection,
+            )
+        }
 
         return GetTrainRealTimesV2Dto.Response(
             generatedAt = generatedAt.toString(),
             dataSource = "API",
             isStale = false,
-            lastExternalRecptnAt = generatedAt.toString(),
-            freshnessSec = 0,
-            confidenceLevel = "HIGH",
+            lastExternalRecptnAt = meta.lastExternalRecptnAt.toString(),
+            freshnessSec = meta.freshnessSec,
+            confidenceLevel = meta.confidenceLevel,
             trainRealTimes = trainRealTimes,
         )
     }

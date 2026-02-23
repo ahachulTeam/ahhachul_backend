@@ -24,6 +24,10 @@ class GetTrainRealTimesDto {
         val subwayId: String?,
         @JsonIgnore
         val stationOrder: Int?,
+        @JsonIgnore
+        val rawEtaSec: Int = 0,
+        @JsonIgnore
+        val externalRecptnAt: String? = null,
         val upDownType: UpDownType,
         val nextStationDirection: String,
         val destinationStationDirection: String,
@@ -35,9 +39,12 @@ class GetTrainRealTimesDto {
         companion object {
             fun of(it: RealtimeArrivalListDTO, stationOrder: Int): TrainRealTime {
                 val trainDirection = it.trainLineNm.split("-")
+                val fallbackEtaSec = if (stationOrder == Int.MAX_VALUE) 0 else stationOrder * 60
                 return TrainRealTime(
                     subwayId = it.subwayId,
                     stationOrder = stationOrder,
+                    rawEtaSec = it.barvlDt?.toIntOrNull() ?: fallbackEtaSec,
+                    externalRecptnAt = it.recptnDt,
                     upDownType = UpDownType.from(it.updnLine),
                     nextStationDirection = trainDirection[1].trim(),
                     destinationStationDirection = trainDirection[0].trim(),
