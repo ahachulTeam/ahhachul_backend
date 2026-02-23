@@ -26,3 +26,30 @@ include::{snippets}/create-lost-post-comment/http-response.adoc[]
 .Response Fields
 include::{snippets}/create-lost-post-comment/response-fields.adoc[]
 
+==== 유실물 코멘트 수정
+
+.Request
+include::{snippets}/update-lost-post-comment/http-request.adoc[]
+.Request Headers
+include::{snippets}/update-lost-post-comment/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/update-lost-post-comment/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/update-lost-post-comment/request-fields.adoc[]
+.Response
+include::{snippets}/update-lost-post-comment/http-response.adoc[]
+.Response Fields
+include::{snippets}/update-lost-post-comment/response-fields.adoc[]
+
+==== 유실물 코멘트 삭제
+
+.Request
+include::{snippets}/delete-lost-post-comment/http-request.adoc[]
+.Request Headers
+include::{snippets}/delete-lost-post-comment/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/delete-lost-post-comment/path-parameters.adoc[]
+.Response
+include::{snippets}/delete-lost-post-comment/http-response.adoc[]
+.Response Fields
+include::{snippets}/delete-lost-post-comment/response-fields.adoc[]

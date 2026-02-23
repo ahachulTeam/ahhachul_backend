@@ -1,7 +1,10 @@
 package backend.team.ahachul_backend.api.lost.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.CreateCommentDto
+import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.DeleteCommentDto
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.GetCommentsDto
+import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.UpdateCommentDto
+import backend.team.ahachul_backend.api.comment.application.command.DeleteCommentCommand
 import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
 import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.common.annotation.Authentication
@@ -23,5 +26,24 @@ class LostPostCommentController(
     @PostMapping("/v1/lost-posts/{lostId}/comments")
     fun createLostPostComment(@PathVariable lostId: Long, @RequestBody request: CreateCommentDto.Request): CommonResponse<CreateCommentDto.Response> {
         return CommonResponse.success(commentUseCase.createComment(request.toCommand(lostId, PostType.LOST)))
+    }
+
+    @Authentication
+    @PatchMapping("/v1/lost-posts/{lostId}/comments/{commentId}")
+    fun updateLostPostComment(
+        @PathVariable lostId: Long,
+        @PathVariable commentId: Long,
+        @RequestBody request: UpdateCommentDto.Request,
+    ): CommonResponse<UpdateCommentDto.Response> {
+        return CommonResponse.success(commentUseCase.updateComment(request.toCommand(commentId, lostId, PostType.LOST)))
+    }
+
+    @Authentication
+    @DeleteMapping("/v1/lost-posts/{lostId}/comments/{commentId}")
+    fun deleteLostPostComment(
+        @PathVariable lostId: Long,
+        @PathVariable commentId: Long,
+    ): CommonResponse<DeleteCommentDto.Response> {
+        return CommonResponse.success(commentUseCase.deleteComment(DeleteCommentCommand(commentId, lostId, PostType.LOST)))
     }
 }
