@@ -6,6 +6,8 @@ import backend.team.ahachul_backend.api.complaint.application.port.out.Complaint
 import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintPostEntity
 import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintPostType
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 
 @Component
@@ -25,5 +27,17 @@ class ComplaintPostPersistence(
 
     override fun save(entity: ComplaintPostEntity): ComplaintPostEntity {
         return repository.save(entity)
+    }
+
+    override fun getRecentComplaintPostsByMemberId(memberId: Long, limit: Int): List<ComplaintPostEntity> {
+        return repository.findByMemberIdAndStatusInOrderByCreatedAtDesc(
+            memberId = memberId,
+            statuses = listOf(
+                ComplaintPostType.CREATED,
+                ComplaintPostType.IN_PROGRESS,
+                ComplaintPostType.COMPLETED,
+            ),
+            pageable = PageRequest.of(0, limit.coerceAtLeast(1))
+        )
     }
 }

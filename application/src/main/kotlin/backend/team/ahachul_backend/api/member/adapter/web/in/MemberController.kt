@@ -18,6 +18,20 @@ class MemberController(
     }
 
     @Authentication
+    @GetMapping("/v1/members/visibility")
+    fun getMemberVisibility(): CommonResponse<MemberVisibilityDto.Response> {
+        return CommonResponse.success(memberUseCase.getMemberVisibility())
+    }
+
+    @Authentication
+    @PatchMapping("/v1/members/visibility")
+    fun updateMemberVisibility(
+        @RequestBody request: MemberVisibilityDto.Request
+    ): CommonResponse<MemberVisibilityDto.Response> {
+        return CommonResponse.success(memberUseCase.updateMemberVisibility(request.toCommand()))
+    }
+
+    @Authentication
     @PatchMapping("/v1/members")
     fun updateMember(
         @RequestBody request: UpdateMemberDto.Request
@@ -66,6 +80,16 @@ class MemberController(
         request: SearchMemberDto.Request
     ): CommonResponse<SearchMemberDto.Response> {
         return CommonResponse.success(memberUseCase.searchMembers(request.toCommand()))
+    }
+
+    @Authentication(required = false)
+    @GetMapping("/v1/members/{nickname}/profile")
+    fun getMemberProfile(
+        @PathVariable nickname: String,
+        @RequestParam(required = false, defaultValue = "false") asPublic: Boolean,
+        @RequestParam(required = false, defaultValue = "20") limit: Int,
+    ): CommonResponse<GetMemberProfileDto.Response> {
+        return CommonResponse.success(memberUseCase.getMemberProfile(nickname, asPublic, limit))
     }
 
     @Authentication

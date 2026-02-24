@@ -15,4 +15,6 @@ interface CommunityPostReader {
     fun searchCommunityPosts(command: GetSliceCommunityPostCommand): List<SearchCommunityPost>
 
     fun searchCommunityHotPosts(command: GetSliceCommunityHotPostCommand): List<SearchCommunityPost>
+
+    fun getRecentCommunityPostsByMemberId(memberId: Long, limit: Int): List<CommunityPostEntity>
 }
