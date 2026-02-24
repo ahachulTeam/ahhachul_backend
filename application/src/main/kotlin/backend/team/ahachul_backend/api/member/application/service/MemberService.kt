@@ -17,16 +17,20 @@ import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
+import backend.team.ahachul_backend.api.member.application.command.CreateFavoriteRouteCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
 import backend.team.ahachul_backend.api.member.application.port.out.FcmTokenWriter
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
+import backend.team.ahachul_backend.api.member.application.port.out.MemberStationRouteReader
+import backend.team.ahachul_backend.api.member.application.port.out.MemberStationRouteWriter
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationWriter
 import backend.team.ahachul_backend.api.member.domain.entity.FcmTokenEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
+import backend.team.ahachul_backend.api.member.domain.entity.MemberStationRouteEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberStationEntity
 import backend.team.ahachul_backend.common.exception.BusinessException
 import backend.team.ahachul_backend.common.response.ResponseCode
@@ -36,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.text.Normalizer
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.PriorityQueue
 
 @Service
 @Transactional(readOnly = true)
@@ -44,6 +49,8 @@ class MemberService(
     private val stationReader: StationReader,
     private val memberStationWriter: MemberStationWriter,
     private val memberStationReader: MemberStationReader,
+    private val memberStationRouteReader: MemberStationRouteReader,
+    private val memberStationRouteWriter: MemberStationRouteWriter,
     private val subwayLineStationReader: SubwayLineStationReader,
     private val fcmTokenWriter: FcmTokenWriter,
     private val authLogoutCacheUtils: AuthLogoutCacheUtils,
@@ -57,8 +64,54 @@ class MemberService(
     companion object {
         private const val NICKNAME_MIN_LENGTH = 2
         private const val NICKNAME_MAX_LENGTH = 10
+        private const val MAX_FAVORITE_ROUTE_COUNT = 10
         private val NICKNAME_REGEX = Regex("^[가-힣a-zA-Z0-9_]+$")
     }
+
+    private data class GraphEdge(
+        val fromStationId: Long,
+        val toStationId: Long,
+        val subwayLineId: Long,
+        val subwayLineName: String,
+    )
+
+    private data class RouteState(
+        val stationId: Long,
+        val lineId: Long?,
+    )
+
+    private data class RouteMetric(
+        val stops: Int,
+        val transfers: Int,
+    ) : Comparable<RouteMetric> {
+        override fun compareTo(other: RouteMetric): Int {
+            if (stops != other.stops) {
+                return stops.compareTo(other.stops)
+            }
+            return transfers.compareTo(other.transfers)
+        }
+    }
+
+    private data class StateWithMetric(
+        val state: RouteState,
+        val metric: RouteMetric,
+    ) : Comparable<StateWithMetric> {
+        override fun compareTo(other: StateWithMetric): Int {
+            return metric.compareTo(other.metric)
+        }
+    }
+
+    private data class Prev(
+        val previousState: RouteState,
+        val edge: GraphEdge,
+    )
+
+    private data class PathResult(
+        val nodes: List<Long>,
+        val edges: List<GraphEdge>,
+        val metric: RouteMetric,
+        val stationNamesById: Map<Long, String>,
+    )
 
     override fun getMember(): GetMemberDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
@@ -196,6 +249,123 @@ class MemberService(
         return createBookmarkStationResponse(bookmarkStations)
     }
 
+    override fun getFavoriteRouteRecommendations(limit: Int): FavoriteRouteDto.GraphResponse {
+        val member = getCurrentMember()
+        val favorites = memberStationReader.getByMember(member)
+        if (favorites.size < 2) {
+            return FavoriteRouteDto.GraphResponse(routes = emptyList())
+        }
+
+        val favoriteStationIds = favorites.map { it.station.id }.toSet()
+        val anchor = favorites.first().station
+        val normalizedLimit = limit.coerceIn(1, 6)
+
+        val routes = favorites
+            .drop(1)
+            .take(normalizedLimit)
+            .mapNotNull { destination ->
+                runCatching {
+                    buildRoute(
+                        sourceStationId = anchor.id,
+                        sourceStationName = anchor.name,
+                        destinationStationId = destination.station.id,
+                        destinationStationName = destination.station.name,
+                        favoriteStationIds = favoriteStationIds,
+                        routeType = FavoriteRouteDto.RouteType.RECOMMENDED,
+                        routeId = null,
+                        title = null,
+                    )
+                }.getOrNull()
+            }
+
+        return FavoriteRouteDto.GraphResponse(routes = routes)
+    }
+
+    override fun getFavoriteRoutes(): FavoriteRouteDto.GraphResponse {
+        val member = getCurrentMember()
+        val favorites = memberStationReader.getByMember(member)
+        val favoriteStationIds = favorites.map { it.station.id }.toSet()
+        val routes = memberStationRouteReader.findAllByMember(member).map { saved ->
+            buildRoute(
+                sourceStationId = saved.sourceStation.id,
+                sourceStationName = saved.sourceStation.name,
+                destinationStationId = saved.destinationStation.id,
+                destinationStationName = saved.destinationStation.name,
+                favoriteStationIds = favoriteStationIds,
+                routeType = FavoriteRouteDto.RouteType.CUSTOM,
+                routeId = saved.id,
+                title = saved.title,
+            )
+        }
+        return FavoriteRouteDto.GraphResponse(routes = routes)
+    }
+
+    @Transactional
+    override fun createFavoriteRoute(command: CreateFavoriteRouteCommand): FavoriteRouteDto.Route {
+        if (command.sourceStationId == command.destinationStationId) {
+            throw BusinessException(ResponseCode.INVALID_FAVORITE_ROUTE_REQUEST)
+        }
+
+        val member = getCurrentMember()
+        val favoriteStations = memberStationReader.getByMember(member)
+        val favoriteStationIds = favoriteStations.map { it.station.id }.toSet()
+
+        if (command.sourceStationId !in favoriteStationIds || command.destinationStationId !in favoriteStationIds) {
+            throw BusinessException(ResponseCode.NOT_EXIST_FAVORITE_ROUTE_STATION)
+        }
+
+        if (memberStationRouteReader.countByMember(member) >= MAX_FAVORITE_ROUTE_COUNT) {
+            throw BusinessException(ResponseCode.EXCEED_MAXIMUM_FAVORITE_ROUTE_COUNT)
+        }
+
+        val existsForward = memberStationRouteReader.existsByMemberAndPair(
+            member = member,
+            sourceStationId = command.sourceStationId,
+            destinationStationId = command.destinationStationId,
+        )
+        val existsReverse = memberStationRouteReader.existsByMemberAndPair(
+            member = member,
+            sourceStationId = command.destinationStationId,
+            destinationStationId = command.sourceStationId,
+        )
+        if (existsForward || existsReverse) {
+            throw BusinessException(ResponseCode.DUPLICATE_FAVORITE_ROUTE)
+        }
+
+        val sourceStation = stationReader.getById(command.sourceStationId)
+        val destinationStation = stationReader.getById(command.destinationStationId)
+        val saved = memberStationRouteWriter.save(
+            MemberStationRouteEntity(
+                member = member,
+                sourceStation = sourceStation,
+                destinationStation = destinationStation,
+                title = command.title,
+            )
+        )
+
+        return buildRoute(
+            sourceStationId = saved.sourceStation.id,
+            sourceStationName = saved.sourceStation.name,
+            destinationStationId = saved.destinationStation.id,
+            destinationStationName = saved.destinationStation.name,
+            favoriteStationIds = favoriteStationIds,
+            routeType = FavoriteRouteDto.RouteType.CUSTOM,
+            routeId = saved.id,
+            title = saved.title,
+        )
+    }
+
+    @Transactional
+    override fun deleteFavoriteRoute(routeId: Long): FavoriteRouteDto.DeleteResponse {
+        val member = getCurrentMember()
+        val target = memberStationRouteReader.getById(routeId)
+        if (target.member.id != member.id) {
+            throw BusinessException(ResponseCode.INVALID_AUTH)
+        }
+        memberStationRouteWriter.delete(target)
+        return FavoriteRouteDto.DeleteResponse(routeId = routeId)
+    }
+
     override fun getArticleHistories(limit: Int): GetArticleHistoryDto.Response {
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong()
         val normalizedLimit = limit.coerceIn(1, 100)
@@ -238,6 +408,177 @@ class MemberService(
         } else {
             tokenEntity.token = fcmToken
         }
+    }
+
+    private fun getCurrentMember(): MemberEntity {
+        return memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
+    }
+
+    private fun buildRoute(
+        sourceStationId: Long,
+        sourceStationName: String,
+        destinationStationId: Long,
+        destinationStationName: String,
+        favoriteStationIds: Set<Long>,
+        routeType: FavoriteRouteDto.RouteType,
+        routeId: Long?,
+        title: String?,
+    ): FavoriteRouteDto.Route {
+        val path = findShortestPath(sourceStationId, destinationStationId)
+        val nodes = path.nodes.mapIndexed { index, stationId ->
+            FavoriteRouteDto.Node(
+                stationId = stationId,
+                stationName = path.stationNamesById[stationId]
+                    ?: if (stationId == sourceStationId) sourceStationName else destinationStationName,
+                order = index,
+                favorite = stationId in favoriteStationIds,
+            )
+        }
+        val edges = path.edges.map {
+            FavoriteRouteDto.Edge(
+                fromStationId = it.fromStationId,
+                toStationId = it.toStationId,
+                subwayLineId = it.subwayLineId,
+                subwayLineName = it.subwayLineName,
+            )
+        }
+
+        return FavoriteRouteDto.Route(
+            routeId = routeId,
+            routeType = routeType,
+            title = title,
+            sourceStationId = sourceStationId,
+            sourceStationName = sourceStationName,
+            destinationStationId = destinationStationId,
+            destinationStationName = destinationStationName,
+            nodes = nodes,
+            edges = edges,
+            summary = FavoriteRouteDto.Summary(
+                totalStops = path.metric.stops,
+                transferCount = path.metric.transfers,
+                estimatedMinutes = estimateRouteMinutes(path.metric.stops, path.metric.transfers),
+            ),
+        )
+    }
+
+    private fun estimateRouteMinutes(totalStops: Int, transferCount: Int): Int {
+        return totalStops * 2 + transferCount * 4
+    }
+
+    private fun findShortestPath(sourceStationId: Long, destinationStationId: Long): PathResult {
+        if (sourceStationId == destinationStationId) {
+            return PathResult(
+                nodes = listOf(sourceStationId),
+                edges = emptyList(),
+                metric = RouteMetric(stops = 0, transfers = 0),
+                stationNamesById = mapOf(sourceStationId to stationReader.getById(sourceStationId).name),
+            )
+        }
+
+        val allLineStations = subwayLineStationReader.findAllOrderedForGraph()
+        if (allLineStations.isEmpty()) {
+            throw BusinessException(ResponseCode.ROUTE_NOT_FOUND)
+        }
+
+        val stationNamesById = allLineStations
+            .associate { it.station.id to it.station.name }
+
+        if (!stationNamesById.containsKey(sourceStationId) || !stationNamesById.containsKey(destinationStationId)) {
+            throw BusinessException(ResponseCode.ROUTE_NOT_FOUND)
+        }
+
+        val adjacency = mutableMapOf<Long, MutableList<GraphEdge>>()
+        allLineStations
+            .groupBy { it.subwayLine.id }
+            .forEach { (_, lineStations) ->
+                lineStations
+                    .windowed(size = 2, step = 1, partialWindows = false)
+                    .forEach { pair ->
+                        val left = pair[0]
+                        val right = pair[1]
+                        val forward = GraphEdge(
+                            fromStationId = left.station.id,
+                            toStationId = right.station.id,
+                            subwayLineId = left.subwayLine.id,
+                            subwayLineName = left.subwayLine.name,
+                        )
+                        val backward = GraphEdge(
+                            fromStationId = right.station.id,
+                            toStationId = left.station.id,
+                            subwayLineId = left.subwayLine.id,
+                            subwayLineName = left.subwayLine.name,
+                        )
+                        adjacency.getOrPut(forward.fromStationId) { mutableListOf() }.add(forward)
+                        adjacency.getOrPut(backward.fromStationId) { mutableListOf() }.add(backward)
+                    }
+            }
+
+        val start = RouteState(sourceStationId, null)
+        val queue = PriorityQueue<StateWithMetric>()
+        val distance = mutableMapOf(start to RouteMetric(stops = 0, transfers = 0))
+        val previous = mutableMapOf<RouteState, Prev>()
+        queue.add(StateWithMetric(start, RouteMetric(stops = 0, transfers = 0)))
+
+        var endState: RouteState? = null
+        var endMetric: RouteMetric? = null
+
+        while (queue.isNotEmpty()) {
+            val current = queue.poll()
+            val currentBest = distance[current.state] ?: continue
+            if (current.metric != currentBest) {
+                continue
+            }
+
+            if (current.state.stationId == destinationStationId) {
+                endState = current.state
+                endMetric = current.metric
+                break
+            }
+
+            adjacency[current.state.stationId].orEmpty().forEach { edge ->
+                val nextState = RouteState(stationId = edge.toStationId, lineId = edge.subwayLineId)
+                val isTransfer = current.state.lineId != null && current.state.lineId != edge.subwayLineId
+                val nextMetric = RouteMetric(
+                    stops = current.metric.stops + 1,
+                    transfers = current.metric.transfers + if (isTransfer) 1 else 0,
+                )
+                val known = distance[nextState]
+                if (known == null || nextMetric < known) {
+                    distance[nextState] = nextMetric
+                    previous[nextState] = Prev(previousState = current.state, edge = edge)
+                    queue.add(StateWithMetric(nextState, nextMetric))
+                }
+            }
+        }
+
+        if (endState == null || endMetric == null) {
+            throw BusinessException(ResponseCode.ROUTE_NOT_FOUND)
+        }
+
+        val edgesReversed = mutableListOf<GraphEdge>()
+        var cursor = endState
+        while (cursor != start) {
+            val prev = previous[cursor] ?: break
+            edgesReversed.add(prev.edge)
+            cursor = prev.previousState
+        }
+
+        val edges = edgesReversed.reversed()
+        if (edges.isEmpty()) {
+            throw BusinessException(ResponseCode.ROUTE_NOT_FOUND)
+        }
+
+        val nodes = buildList {
+            add(sourceStationId)
+            edges.forEach { add(it.toStationId) }
+        }
+
+        return PathResult(
+            nodes = nodes,
+            edges = edges,
+            metric = endMetric,
+            stationNamesById = stationNamesById,
+        )
     }
 
     private fun isEqualsAlreadyRegisteredStation(

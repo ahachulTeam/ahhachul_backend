@@ -9,5 +9,7 @@ interface SubwayLineStationReader {
 
     fun findAll(): List<SubwayLineStationEntity>
 
+    fun findAllOrderedForGraph(): List<SubwayLineStationEntity>
+
     fun findBySubwayLineIdAndStationId(subwayLineId: Long, stationId: Long): SubwayLineStationEntity
 }

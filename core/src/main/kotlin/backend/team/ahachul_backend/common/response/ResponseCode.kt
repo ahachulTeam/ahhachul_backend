@@ -63,6 +63,11 @@ enum class ResponseCode(
     DUPLICATE_BOOKMARK_STATION("803", "중복된 역은 즐겨찾기에 등록할 수 없습니다.", HttpStatus.BAD_REQUEST),
     INVALID_STATION_TIMES_API_RESPONSE("804", "역 시간표 API 응답 값이 올바르지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FAILED_TO_GET_STATION_TIMES("805", "현재 역 시간 정보를 받을 수 없습니다.", HttpStatus.NOT_FOUND),
+    ROUTE_NOT_FOUND("806", "요청한 경로를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    INVALID_FAVORITE_ROUTE_REQUEST("807", "유효하지 않은 즐겨찾기 경로 요청입니다.", HttpStatus.BAD_REQUEST),
+    DUPLICATE_FAVORITE_ROUTE("808", "이미 등록된 즐겨찾기 경로입니다.", HttpStatus.BAD_REQUEST),
+    NOT_EXIST_FAVORITE_ROUTE_STATION("809", "즐겨찾기에 등록된 역만 경로로 지정할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    EXCEED_MAXIMUM_FAVORITE_ROUTE_COUNT("810", "즐겨찾기 경로는 최대 10개까지 가능합니다.", HttpStatus.BAD_REQUEST),
 
     // DELAY PROOF
     DELAY_PROOF_INVALID("900", "유효하지 않은 지연 증빙입니다.", HttpStatus.BAD_REQUEST),

@@ -54,6 +54,36 @@ class MemberController(
     }
 
     @Authentication
+    @GetMapping("/v2/members/bookmarks/routes/recommendations")
+    fun getFavoriteRouteRecommendations(
+        @RequestParam(required = false, defaultValue = "3") limit: Int
+    ): CommonResponse<FavoriteRouteDto.GraphResponse> {
+        return CommonResponse.success(memberUseCase.getFavoriteRouteRecommendations(limit))
+    }
+
+    @Authentication
+    @GetMapping("/v2/members/bookmarks/routes")
+    fun getFavoriteRoutes(): CommonResponse<FavoriteRouteDto.GraphResponse> {
+        return CommonResponse.success(memberUseCase.getFavoriteRoutes())
+    }
+
+    @Authentication
+    @PostMapping("/v2/members/bookmarks/routes")
+    fun createFavoriteRoute(
+        @RequestBody request: FavoriteRouteDto.CreateRequest
+    ): CommonResponse<FavoriteRouteDto.Route> {
+        return CommonResponse.success(memberUseCase.createFavoriteRoute(request.toCommand()))
+    }
+
+    @Authentication
+    @DeleteMapping("/v2/members/bookmarks/routes/{routeId}")
+    fun deleteFavoriteRoute(
+        @PathVariable routeId: Long
+    ): CommonResponse<FavoriteRouteDto.DeleteResponse> {
+        return CommonResponse.success(memberUseCase.deleteFavoriteRoute(routeId))
+    }
+
+    @Authentication
     @GetMapping("/v1/members/article-histories")
     fun getArticleHistories(
         @RequestParam(required = false, defaultValue = "30") limit: Int
