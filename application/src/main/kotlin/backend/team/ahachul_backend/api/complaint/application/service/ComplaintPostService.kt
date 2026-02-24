@@ -13,6 +13,7 @@ import backend.team.ahachul_backend.api.complaint.application.port.`in`.Complain
 import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintPostFileReader
 import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintPostReader
 import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintPostWriter
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintPostEntity
 import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintPostFileEntity
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintPostType
@@ -65,6 +66,7 @@ class ComplaintPostService(
                 status = it.status,
                 commentCnt = commentReader.countComplaint(it.id),
                 subwayLineId = it.subwayLine.id,
+                stationId = it.station?.id,
                 createdBy = it.createdBy,
                 createdAt = it.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                 writer = it.member?.nickname,
@@ -99,12 +101,14 @@ class ComplaintPostService(
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val member = memberReader.getMember(memberId.toLong())
         val subwayLine = subwayLineReader.getById(command.subwayLineId)
+        val station = resolveStation(command.subwayLineId, command.stationId)
 
         val complaintPost = complaintPostWriter.save(
             ComplaintPostEntity.of(
                 command = command,
                 member = member,
                 subwayLine = subwayLine,
+                station = station,
             )
         )
 
@@ -124,8 +128,15 @@ class ComplaintPostService(
         val subwayLine = command.subwayLineId?.let {
             subwayLineReader.getById(it)
         }
+        val targetSubwayLineId = subwayLine?.id ?: complaintPost.subwayLine.id
+        val targetStationId = when {
+            command.stationId != null -> command.stationId
+            command.subwayLineId != null -> null
+            else -> complaintPost.station?.id
+        }
+        val station = resolveStation(targetSubwayLineId, targetStationId)
 
-        complaintPost.update(command, subwayLine)
+        complaintPost.update(command, subwayLine, station)
         updateImageFiles(command, complaintPost)
 
         return UpdateComplaintPostDto.Response.of(complaintPost)
@@ -177,6 +188,14 @@ class ComplaintPostService(
                 imageUrl = it.file.filePath
             )
         }
+    }
+
+    private fun resolveStation(subwayLineId: Long, stationId: Long?): StationEntity? {
+        if (stationId == null) {
+            return null
+        }
+
+        return subwayLineStationReader.findBySubwayLineIdAndStationId(subwayLineId, stationId).station
     }
 
     private fun resolveSubwayLineIds(requestedLineIds: List<Long>?, stationId: Long?): List<Long>? {

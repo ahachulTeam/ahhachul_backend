@@ -72,6 +72,7 @@ class CustomLostPostRepository(
         return queryFactory.selectFrom(lostPostEntity)
             .where(
                 subwayLinesEq(command.subwayLines),
+                stationIdEq(command.stationId),
                 lostTypeEq(command.lostType),
                 categoryEq(command.category),
                 typeNotEq(LostPostType.DELETED),
@@ -120,6 +121,9 @@ class CustomLostPostRepository(
             subwayLines.isEmpty() -> Expressions.booleanTemplate("1 = 0")
             else -> lostPostEntity.subwayLine.`in`(subwayLines)
         }
+
+    private fun stationIdEq(stationId: Long?): BooleanExpression? =
+        stationId?.let { lostPostEntity.station.id.eq(it) }
 
     private fun lostTypeEq(lostType: LostType?) =
         lostType?.let { lostPostEntity.lostType.eq(lostType) }

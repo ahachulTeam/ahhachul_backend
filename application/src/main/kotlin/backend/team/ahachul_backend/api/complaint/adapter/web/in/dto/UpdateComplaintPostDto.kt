@@ -17,6 +17,7 @@ class UpdateComplaintPostDto {
         val trainNo: String?,
         val location: Int?,
         val subwayLineId: Long?,
+        val stationId: Long?,
         val status: ComplaintPostType?,
         val removeFileIds: List<Long>? = arrayListOf(),
     ) {
@@ -30,6 +31,7 @@ class UpdateComplaintPostDto {
                 location = location,
                 content = content,
                 subwayLineId = subwayLineId,
+                stationId = stationId,
                 status = status,
                 imageFiles = imageFiles,
                 removeFileIds = removeFileIds,
@@ -47,6 +49,7 @@ class UpdateComplaintPostDto {
         val location: Int?,
         val status: ComplaintPostType,
         val subwayLineId: Long,
+        val stationId: Long?,
     ) {
         companion object {
             fun of(complaintPost: ComplaintPostEntity): Response {
@@ -60,6 +63,7 @@ class UpdateComplaintPostDto {
                     location = complaintPost.location,
                     status = complaintPost.status,
                     subwayLineId = complaintPost.subwayLine.id,
+                    stationId = complaintPost.station?.id,
                 )
             }
         }

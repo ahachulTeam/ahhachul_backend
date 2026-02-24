@@ -207,7 +207,7 @@ class LostPostServiceTest(
             )
         )
 
-        lostPostUseCase.createLostPost(createLostPostCommand(subwayLine1.id, "1호선 유실물", "휴대폰"))
+        lostPostUseCase.createLostPost(createLostPostCommand(subwayLine1.id, "1호선 유실물", "휴대폰", station.id))
         lostPostUseCase.createLostPost(createLostPostCommand(subwayLine2.id, "2호선 유실물", "휴대폰"))
 
         val stationOnlyCommand = SearchLostPostCommand(
@@ -256,6 +256,27 @@ class LostPostServiceTest(
         assertThat(entity.content).isEqualTo("내용")
         assertThat(entity.lostType).isEqualTo(LostType.ACQUIRE)
         assertThat(entity.type).isEqualTo(LostPostType.CREATED)
+    }
+
+    @Test
+    @DisplayName("유실물 저장 시 stationId를 저장한다.")
+    fun createLostPostWithStationId() {
+        // given
+        val station = stationRepository.save(StationEntity(name = "테스트역"))
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                station = station,
+                subwayLine = subwayLine
+            )
+        )
+        val createCommand = createLostPostCommand(subwayLine.id, "내용", "휴대폰", station.id)
+
+        // when
+        val response = lostPostUseCase.createLostPost(createCommand)
+        val entity = lostPostRepository.findById(response.id).orElseThrow()
+
+        // then
+        assertThat(entity.station?.id).isEqualTo(station.id)
     }
 
     @Test
@@ -464,14 +485,20 @@ class LostPostServiceTest(
         assertThat(response.data[0].id).isEqualTo(entity2.id)
         assertThat(response.data[1].id).isEqualTo(entity1.id)
     }
-    
-    private fun createLostPostCommand(subwayLineId: Long, content: String, categoryName: String): CreateLostPostCommand {
+
+    private fun createLostPostCommand(
+        subwayLineId: Long,
+        content: String,
+        categoryName: String,
+        stationId: Long? = null
+    ): CreateLostPostCommand {
         return CreateLostPostCommand(
             title = "지갑 주인 찾아요",
             content = content,
             subwayLine = subwayLineId,
             lostType = LostType.ACQUIRE,
             categoryName = categoryName,
+            stationId = stationId,
         )
     }
 

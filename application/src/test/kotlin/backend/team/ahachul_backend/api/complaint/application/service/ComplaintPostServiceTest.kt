@@ -216,6 +216,7 @@ class ComplaintPostServiceTest(
             trainNo = null,
             location = null,
             subwayLineId = subwayLine.id,
+            stationId = station.id,
             imageFiles = listOf(),
         )
         val createSecondaryLinePost = CreateComplaintPostCommand(
@@ -230,7 +231,7 @@ class ComplaintPostServiceTest(
         )
 
         val primaryPost = complaintPostRepository.save(
-            ComplaintPostEntity.of(createPrimaryLinePost, member, subwayLine)
+            ComplaintPostEntity.of(createPrimaryLinePost, member, subwayLine, station)
         )
         complaintPostRepository.save(
             ComplaintPostEntity.of(createSecondaryLinePost, member, subwayLine2)
@@ -308,6 +309,36 @@ class ComplaintPostServiceTest(
         // then
         assertThat(createComplaintPost.id).isNotNull()
         assertThat(createComplaintPost.images).isEmpty()
+    }
+
+    @Test
+    fun 민원_생성_stationId_저장() {
+        // given
+        val station = stationRepository.save(StationEntity(name = "테스트역"))
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                station = station,
+                subwayLine = subwayLine
+            )
+        )
+        val createComplaintPostCommand = CreateComplaintPostCommand(
+            complaintType = ComplaintType.ENVIRONMENTAL_COMPLAINT,
+            shortContentType = ShortContentType.SELF,
+            content = "내용",
+            phoneNumber = null,
+            trainNo = null,
+            location = null,
+            subwayLineId = subwayLine.id,
+            stationId = station.id,
+            imageFiles = listOf(),
+        )
+
+        // when
+        val created = complaintPostUseCase.createComplaintPost(createComplaintPostCommand)
+        val saved = complaintPostRepository.findById(created.id).orElseThrow()
+
+        // then
+        assertThat(saved.station?.id).isEqualTo(station.id)
     }
 
     @Test

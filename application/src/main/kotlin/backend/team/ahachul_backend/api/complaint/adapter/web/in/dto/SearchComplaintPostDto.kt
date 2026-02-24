@@ -37,6 +37,7 @@ class SearchComplaintPostDto {
         val status: ComplaintPostType,
         val commentCnt: Int,
         val subwayLineId: Long,
+        val stationId: Long?,
         val createdBy: String,
         val createdAt: String,
         val writer: String?,

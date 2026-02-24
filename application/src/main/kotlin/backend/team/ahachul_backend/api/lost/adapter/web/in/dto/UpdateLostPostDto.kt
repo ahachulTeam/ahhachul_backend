@@ -12,6 +12,7 @@ class UpdateLostPostDto {
         val title: String?,
         val content: String?,
         val subwayLineId: Long?,
+        val stationId: Long?,
         val status: LostStatus?,
         val removeFileIds: List<Long>? = arrayListOf(),
         val categoryName: String?
@@ -22,6 +23,7 @@ class UpdateLostPostDto {
                 title = title,
                 content = content,
                 subwayLineId = subwayLineId,
+                stationId = stationId,
                 status = status,
                 imageFiles = imageFiles,
                 removeFileIds = removeFileIds,
@@ -35,6 +37,7 @@ class UpdateLostPostDto {
         val title: String,
         val content: String,
         val subwayLine: Long?,
+        val stationId: Long?,
         val categoryName: String?,
         val status: LostStatus
     ) {
@@ -45,6 +48,7 @@ class UpdateLostPostDto {
                     title = entity.title,
                     content = entity.content,
                     subwayLine = entity.subwayLine?.id,
+                    stationId = entity.station?.id,
                     categoryName = entity.category?.name,
                     status = entity.status
                 )

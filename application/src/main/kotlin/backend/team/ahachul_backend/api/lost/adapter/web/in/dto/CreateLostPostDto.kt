@@ -13,6 +13,7 @@ CreateLostPostDto{
         @NotNull val title: String,
         @NotNull val content: String,
         @NotNull val subwayLineId: Long,
+        val stationId: Long?,
         @NotNull val lostType: LostType,
         val categoryName: String?
     ) {
@@ -21,6 +22,7 @@ CreateLostPostDto{
                 title = title,
                 content = content,
                 subwayLine = subwayLineId,
+                stationId = stationId,
                 lostType = lostType,
                 imageFiles = imageFiles,
                 categoryName = categoryName

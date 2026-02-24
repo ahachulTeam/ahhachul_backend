@@ -3,6 +3,7 @@ package backend.team.ahachul_backend.api.lost.domain.entity
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.CreateLostPostCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostCommand
 import backend.team.ahachul_backend.api.lost.domain.model.*
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.report.domain.ReportEntity
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
@@ -30,6 +31,10 @@ class LostPostEntity(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subway_line_id")
     var subwayLine: SubwayLineEntity?,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "station_id")
+    var station: StationEntity? = null,
 
     @OneToMany(mappedBy = "lostPost")
     var lostPostReports: MutableList<ReportEntity> = mutableListOf(),
@@ -71,12 +76,13 @@ class LostPostEntity(
         const val MIN_BLOCK_REPORT_COUNT = 5
 
         fun of(command: CreateLostPostCommand, member: MemberEntity,
-               subwayLine: SubwayLineEntity?, category: CategoryEntity?
+               subwayLine: SubwayLineEntity?, category: CategoryEntity?, station: StationEntity? = null
         ): LostPostEntity {
             return LostPostEntity(
                 title = command.title,
                 content = command.content,
                 subwayLine = subwayLine,
+                station = station,
                 lostType = command.lostType,
                 member = member,
                 category = category
@@ -107,6 +113,13 @@ class LostPostEntity(
         command.status?.let { this.status= it }
         subwayLine?.let { this.subwayLine = subwayLine }
         category?.let { this.category = category }
+    }
+
+    fun update(command: UpdateLostPostCommand, subwayLine: SubwayLineEntity?, category: CategoryEntity?, station: StationEntity?) {
+        update(command, subwayLine, category)
+        if (command.stationId != null || command.subwayLineId != null) {
+            this.station = station
+        }
     }
 
     fun updateStatus(status: LostStatus) {

@@ -14,6 +14,7 @@ class UpdateComplaintPostCommand(
     val location: Int?,
     val content: String?,
     val subwayLineId: Long?,
+    val stationId: Long? = null,
     val status: ComplaintPostType?,
     val imageFiles: List<MultipartFile>? = arrayListOf(),
     val removeFileIds: List<Long>? = arrayListOf(),

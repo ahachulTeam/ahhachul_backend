@@ -48,6 +48,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
             createdBy = "1",
             createdAt = "2023/01/23",
             subwayLineId = 1,
+            stationId = 151,
             commentCnt = 1,
             status = LostStatus.PROGRESS,
             storage = "우리집",
@@ -87,6 +88,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("result.createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                     fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("유실물 작성 날짜"),
                     fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선"),
+                    fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("유실 역 ID").optional(),
                     fieldWithPath("result.commentCnt").type(JsonFieldType.NUMBER).description("유실물 쪽지 개수"),
                     fieldWithPath("result.isFromLost112").type(JsonFieldType.BOOLEAN).description("Lost112 여부"),
                     fieldWithPath("result.lostType").type(JsonFieldType.STRING).description("유실물 타입").attributes(getFormatAttribute("LOST(유실) / ACQUIRE(습득)")),
@@ -121,6 +123,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                 createdBy = "1",
                 createdAt = "2023/01/23",
                 subwayLineId = 1,
+                stationId = 151,
                 commentCnt = 1,
                 status = LostStatus.PROGRESS,
                 imageUrl = "https://img.png",
@@ -168,6 +171,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("result.data[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                     fieldWithPath("result.data[].createdAt").type(JsonFieldType.STRING).description("유실물 작성 날짜"),
                     fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선 ID"),
+                    fieldWithPath("result.data[].stationId").type(JsonFieldType.NUMBER).description("유실 역 ID").optional(),
                     fieldWithPath("result.data[].commentCnt").type(JsonFieldType.NUMBER).description("유실물 댓글 개수"),
                     fieldWithPath("result.data[].status").type(JsonFieldType.STRING).description("유실물 찾기 완료 여부").attributes(getFormatAttribute( "PROGRESS / COMPLETE")),
                     fieldWithPath("result.data[].categoryName" ).type(JsonFieldType.STRING).description("카테고리 이름").optional(),
@@ -190,6 +194,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
             title = "title",
             content = "content",
             subwayLineId = 1,
+            stationId = 151,
             lostType = LostType.LOST,
             categoryName = null // deprecated
         )
@@ -234,6 +239,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                         fieldWithPath("title").type(JsonFieldType.STRING).description("유실물 제목"),
                         fieldWithPath("content").type(JsonFieldType.STRING).description("유실물 내용"),
                         fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선 ID"),
+                        fieldWithPath("stationId").type(JsonFieldType.NUMBER).description("유실 역 ID").optional(),
                         fieldWithPath("lostType").type(JsonFieldType.STRING).description("유실물 타입").attributes(getFormatAttribute("LOST(유실) / ACQUIRE(습득)")),
                         fieldWithPath("categoryName").type(JsonFieldType.STRING).description("[deprecated] 카테고리 이름").optional(), // deprecated
                     ),
@@ -254,6 +260,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
             title = "title",
             content = "content",
             subwayLine = 1,
+            stationId = 151,
             status = LostStatus.COMPLETE,
             categoryName = "지갑"
         )
@@ -266,6 +273,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
             title = "title",
             content = "content",
             subwayLineId = 1,
+            stationId = 151,
             status = LostStatus.COMPLETE,
             removeFileIds = arrayListOf(1, 2, 3),
             categoryName = null // deprecated
@@ -316,6 +324,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("content").type(JsonFieldType.STRING).description("유실물 내용").optional(),
                     fieldWithPath("imgUrls").type(JsonFieldType.ARRAY).description("유실물 이미지 리스트").optional(),
                     fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선 ID").optional(),
+                    fieldWithPath("stationId").type(JsonFieldType.NUMBER).description("유실 역 ID").optional(),
                     fieldWithPath("status").type(JsonFieldType.STRING).description("유실물 찾기 완료 상태")
                         .attributes(getFormatAttribute( "PROGRESS / COMPLETE")).optional(),
                     fieldWithPath("removeFileIds").type(JsonFieldType.ARRAY).description("삭제할 유실물 이미지 번호 리스트").optional(),
@@ -327,6 +336,7 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("result.title").type(JsonFieldType.STRING).description("유실물 제목"),
                     fieldWithPath("result.content").type(JsonFieldType.STRING).description("유실물 내용"),
                     fieldWithPath("result.subwayLine").type(JsonFieldType.NUMBER).description("유실 호선 ID"),
+                    fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("유실 역 ID").optional(),
                     fieldWithPath("result.status").type(JsonFieldType.STRING).description("유실물 찾기 완료 상태")
                         .attributes(getFormatAttribute( "PROGRESS / COMPLETE")),
                     fieldWithPath("result.categoryName").type(JsonFieldType.STRING).description("카테고리 이름")

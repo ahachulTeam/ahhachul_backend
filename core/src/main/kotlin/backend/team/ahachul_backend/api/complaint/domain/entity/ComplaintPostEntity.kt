@@ -5,6 +5,7 @@ import backend.team.ahachul_backend.api.complaint.application.command.`in`.Updat
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintPostType
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintType
 import backend.team.ahachul_backend.api.complaint.domain.model.ShortContentType
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.common.domain.entity.BaseEntity
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
@@ -42,13 +43,18 @@ class ComplaintPostEntity(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subway_line_id")
     var subwayLine: SubwayLineEntity,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "station_id")
+    var station: StationEntity? = null,
 ): BaseEntity() {
 
     companion object {
         fun of(
             command: CreateComplaintPostCommand,
             member: MemberEntity,
-            subwayLine: SubwayLineEntity
+            subwayLine: SubwayLineEntity,
+            station: StationEntity? = null,
         ): ComplaintPostEntity {
             return ComplaintPostEntity(
                 complaintType = command.complaintType,
@@ -59,11 +65,12 @@ class ComplaintPostEntity(
                 location = command.location,
                 member = member,
                 subwayLine = subwayLine,
+                station = station,
             )
         }
     }
 
-    fun update(command: UpdateComplaintPostCommand, subwayLine: SubwayLineEntity?) {
+    fun update(command: UpdateComplaintPostCommand, subwayLine: SubwayLineEntity?, station: StationEntity?) {
         command.complaintType?.let { this.complaintType = it }
         command.shortContentType?.let { this.shortContentType = it }
         command.content?.let { this.content = it }
@@ -71,7 +78,10 @@ class ComplaintPostEntity(
         command.trainNo?.let { this.trainNo = it }
         command.location?.let { this.location = it }
         command.status?.let { this.status= it }
-        subwayLine?.let { this.subwayLine = subwayLine }
+        subwayLine?.let { this.subwayLine = it }
+        if (command.stationId != null || command.subwayLineId != null) {
+            this.station = station
+        }
     }
 
     fun updateStatus(status: ComplaintPostType) {

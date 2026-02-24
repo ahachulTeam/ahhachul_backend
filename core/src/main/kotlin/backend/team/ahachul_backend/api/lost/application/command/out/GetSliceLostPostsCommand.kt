@@ -10,6 +10,7 @@ import java.time.LocalDateTime
 class GetSliceLostPostsCommand(
     val lostType: LostType,
     val subwayLines: List<SubwayLineEntity>?,
+    val stationId: Long?,
     val category: CategoryEntity?,
     val keyword: String?,
     val date: LocalDateTime?,
@@ -27,6 +28,7 @@ class GetSliceLostPostsCommand(
             return GetSliceLostPostsCommand(
                 lostType = command.lostType,
                 subwayLines = subwayLines,
+                stationId = command.stationId,
                 category = category,
                 keyword = command.keyword,
                 date = pageToken?.get(0) as LocalDateTime?,

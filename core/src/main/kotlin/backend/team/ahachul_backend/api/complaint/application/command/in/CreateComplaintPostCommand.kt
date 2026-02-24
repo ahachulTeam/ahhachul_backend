@@ -12,6 +12,7 @@ class CreateComplaintPostCommand(
     val trainNo: String?,
     val location: Int?,
     val subwayLineId: Long,
+    val stationId: Long? = null,
     val imageFiles: List<MultipartFile>? = listOf()
 ) {
 

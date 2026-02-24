@@ -49,6 +49,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                     status = ComplaintPostType.CREATED,
                     commentCnt = 0,
                     subwayLineId = 1L,
+                    stationId = 151L,
                     createdBy = "1",
                     createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                     writer = "닉네임",
@@ -101,6 +102,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.data[].status").type(JsonFieldType.STRING).description("민원 상태").attributes(getFormatAttribute("민원 코드 - 민원 상태")),
                         fieldWithPath("result.data[].commentCnt").type(JsonFieldType.NUMBER).description("민원 댓글 수"),
                         fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
+                        fieldWithPath("result.data[].stationId").type(JsonFieldType.NUMBER).description("민원 역 ID").optional(),
                         fieldWithPath("result.data[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.data[].createdAt").type(JsonFieldType.STRING).description("작성일자"),
                         fieldWithPath("result.data[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
@@ -126,6 +128,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
             status = ComplaintPostType.CREATED,
             commentCnt = 0,
             subwayLineId = 1L,
+            stationId = 151L,
             createdBy = "1",
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
             writer = "닉네임",
@@ -163,6 +166,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.status").type(JsonFieldType.STRING).description("민원 상태").attributes(getFormatAttribute("민원 코드 - 민원 상태")),
                         fieldWithPath("result.commentCnt").type(JsonFieldType.NUMBER).description("민원 댓글 수"),
                         fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("민원 역 ID").optional(),
                         fieldWithPath("result.createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("작성일자"),
                         fieldWithPath("result.writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
@@ -193,7 +197,8 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
             phoneNumber = "010-1234-5678",
             trainNo = "1234",
             location = 1,
-            subwayLineId = 1L
+            subwayLineId = 1L,
+            stationId = 151L,
         )
 
         val mapper = ObjectMapper()
@@ -239,6 +244,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                     fieldWithPath("trainNo").type(JsonFieldType.STRING).description("민원 열차 번호").optional(),
                     fieldWithPath("location").type(JsonFieldType.NUMBER).description("민원 열차 칸").optional(),
                     fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
+                    fieldWithPath("stationId").type(JsonFieldType.NUMBER).description("민원 역 ID").optional(),
                 ),
                 responseFields(
                     *commonResponseFields(),
@@ -263,6 +269,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
             location = 1,
             status = ComplaintPostType.IN_PROGRESS,
             subwayLineId = 1L,
+            stationId = 151L,
         )
 
         given(complaintPostUseCase.updateComplaintPost(any()))
@@ -277,6 +284,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
             location = 1,
             status = ComplaintPostType.IN_PROGRESS,
             subwayLineId = 1L,
+            stationId = 151L,
             removeFileIds = listOf(1L)
         )
 
@@ -327,6 +335,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                     fieldWithPath("trainNo").type(JsonFieldType.STRING).description("민원 열차 번호").optional(),
                     fieldWithPath("location").type(JsonFieldType.NUMBER).description("민원 열차 칸").optional(),
                     fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선").optional(),
+                    fieldWithPath("stationId").type(JsonFieldType.NUMBER).description("민원 역 ID").optional(),
                     fieldWithPath("status").type(JsonFieldType.STRING).description("민원 상태").optional().attributes(getFormatAttribute("민원 코드 - 민원 상태")),
                     fieldWithPath("removeFileIds").type(JsonFieldType.ARRAY).description("삭제할 민원 이미지 번호 리스트").optional(),
                 ),
@@ -341,6 +350,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                     fieldWithPath("result.location").type(JsonFieldType.NUMBER).description("민원 열차 칸"),
                     fieldWithPath("result.status").type(JsonFieldType.STRING).description("민원 상태").attributes(getFormatAttribute("민원 코드 - 민원 상태")),
                     fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
+                    fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("민원 역 ID").optional(),
                 )
             ))
     }
@@ -358,6 +368,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
             location = 1,
             status = ComplaintPostType.IN_PROGRESS,
             subwayLineId = 1L,
+            stationId = 151L,
         )
 
         given(complaintPostUseCase.updateComplaintPostStatus(any()))
@@ -401,6 +412,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                     fieldWithPath("result.location").type(JsonFieldType.NUMBER).description("민원 열차 칸"),
                     fieldWithPath("result.status").type(JsonFieldType.STRING).description("민원 상태").attributes(getFormatAttribute("민원 코드 - 민원 상태")),
                     fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
+                    fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("민원 역 ID").optional(),
                 )
             ))
     }

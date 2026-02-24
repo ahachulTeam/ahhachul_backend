@@ -15,6 +15,7 @@ import backend.team.ahachul_backend.api.lost.application.service.command.`in`.Up
 import backend.team.ahachul_backend.api.lost.application.service.command.`in`.UpdateLostPostStatusCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetRecommendLostPostsCommand
 import backend.team.ahachul_backend.api.lost.application.service.command.out.GetSliceLostPostsCommand
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostFileEntity
@@ -137,6 +138,7 @@ class LostPostService(
                 createdBy = it.createdBy,
                 createdAt = it.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                 subwayLineId = it.subwayLine?.id,
+                stationId = it.station?.id,
                 commentCnt = commentCountMap[it.id] ?: 0,
                 status = it.status,
                 imageUrl = getFileSource(it),
@@ -165,6 +167,7 @@ class LostPostService(
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val member = memberReader.getMember(memberId.toLong())
         val subwayLine = subwayLineReader.getById(command.subwayLine)
+        val station = resolveStation(command.subwayLine, command.stationId)
         val category = command.categoryName?.let { categoryReader.getCategoryByName(it) }
 
         val entity = lostPostWriter.save(
@@ -172,7 +175,8 @@ class LostPostService(
                 command = command,
                 member = member,
                 subwayLine = subwayLine,
-                category = category
+                category = category,
+                station = station,
             )
         )
 
@@ -191,12 +195,20 @@ class LostPostService(
         val subwayLine = command.subwayLineId?.let {
             subwayLineReader.getById(it)
         }
+        val targetSubwayLineId = subwayLine?.id ?: entity.subwayLine?.id
+        val targetStationId = when {
+            command.stationId != null -> command.stationId
+            command.subwayLineId != null -> null
+            else -> entity.station?.id
+        }
 
         val category = command.categoryName?.let {
             categoryReader.getCategoryByName(it)
         }
 
-        entity.update(command, subwayLine, category)
+        val station = targetSubwayLineId?.let { resolveStation(it, targetStationId) }
+
+        entity.update(command, subwayLine, category, station)
         updateImageFiles(command, entity)
         return UpdateLostPostDto.Response.from(entity)
     }
@@ -237,6 +249,14 @@ class LostPostService(
 
     companion object {
         const val DEFAULT_RECOMMEND_SIZE = 12L
+    }
+
+    private fun resolveStation(subwayLineId: Long, stationId: Long?): StationEntity? {
+        if (stationId == null) {
+            return null
+        }
+
+        return subwayLineStationReader.findBySubwayLineIdAndStationId(subwayLineId, stationId).station
     }
 
     private fun resolveSubwayLineIds(requestedLineIds: List<Long>?, stationId: Long?): List<Long>? {

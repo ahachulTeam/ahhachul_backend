@@ -10,5 +10,6 @@ class CreateLostPostCommand(
     val subwayLine: Long,
     val lostType: LostType,
     val categoryName: String?,
+    val stationId: Long? = null,
     var imageFiles: List<MultipartFile>? = listOf()
 )

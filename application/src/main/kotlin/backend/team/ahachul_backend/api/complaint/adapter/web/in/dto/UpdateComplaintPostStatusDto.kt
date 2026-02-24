@@ -29,6 +29,7 @@ class UpdateComplaintPostStatusDto {
         val location: Int?,
         val status: ComplaintPostType,
         val subwayLineId: Long,
+        val stationId: Long?,
     ) {
         companion object {
             fun of(complaintPost: ComplaintPostEntity): Response {
@@ -42,6 +43,7 @@ class UpdateComplaintPostStatusDto {
                     location = complaintPost.location,
                     status = complaintPost.status,
                     subwayLineId = complaintPost.subwayLine.id,
+                    stationId = complaintPost.station?.id,
                 )
             }
         }
