@@ -7,9 +7,11 @@ import backend.team.ahachul_backend.api.lost.application.service.command.out.Get
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.model.Lost112Data
+import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.response.ResponseCode
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -44,5 +46,13 @@ class LostPostPersistence(
 
     override fun getRandomLostPosts(command: GetRecommendLostPostsCommand): List<LostPostEntity> {
         return customLostPostRepository.searchRandomPostNotEqualCategory(command)
+    }
+
+    override fun getRecentLostPostsByMemberId(memberId: Long, limit: Int): List<LostPostEntity> {
+        return lostPostRepository.findByMemberIdAndTypeOrderByCreatedAtDesc(
+            memberId = memberId,
+            type = LostPostType.CREATED,
+            pageable = PageRequest.of(0, limit.coerceAtLeast(1)),
+        )
     }
 }

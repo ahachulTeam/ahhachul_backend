@@ -10,7 +10,12 @@ class GetMemberDto {
             val email: String?,
             val maskedEmail: String? = null,
             val gender: GenderType?,
-            val ageRange: String?
+            val ageRange: String?,
+            val profilePublic: Boolean,
+            val emailPublic: Boolean,
+            val genderAgePublic: Boolean,
+            val postsPublic: Boolean,
+            val commentsPublic: Boolean,
     ) {
         companion object {
             fun of(memberEntity: MemberEntity): Response {
@@ -20,7 +25,12 @@ class GetMemberDto {
                         email = memberEntity.email,
                         maskedEmail = maskEmail(memberEntity.email),
                         gender = memberEntity.gender,
-                        ageRange = memberEntity.ageRange
+                        ageRange = memberEntity.ageRange,
+                        profilePublic = memberEntity.isProfilePublic(),
+                        emailPublic = memberEntity.isEmailPublic(),
+                        genderAgePublic = memberEntity.isGenderAgePublic(),
+                        postsPublic = memberEntity.isActivityPostsPublic(),
+                        commentsPublic = memberEntity.isActivityCommentsPublic(),
                 )
             }
 

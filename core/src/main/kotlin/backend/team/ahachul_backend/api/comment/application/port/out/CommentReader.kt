@@ -18,4 +18,6 @@ interface CommentReader {
     fun countComplaint(postId: Long): Int
 
     fun searchComments(command: GetCommentsCommand): List<SearchComment>
+
+    fun getRecentCommentsByMemberId(memberId: Long, limit: Int): List<CommentEntity>
 }

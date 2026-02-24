@@ -27,6 +27,15 @@ class MemberPersistence(
         return member
     }
 
+    override fun getMemberByNickname(nickname: String): MemberEntity {
+        val member = memberRepository.findByNickname(nickname)
+            ?: throw AdapterException(ResponseCode.INVALID_DOMAIN)
+
+        validateMember(member)
+
+        return member
+    }
+
     override fun findMember(providerUserId: String): MemberEntity? {
         val member = memberRepository.findByProviderUserId(providerUserId)
 

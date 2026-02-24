@@ -10,6 +10,8 @@ interface MemberUseCase {
 
     fun getMember(): GetMemberDto.Response
 
+    fun getMemberProfile(nickname: String, asPublic: Boolean, limit: Int): GetMemberProfileDto.Response
+
     fun updateMember(command: UpdateMemberCommand): UpdateMemberDto.Response
 
     fun deleteMember(request: DeleteMemberDto.Request)
