@@ -83,7 +83,7 @@ class StationService(
 
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesLastTrainRiskApiGet")
     override fun getLastTrainRisk(command: GetStationLastTrainRiskCommand): GetStationTimesDto.LastTrainRiskResponse {
-        val stationTimes = loadStationTimes(
+        val stationTimes = loadStationTimesForLastTrainRisk(
             GetStationTimesCommand(
                 stationId = command.stationId,
                 subwayLineId = command.subwayLineId,
@@ -113,6 +113,21 @@ class StationService(
             riskLevel = calculated.riskLevel,
             message = calculated.message,
         )
+    }
+
+    private fun loadStationTimesForLastTrainRisk(command: GetStationTimesCommand): List<GetStationTimesDto.StationTimes> {
+        return try {
+            loadStationTimes(command)
+        } catch (e: BusinessException) {
+            if (e.code == ResponseCode.FAILED_STATION_TIMES_API ||
+                e.code == ResponseCode.INVALID_STATION_TIMES_API_RESPONSE
+            ) {
+                logger.error("station times last-train-risk fallback to empty list", e)
+                emptyList()
+            } else {
+                throw e
+            }
+        }
     }
 
     override fun getQuickExits(command: GetStationQuickExitCommand): GetStationTimesDto.QuickExitResponse {

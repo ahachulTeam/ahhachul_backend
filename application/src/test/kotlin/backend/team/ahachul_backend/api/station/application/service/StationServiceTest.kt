@@ -7,6 +7,7 @@ import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEn
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimesDto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.StationTimeWeekType
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationLastTrainRiskCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
 import backend.team.ahachul_backend.api.train.domain.model.TrainType
@@ -394,6 +395,53 @@ class StationServiceTest(
                 tuple(null, null),
                 tuple(null, null),
             )
+    }
+
+    @Test
+    @DisplayName("역 시간표 외부 API 실패 시 막차 리스크는 500 대신 위험 응답으로 안전하게 응답한다.")
+    fun getLastTrainRiskWithApiFailFallbackToRiskResponse() {
+        // given
+        val subwayLine = subwayLineRepository.save(
+            SubwayLineEntity(
+                name = "2호선",
+                regionType = RegionType.METROPOLITAN
+            )
+        )
+        val station = stationRepository.save(
+            StationEntity(
+                name = "강남"
+            )
+        )
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                stationCode = "0222",
+                subwayLine = subwayLine,
+                station = station
+            )
+        )
+
+        val command = GetStationLastTrainRiskCommand(
+            stationId = station.id,
+            subwayLineId = subwayLine.id,
+            upDownType = UpDownType.UP,
+            stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+            walkingMinutes = 15,
+        )
+
+        given(stationTimesCacheUtils.getStationTimesByCache(any()))
+            .willReturn(null)
+        given(seoulTrainClient.getStationTimesByApi(any()))
+            .willThrow(BusinessException(ResponseCode.FAILED_STATION_TIMES_API))
+
+        // when
+        val result = stationUseCase.getLastTrainRisk(command)
+
+        // then
+        assertThat(result.lastDepartureTime).isNull()
+        assertThat(result.minutesToLastTrain).isEqualTo(-1)
+        assertThat(result.isLastTrainRisk).isTrue()
+        assertThat(result.riskLevel).isEqualTo(GetStationTimesDto.LastTrainRiskLevel.RISK)
+        assertThat(result.message).isEqualTo("막차 정보가 없습니다.")
     }
 
     @Test
