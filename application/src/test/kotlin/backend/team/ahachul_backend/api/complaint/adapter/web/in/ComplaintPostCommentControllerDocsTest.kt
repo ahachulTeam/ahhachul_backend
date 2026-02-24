@@ -1,7 +1,9 @@
 package backend.team.ahachul_backend.api.complaint.adapter.web.`in`
 
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.CreateCommentDto
+import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.DeleteCommentDto
 import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.GetCommentsDto
+import backend.team.ahachul_backend.api.comment.adapter.web.`in`.dto.UpdateCommentDto
 import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
 import backend.team.ahachul_backend.api.comment.domain.model.CommentType
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
@@ -13,7 +15,9 @@ import org.springframework.http.MediaType
 import org.springframework.restdocs.headers.HeaderDocumentation.headerWithName
 import org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post
 import org.springframework.restdocs.payload.JsonFieldType
 import org.springframework.restdocs.payload.PayloadDocumentation
@@ -160,6 +164,95 @@ class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.id").type(JsonFieldType.NUMBER).description("생성된 코멘트 아이디"),
                         fieldWithPath("result.upperCommentId").type(JsonFieldType.NUMBER).description("연결된 상위 코멘트 아이디").optional(),
                         fieldWithPath("result.content").type(JsonFieldType.STRING).description("생성된 내용"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun updateComplaintPostCommentTest() {
+        // given
+        val response = UpdateCommentDto.Response(
+            id = 2,
+            content = "수정된 민원 코멘트 내용"
+        )
+
+        given(commentUseCase.updateComment(any()))
+            .willReturn(response)
+
+        val request = UpdateCommentDto.Request(
+            content = "수정할 민원 코멘트 내용"
+        )
+
+        // when
+        val result = mockMvc.perform(
+            patch("/v1/complaint-posts/{postId}/comments/{commentId}", 1L, 2L)
+                .header("Authorization", "Bearer <Access Token>")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "update-complaint-post-comment",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    pathParameters(
+                        parameterWithName("postId").description("코멘트가 속한 민원 아이디"),
+                        parameterWithName("commentId").description("수정할 코멘트 아이디")
+                    ),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰")
+                    ),
+                    PayloadDocumentation.requestFields(
+                        fieldWithPath("content").type(JsonFieldType.STRING).description("수정할 내용"),
+                    ),
+                    PayloadDocumentation.responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.id").type(JsonFieldType.NUMBER).description("수정된 코멘트 아이디"),
+                        fieldWithPath("result.content").type(JsonFieldType.STRING).description("수정된 내용"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun deleteComplaintPostCommentTest() {
+        // given
+        val response = DeleteCommentDto.Response(
+            id = 2
+        )
+
+        given(commentUseCase.deleteComment(any()))
+            .willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            delete("/v1/complaint-posts/{postId}/comments/{commentId}", 1L, 2L)
+                .header("Authorization", "Bearer <Access Token>")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "delete-complaint-post-comment",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    pathParameters(
+                        parameterWithName("postId").description("코멘트가 속한 민원 아이디"),
+                        parameterWithName("commentId").description("삭제할 코멘트 아이디")
+                    ),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰")
+                    ),
+                    PayloadDocumentation.responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.id").type(JsonFieldType.NUMBER).description("삭제된 코멘트 아이디"),
                     )
                 )
             )
