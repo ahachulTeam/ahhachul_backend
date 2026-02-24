@@ -9,6 +9,7 @@ class CreateCommunityPostCommand(
     val categoryType: CommunityCategoryType,
     val hashTags: List<String> = arrayListOf(),
     val subwayLineId: Long,
+    val stationId: Long? = null,
     val imageFiles: List<MultipartFile>? = arrayListOf(),
 ) {
 }

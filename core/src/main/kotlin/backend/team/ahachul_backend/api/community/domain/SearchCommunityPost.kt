@@ -11,6 +11,7 @@ data class SearchCommunityPost(
     val categoryType: CommunityCategoryType,
     val regionType: RegionType,
     val subwayLineId: Long,
+    val stationId: Long?,
     val likeCnt: Long,
     val commentCnt: Long,
     val createdAt: LocalDateTime,

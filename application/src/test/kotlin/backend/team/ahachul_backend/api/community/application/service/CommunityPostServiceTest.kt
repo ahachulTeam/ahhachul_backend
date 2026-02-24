@@ -6,6 +6,10 @@ import backend.team.ahachul_backend.api.community.application.command.`in`.*
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostUseCase
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
+import backend.team.ahachul_backend.api.common.adapter.web.out.StationRepository
+import backend.team.ahachul_backend.api.common.adapter.web.out.SubwayLineStationRepository
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
+import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
@@ -14,6 +18,7 @@ import backend.team.ahachul_backend.api.member.domain.model.ProviderType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.RegionType
 import backend.team.ahachul_backend.common.domain.model.YNType
+import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.persistence.HashTagRepository
 import backend.team.ahachul_backend.common.persistence.SubwayLineRepository
@@ -37,6 +42,8 @@ class CommunityPostServiceTest(
     @Autowired val hashTagRepository: HashTagRepository,
     @Autowired val memberRepository: MemberRepository,
     @Autowired val subwayLineRepository: SubwayLineRepository,
+    @Autowired val stationRepository: StationRepository,
+    @Autowired val subwayLineStationRepository: SubwayLineStationRepository,
 ): CommonServiceTestConfig() {
 
     var member: MemberEntity? = null
@@ -569,5 +576,131 @@ class CommunityPostServiceTest(
         // then
         assertThat(result.data).hasSize(1)
         assertThat(result.data.first().id).isEqualTo(findCommunityPost.id)
+    }
+
+    @Test
+    @DisplayName("커뮤니티 역 필터 조회")
+    fun 커뮤니티_역_필터_조회() {
+        // given
+        val secondaryLine = subwayLineRepository.save(
+            SubwayLineEntity(name = "2호선", regionType = RegionType.METROPOLITAN)
+        )
+        val station = stationRepository.save(StationEntity(name = "테스트역"))
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                station = station,
+                subwayLine = subwayLine
+            )
+        )
+
+        communityPostUseCase.createCommunityPost(
+            CreateCommunityPostCommand(
+                title = "다른 노선 게시글",
+                content = "2호선 내용",
+                categoryType = CommunityCategoryType.FREE,
+                subwayLineId = secondaryLine.id
+            )
+        )
+        val primaryLinePost = communityPostUseCase.createCommunityPost(
+            CreateCommunityPostCommand(
+                title = "역 필터 대상 게시글",
+                content = "1호선 내용",
+                categoryType = CommunityCategoryType.FREE,
+                subwayLineId = subwayLine.id
+            )
+        )
+
+        val byStationCommand = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineIds = null,
+            stationId = station.id,
+            content = null,
+            hashTag = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 10
+        )
+
+        val mismatchIntersectionCommand = SearchCommunityPostCommand(
+            categoryType = null,
+            subwayLineIds = listOf(secondaryLine.id),
+            stationId = station.id,
+            content = null,
+            hashTag = null,
+            writer = null,
+            sort = Sort.unsorted(),
+            pageToken = null,
+            pageSize = 10
+        )
+
+        // when
+        val byStationResult = communityPostUseCase.searchCommunityPosts(byStationCommand)
+        val mismatchIntersectionResult = communityPostUseCase.searchCommunityPosts(mismatchIntersectionCommand)
+
+        // then
+        assertThat(byStationResult.data).hasSize(1)
+        assertThat(byStationResult.data.first().id).isEqualTo(primaryLinePost.id)
+        assertThat(mismatchIntersectionResult.data).isEmpty()
+    }
+
+    @Test
+    @DisplayName("커뮤니티 게시글 작성 시 stationId 저장")
+    fun 커뮤니티_게시글_작성_stationId_저장() {
+        // given
+        val station = stationRepository.save(StationEntity(name = "강남"))
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                station = station,
+                subwayLine = subwayLine
+            )
+        )
+
+        // when
+        val result = communityPostUseCase.createCommunityPost(
+            CreateCommunityPostCommand(
+                title = "station 저장",
+                content = "station 저장 테스트",
+                categoryType = CommunityCategoryType.ISSUE,
+                subwayLineId = subwayLine.id,
+                stationId = station.id
+            )
+        )
+        val saved = communityPostRepository.findById(result.id).orElseThrow()
+
+        // then
+        assertThat(result.stationId).isEqualTo(station.id)
+        assertThat(saved.station?.id).isEqualTo(station.id)
+    }
+
+    @Test
+    @DisplayName("커뮤니티 게시글 작성 시 호선-역이 맞지 않으면 예외 발생")
+    fun 커뮤니티_게시글_작성_호선_역_불일치_예외() {
+        // given
+        val line2 = subwayLineRepository.save(
+            SubwayLineEntity(name = "2호선", regionType = RegionType.METROPOLITAN)
+        )
+        val station = stationRepository.save(StationEntity(name = "잠실"))
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                station = station,
+                subwayLine = line2
+            )
+        )
+
+        // when, then
+        assertThatThrownBy {
+            communityPostUseCase.createCommunityPost(
+                CreateCommunityPostCommand(
+                    title = "불일치",
+                    content = "불일치",
+                    categoryType = CommunityCategoryType.FREE,
+                    subwayLineId = subwayLine.id,
+                    stationId = station.id
+                )
+            )
+        }
+            .isExactlyInstanceOf(AdapterException::class.java)
+            .hasMessage(ResponseCode.INVALID_DOMAIN.message)
     }
 }

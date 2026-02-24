@@ -50,6 +50,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     likeCnt = 0,
                     regionType = RegionType.METROPOLITAN,
                     subwayLineId = 1L,
+                    stationId = 151L,
                     createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                     createdBy = "작성자 ID",
                     writer = "작성자 닉네임",
@@ -68,6 +69,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
             get("/v1/community-posts")
                 .queryParam("categoryType", "ISSUE")
                 .queryParam("subwayLineIds", "1,2")
+                .queryParam("stationId", "151")
                 .queryParam("content", "내용")
                 .queryParam("hashTag", "여행")
                 .queryParam("writer", "작성자")
@@ -88,6 +90,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     queryParameters(
                         parameterWithName("categoryType").description("카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")).optional(),
                         parameterWithName("subwayLineIds").description("노선 ID 리스트").optional(),
+                        parameterWithName("stationId").description("역 ID").optional(),
                         parameterWithName("content").description("검색하고자 하는 내용").optional(),
                         parameterWithName("hashTag").description("검색하고자 하는 해시 태그").optional(),
                         parameterWithName("hotPostYn").description("검색하고자 하는 핫 게시글 여부").optional(),
@@ -110,6 +113,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.data[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
                         fieldWithPath("result.data[].regionType").type("RegionType").description("지역").attributes(getFormatAttribute("METROPOLITAN")),
                         fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.data[].stationId").type(JsonFieldType.NUMBER).description("지하철 역 ID").optional(),
                         fieldWithPath("result.data[].createdAt").type("LocalDateTime").description("작성일자"),
                         fieldWithPath("result.data[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.data[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
@@ -137,6 +141,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     likeCnt = 0,
                     regionType = RegionType.METROPOLITAN,
                     subwayLineId = 1L,
+                    stationId = 151L,
                     createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                     createdBy = "작성자 ID",
                     writer = "작성자 닉네임",
@@ -154,6 +159,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
         val result = mockMvc.perform(
             get("/v1/community-hot-posts")
                 .queryParam("subwayLineIds", "1,2")
+                .queryParam("stationId", "151")
                 .queryParam("content", "내용")
                 .queryParam("hashTag", "여행")
                 .queryParam("writer", "작성자")
@@ -173,6 +179,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                     getDocsResponse(),
                     queryParameters(
                         parameterWithName("subwayLineIds").description("노선 ID 리스트").optional(),
+                        parameterWithName("stationId").description("역 ID").optional(),
                         parameterWithName("content").description("검색하고자 하는 내용").optional(),
                         parameterWithName("hashTag").description("검색하고자 하는 해시 태그").optional(),
                         parameterWithName("writer").description("검색하고자 하는 작성자 닉네임").optional(),
@@ -194,6 +201,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.data[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
                         fieldWithPath("result.data[].regionType").type("RegionType").description("지역").attributes(getFormatAttribute("METROPOLITAN")),
                         fieldWithPath("result.data[].subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.data[].stationId").type(JsonFieldType.NUMBER).description("지하철 역 ID").optional(),
                         fieldWithPath("result.data[].createdAt").type("LocalDateTime").description("작성일자"),
                         fieldWithPath("result.data[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.data[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
@@ -222,6 +230,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
             YNType.Y,
             RegionType.METROPOLITAN,
             1L,
+            151L,
             LocalDateTime.now(),
             "작성자 ID",
             "작성자 닉네임",
@@ -262,6 +271,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.hotPostYn").type("YNType").description("핫 게시글 여부").attributes(getFormatAttribute("Y, N")),
                         fieldWithPath("result.regionType").type("RegionType").description("지역").attributes(getFormatAttribute("METROPOLITAN")),
                         fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("지하철 역 ID").optional(),
                         fieldWithPath("result.createdAt").type("LocalDateTime").description("작성일자"),
                         fieldWithPath("result.createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
                         fieldWithPath("result.writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
@@ -283,6 +293,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
             categoryType = CommunityCategoryType.ISSUE,
             region = RegionType.METROPOLITAN,
             subwayLineId = 1,
+            stationId = 151,
             images = listOf(ImageDto.of(1L, "url1"), ImageDto.of(2L, "url2"))
         )
 
@@ -293,6 +304,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
             title = "생성할 제목",
             content = "생성할 내용",
             subwayLineId = 1,
+            stationId = 151,
             categoryType = CommunityCategoryType.ISSUE,
             hashTags = listOf("여행", "취미")
         )
@@ -334,6 +346,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("content").type(JsonFieldType.STRING).description("생성할 내용"),
                         fieldWithPath("categoryType").type(JsonFieldType.STRING).description("카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")),
                         fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("stationId").type(JsonFieldType.NUMBER).description("지하철 역 ID").optional(),
                         fieldWithPath("hashTags").type(JsonFieldType.ARRAY).description("해시 태그 목록").optional(),
                     ),
                     responseFields(
@@ -344,6 +357,7 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.categoryType").type("CategoryType").description("카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")),
                         fieldWithPath("result.region").type(JsonFieldType.STRING).description("지역"),
                         fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("지하철 역 ID").optional(),
                         fieldWithPath("result.images[]").type(JsonFieldType.ARRAY).description("등록된 이미지 목록"),
                         fieldWithPath("result.images[].imageId").type(JsonFieldType.NUMBER).description("등록된 이미지 ID"),
                         fieldWithPath("result.images[].imageUrl").type(JsonFieldType.STRING).description("등록된 이미지 URI"),
@@ -360,6 +374,8 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
             title = "변경된 제목",
             content = "변경된 내용",
             categoryType = CommunityCategoryType.ISSUE,
+            subwayLineId = 1L,
+            stationId = 151L,
             images = listOf(ImageDto.of(3L, "url3"))
         )
 
@@ -371,6 +387,8 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
             content = "변경할 내용",
             removeFileIds = listOf(1, 2),
             categoryType = CommunityCategoryType.ISSUE,
+            subwayLineId = 1L,
+            stationId = 151L,
             hashTags = listOf("여행", "취미")
         )
 
@@ -413,6 +431,8 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("title").type(JsonFieldType.STRING).description("생성할 제목"),
                         fieldWithPath("content").type(JsonFieldType.STRING).description("생성할 내용"),
                         fieldWithPath("categoryType").type(JsonFieldType.STRING).description("카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")),
+                        fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID").optional(),
+                        fieldWithPath("stationId").type(JsonFieldType.NUMBER).description("지하철 역 ID").optional(),
                         fieldWithPath("removeFileIds").type(JsonFieldType.ARRAY).description("지하철 노선 ID"),
                         fieldWithPath("hashTags").type(JsonFieldType.ARRAY).description("해시 태그 목록").optional(),
                     ),
@@ -422,6 +442,8 @@ class CommunityPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.title").type(JsonFieldType.STRING).description("변경된 게시글 제목"),
                         fieldWithPath("result.content").type(JsonFieldType.STRING).description("변경된 게시글 내용"),
                         fieldWithPath("result.categoryType").type("CategoryType").description("변경된 카테고리 타입").attributes(getFormatAttribute("FREE, INSIGHT, ISSUE, HUMOR")),
+                        fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("지하철 역 ID").optional(),
                         fieldWithPath("result.images[]").type(JsonFieldType.ARRAY).description("등록된 이미지 목록"),
                         fieldWithPath("result.images[].imageId").type(JsonFieldType.NUMBER).description("등록된 이미지 ID"),
                         fieldWithPath("result.images[].imageUrl").type(JsonFieldType.STRING).description("등록된 이미지 URI"),

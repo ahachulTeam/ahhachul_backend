@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 
 class GetSliceCommunityHotPostCommand(
     val subwayLines: List<SubwayLineEntity>?,
+    val stationId: Long?,
     val content: String?,
     val hashTag: String?,
     val writer: String?,
@@ -27,6 +28,7 @@ class GetSliceCommunityHotPostCommand(
 
             return GetSliceCommunityHotPostCommand(
                 subwayLines = subwayLines,
+                stationId = command.stationId,
                 content = command.content,
                 hashTag = command.hashTag,
                 writer = command.writer,

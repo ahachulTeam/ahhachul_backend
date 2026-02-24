@@ -18,6 +18,7 @@ data class GetCommunityPost(
     val hotPostYn: YNType,
     val regionType: RegionType,
     val subwayLineId: Long,
+    val stationId: Long?,
     val createdAt: LocalDateTime,
     val createdBy: String,
     val writer: String,

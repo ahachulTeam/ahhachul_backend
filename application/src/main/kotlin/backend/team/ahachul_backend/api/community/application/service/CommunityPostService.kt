@@ -13,6 +13,9 @@ import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostFileEntity
 import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
+import backend.team.ahachul_backend.api.common.application.port.out.StationReader
+import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.dto.PageInfoDto
@@ -33,7 +36,9 @@ class CommunityPostService(
     private val communityPostReader: CommunityPostReader,
 
     private val memberReader: MemberReader,
+    private val stationReader: StationReader,
     private val subwayLineReader: SubwayLineReader,
+    private val subwayLineStationReader: SubwayLineStationReader,
     private val communityPostHashTagReader: CommunityPostHashTagReader,
     private val communityPostFileReader: CommunityPostFileReader,
 
@@ -47,7 +52,8 @@ class CommunityPostService(
 
     override fun searchCommunityPosts(command: SearchCommunityPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
         val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
-        val subwayLines = command.subwayLineIds?.stream()
+        val subwayLineIds = resolveSubwayLineIds(command.subwayLineIds, command.stationId)
+        val subwayLines = subwayLineIds?.stream()
             ?.map { subwayLineReader.getById(it) }
             ?.toList()
 
@@ -69,7 +75,8 @@ class CommunityPostService(
 
     override fun searchCommunityHotPosts(command: SearchCommunityHotPostCommand): PageInfoDto<SearchCommunityPostDto.Response> {
         val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
-        val subwayLines = command.subwayLineIds?.stream()
+        val subwayLineIds = resolveSubwayLineIds(command.subwayLineIds, command.stationId)
+        val subwayLines = subwayLineIds?.stream()
             ?.map { subwayLineReader.getById(it) }
             ?.toList()
 
@@ -113,7 +120,8 @@ class CommunityPostService(
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val member = memberReader.getMember(memberId.toLong())
         val subwayLine = subwayLineReader.getById(command.subwayLineId)
-        val communityPost = communityPostWriter.save(CommunityPostEntity.of(command, member, subwayLine))
+        val station = resolveStation(command.subwayLineId, command.stationId)
+        val communityPost = communityPostWriter.save(CommunityPostEntity.of(command, member, subwayLine, station))
         communityPostHashTagService.createCommunityPostHashTag(communityPost, command.hashTags)
 
         val images = command.imageFiles?.let {
@@ -131,7 +139,10 @@ class CommunityPostService(
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val communityPost = communityPostReader.getCommunityPost(command.id)
         communityPost.checkMe(memberId)
-        communityPost.update(command)
+        val subwayLineId = command.subwayLineId ?: communityPost.subwayLineEntity.id
+        val subwayLine = subwayLineReader.getById(subwayLineId)
+        val station = resolveStation(subwayLineId, command.stationId ?: communityPost.station?.id)
+        communityPost.update(command, subwayLine, station)
         communityPostHashTagService.createCommunityPostHashTag(communityPost, command.hashTags)
         command.uploadFiles?.let {
             communityPostFileService.createCommunityPostFiles(communityPost, command.uploadFiles!!)
@@ -187,11 +198,45 @@ class CommunityPostService(
                     likeCnt = it.likeCnt,
                     regionType = it.regionType,
                     subwayLineId = it.subwayLineId,
+                    stationId = it.stationId,
                     createdAt = it.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                     createdBy = it.createdBy,
                     writer = it.writer,
                     image = file?.let { it1 -> ImageDto.of(it1.id, file.filePath) }
                 )
             }.toList()
+    }
+
+    private fun resolveStation(subwayLineId: Long, stationId: Long?): StationEntity? {
+        if (stationId == null) {
+            return null
+        }
+
+        return subwayLineStationReader.findBySubwayLineIdAndStationId(subwayLineId, stationId).station
+    }
+
+    private fun resolveSubwayLineIds(requestedLineIds: List<Long>?, stationId: Long?): List<Long>? {
+        val stationLineIds = stationId?.let {
+            val station = stationReader.getById(it)
+            subwayLineStationReader.findByStation(station)
+                .map { subwayLineStation -> subwayLineStation.subwayLine.id }
+                .distinct()
+        }
+
+        if (requestedLineIds == null && stationLineIds == null) {
+            return null
+        }
+
+        if (requestedLineIds == null) {
+            return stationLineIds
+        }
+
+        if (stationLineIds == null) {
+            return requestedLineIds
+        }
+
+        return requestedLineIds
+            .intersect(stationLineIds.toSet())
+            .toList()
     }
 }

@@ -11,6 +11,7 @@ class SearchCommunityPostDto {
     data class Request(
         val categoryType: CommunityCategoryType?,
         val subwayLineIds: String?,
+        val stationId: Long?,
         val content: String?,
         val hashTag: String?,
         val writer: String?,
@@ -22,6 +23,7 @@ class SearchCommunityPostDto {
                 subwayLineIds = subwayLineIds?.let {
                     it.split(",").map { x -> x.toLong() }
                 },
+                stationId = stationId,
                 content = content,
                 hashTag = hashTag,
                 writer = writer,
@@ -48,6 +50,7 @@ class SearchCommunityPostDto {
         val likeCnt: Long,
         val regionType: RegionType,
         val subwayLineId: Long,
+        val stationId: Long?,
         val createdAt: String,
         val createdBy: String,
         val writer: String,

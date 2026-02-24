@@ -8,6 +8,8 @@ class UpdateCommunityPostCommand(
     val title: String,
     val content: String,
     val categoryType: CommunityCategoryType,
+    val subwayLineId: Long? = null,
+    val stationId: Long? = null,
     val hashTags: List<String> = arrayListOf(),
     val uploadFiles: List<MultipartFile>? = arrayListOf(),
     val removeFileIds: List<Long> = arrayListOf()

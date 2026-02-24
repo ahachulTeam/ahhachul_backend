@@ -12,6 +12,8 @@ class UpdateCommunityPostDto {
         val title: String,
         val content: String,
         val categoryType: CommunityCategoryType,
+        val subwayLineId: Long? = null,
+        val stationId: Long? = null,
         val hashTags: List<String> = listOf(),
         val removeFileIds: List<Long> = listOf()
     ) {
@@ -21,6 +23,8 @@ class UpdateCommunityPostDto {
                 title = title,
                 content = content,
                 categoryType = categoryType,
+                subwayLineId = subwayLineId,
+                stationId = stationId,
                 hashTags = hashTags,
                 uploadFiles = uploadFiles,
                 removeFileIds = removeFileIds
@@ -33,6 +37,8 @@ class UpdateCommunityPostDto {
         val title: String,
         val content: String,
         val categoryType: CommunityCategoryType,
+        val subwayLineId: Long,
+        val stationId: Long?,
         val images: List<ImageDto> = arrayListOf()
     ) {
         companion object {
@@ -42,6 +48,8 @@ class UpdateCommunityPostDto {
                     title = entity.title,
                     content = entity.content,
                     categoryType = entity.categoryType,
+                    subwayLineId = entity.subwayLineEntity.id,
+                    stationId = entity.station?.id,
                     images = images
                 )
             }

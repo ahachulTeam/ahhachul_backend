@@ -7,6 +7,7 @@ class SearchCommunityHotPostDto {
 
     data class Request(
         val subwayLineIds: String?,
+        val stationId: Long?,
         val content: String?,
         val hashTag: String?,
         val writer: String?,
@@ -17,6 +18,7 @@ class SearchCommunityHotPostDto {
                 subwayLineIds = subwayLineIds?.let {
                     it.split(",").map { x -> x.toLong() }
                 },
+                stationId = stationId,
                 content = content,
                 hashTag = hashTag,
                 writer = writer,

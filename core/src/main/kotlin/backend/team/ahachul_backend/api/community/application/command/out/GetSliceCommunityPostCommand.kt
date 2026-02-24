@@ -10,6 +10,7 @@ import java.time.LocalDateTime
 class GetSliceCommunityPostCommand(
     val categoryType: CommunityCategoryType?,
     val subwayLines: List<SubwayLineEntity>?,
+    val stationId: Long?,
     val content: String?,
     val hashTag: String?,
     val writer: String?,
@@ -30,6 +31,7 @@ class GetSliceCommunityPostCommand(
             return GetSliceCommunityPostCommand(
                 categoryType = command.categoryType,
                 subwayLines = subwayLines,
+                stationId = command.stationId,
                 content = command.content,
                 hashTag = command.hashTag,
                 writer = command.writer,

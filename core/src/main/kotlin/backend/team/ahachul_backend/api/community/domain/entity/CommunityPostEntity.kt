@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.community.application.command.`in`.Creat
 import backend.team.ahachul_backend.api.community.application.command.`in`.UpdateCommunityPostCommand
 import backend.team.ahachul_backend.api.community.domain.model.CommunityCategoryType
 import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.report.domain.ReportEntity
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
@@ -49,6 +50,10 @@ class CommunityPostEntity(
     @JoinColumn(name = "subway_line_id")
     var subwayLineEntity: SubwayLineEntity,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "station_id")
+    var station: StationEntity? = null,
+
     @OneToMany(mappedBy = "communityPost", fetch = FetchType.EAGER)
     var communityPostHashTags: MutableList<CommunityPostHashTagEntity> = mutableListOf(),
 
@@ -60,21 +65,29 @@ class CommunityPostEntity(
 
     companion object {
         const val MIN_BLOCK_REPORT_COUNT = 5
-        fun of(command: CreateCommunityPostCommand, memberEntity: MemberEntity, subwayLineEntity: SubwayLineEntity): CommunityPostEntity {
+        fun of(
+            command: CreateCommunityPostCommand,
+            memberEntity: MemberEntity,
+            subwayLineEntity: SubwayLineEntity,
+            stationEntity: StationEntity? = null,
+        ): CommunityPostEntity {
             return CommunityPostEntity(
                 title = command.title,
                 content = command.content,
                 categoryType = command.categoryType,
                 member = memberEntity,
-                subwayLineEntity = subwayLineEntity
+                subwayLineEntity = subwayLineEntity,
+                station = stationEntity
             )
         }
     }
 
-    fun update(command: UpdateCommunityPostCommand) {
+    fun update(command: UpdateCommunityPostCommand, subwayLineEntity: SubwayLineEntity, station: StationEntity?) {
         title = command.title
         content = command.content
         categoryType = command.categoryType
+        this.subwayLineEntity = subwayLineEntity
+        this.station = station
     }
 
     fun delete() {

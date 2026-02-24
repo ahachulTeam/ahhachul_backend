@@ -4,6 +4,7 @@ import org.springframework.data.domain.Sort
 
 class SearchCommunityHotPostCommand(
     val subwayLineIds: List<Long>?,
+    val stationId: Long? = null,
     val content: String?,
     val hashTag: String?,
     val writer: String?,

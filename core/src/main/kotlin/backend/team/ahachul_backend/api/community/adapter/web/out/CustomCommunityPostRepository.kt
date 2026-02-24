@@ -13,6 +13,7 @@ import backend.team.ahachul_backend.api.lost.domain.entity.QLostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.QLostPostEntity.lostPostEntity
 import backend.team.ahachul_backend.api.member.domain.entity.QMemberEntity.memberEntity
 import backend.team.ahachul_backend.common.domain.entity.QHashTagEntity.hashTagEntity
+import backend.team.ahachul_backend.api.common.domain.entity.QStationEntity.stationEntity
 import backend.team.ahachul_backend.common.domain.entity.QSubwayLineEntity.subwayLineEntity
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.YNType
@@ -21,6 +22,7 @@ import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.ExpressionUtils.count
 import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.Projections
+import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.JPAExpressions
 import com.querydsl.jpa.impl.JPAQueryFactory
@@ -96,6 +98,7 @@ class CustomCommunityPostRepository(
                 communityPostEntity.hotPostYn,
                 communityPostEntity.regionType,
                 communityPostEntity.subwayLineEntity.id,
+                communityPostEntity.station.id,
                 communityPostEntity.createdAt,
                 communityPostEntity.createdBy,
                 communityPostEntity.member.nickname.`as`("writer"),
@@ -105,6 +108,7 @@ class CustomCommunityPostRepository(
             .from(communityPostEntity)
             .join(communityPostEntity.member, memberEntity)
             .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
+            .leftJoin(communityPostEntity.station, stationEntity)
             .where(communityPostEntity.id.eq(postId))
             .fetchOne()
     }
@@ -116,9 +120,11 @@ class CustomCommunityPostRepository(
             .from(communityPostEntity)
             .join(communityPostEntity.member, memberEntity)
             .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
+            .leftJoin(communityPostEntity.station, stationEntity)
             .where(
                 categoryTypeEq(command.categoryType),
                 subwayLinesEq(command.subwayLines),
+                stationIdEq(command.stationId),
                 hashTagEqWithSubQuery(command.hashTag),
                 titleOrContentContains(command.content),
                 writerEq(command.writer),
@@ -139,9 +145,11 @@ class CustomCommunityPostRepository(
             .from(communityPostEntity)
             .join(communityPostEntity.member, memberEntity)
             .join(communityPostEntity.subwayLineEntity, subwayLineEntity)
+            .leftJoin(communityPostEntity.station, stationEntity)
             .where(
                 hotPost(),
                 subwayLinesEq(command.subwayLines),
+                stationIdEq(command.stationId),
                 hashTagEqWithSubQuery(command.hashTag),
                 titleOrContentContains(command.content),
                 writerEq(command.writer),
@@ -175,9 +183,20 @@ class CustomCommunityPostRepository(
     private fun subwayLineEq(subwayLine: SubwayLineEntity?) =
         subwayLine?.let { communityPostEntity.subwayLineEntity.eq(subwayLine) }
 
-    private fun subwayLinesEq(subwayLines: List<SubwayLineEntity>?) =
-        subwayLines?.takeIf { it.isNotEmpty() }
-            ?.let { communityPostEntity.subwayLineEntity.`in`(it) }
+    private fun subwayLinesEq(subwayLines: List<SubwayLineEntity>?): BooleanExpression? {
+        if (subwayLines == null) {
+            return null
+        }
+
+        if (subwayLines.isEmpty()) {
+            return Expressions.booleanTemplate("1 = 0")
+        }
+
+        return communityPostEntity.subwayLineEntity.`in`(subwayLines)
+    }
+
+    private fun stationIdEq(stationId: Long?): BooleanExpression? =
+        stationId?.let { communityPostEntity.station.id.eq(it).or(communityPostEntity.station.isNull()) }
 
     private fun hotPost() = communityPostEntity.hotPostYn.eq(YNType.Y)
         .and(communityPostEntity.hotPostSelectedDate.after(LocalDateTime.now().minusDays(HOT_POST_LIMIT_DAYS)))
@@ -216,6 +235,7 @@ class CustomCommunityPostRepository(
             communityPostEntity.categoryType,
             communityPostEntity.regionType,
             communityPostEntity.subwayLineEntity.id,
+            communityPostEntity.station.id,
             ExpressionUtils.`as`(
                 JPAExpressions.select(count(communityPostLikeEntity.id))
                     .from(communityPostLikeEntity)
