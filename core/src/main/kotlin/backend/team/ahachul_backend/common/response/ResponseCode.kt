@@ -65,6 +65,9 @@ enum class ResponseCode(
     // DELAY PROOF
     DELAY_PROOF_INVALID("900", "유효하지 않은 지연 증빙입니다.", HttpStatus.BAD_REQUEST),
     DELAY_PROOF_EXPIRED("901", "만료된 지연 증빙입니다.", HttpStatus.GONE),
+    INVALID_MESSAGE_REQUEST("902", "유효하지 않은 쪽지 요청입니다.", HttpStatus.BAD_REQUEST),
+    MESSAGE_ROOM_NOT_FOUND("903", "쪽지방이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    MESSAGE_ROOM_FORBIDDEN("904", "해당 쪽지방에 접근할 수 없습니다.", HttpStatus.FORBIDDEN),
 
     // FILE
     FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
