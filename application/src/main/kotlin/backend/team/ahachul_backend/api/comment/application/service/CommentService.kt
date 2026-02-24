@@ -83,6 +83,7 @@ class CommentService(
     override fun createComment(command: CreateCommentCommand): CreateCommentDto.Response {
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!
         val upperComment = command.upperCommentId?.let { commentReader.findById(it) }
+        upperComment?.validateBelongsTo(command.postType, command.postId)
         val member = memberReader.getMember(memberId.toLong())
         val post = getPost(command.postType, command.postId)
 

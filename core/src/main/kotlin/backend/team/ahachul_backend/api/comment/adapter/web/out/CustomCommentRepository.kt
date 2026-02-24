@@ -22,6 +22,11 @@ class CustomCommentRepository(
     private val queryFactory: JPAQueryFactory
 ) {
 
+    private data class LostCommentCount(
+        val postId: Long,
+        val commentCount: Long,
+    )
+
     fun searchComments(command: GetCommentsCommand): List<SearchComment> {
         val orderSpecifier = getOrder(command.sort)
 
@@ -56,6 +61,26 @@ class CustomCommentRepository(
             .orderBy(orderSpecifier)
             .fetch()
 
+    }
+
+    fun countLostCommentsByPostIds(postIds: List<Long>): Map<Long, Int> {
+        if (postIds.isEmpty()) {
+            return emptyMap()
+        }
+
+        return queryFactory
+            .select(
+                Projections.constructor(
+                    LostCommentCount::class.java,
+                    commentEntity.lostPost.id,
+                    count(commentEntity.id),
+                )
+            )
+            .from(commentEntity)
+            .where(commentEntity.lostPost.id.`in`(postIds))
+            .groupBy(commentEntity.lostPost.id)
+            .fetch()
+            .associate { it.postId to it.commentCount.toInt() }
     }
 
     private fun getOrder(sort: Sort): OrderSpecifier<*>? {

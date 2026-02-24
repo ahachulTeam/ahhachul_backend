@@ -121,6 +121,7 @@ class LostPostService(
                 command=command, subwayLines=subwayLines, category=category
             )
         )
+        val commentCountMap = commentReader.countLostByPostIds(lostPostList.map { it.id })
 
         val searchLostPostsDtoList = lostPostList.map {
             SearchLostPostsDto.Response(
@@ -131,7 +132,7 @@ class LostPostService(
                 createdBy = it.createdBy,
                 createdAt = it.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")),
                 subwayLineId = it.subwayLine?.id,
-                commentCnt = commentReader.countLost(it.id),
+                commentCnt = commentCountMap[it.id] ?: 0,
                 status = it.status,
                 imageUrl = getFileSource(it),
                 categoryName = it.category?.name

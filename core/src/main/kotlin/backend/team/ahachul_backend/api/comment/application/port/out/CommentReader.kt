@@ -13,6 +13,7 @@ interface CommentReader {
     fun countCommunity(postId: Long): Int
 
     fun countLost(postId: Long): Int
+    fun countLostByPostIds(postIds: List<Long>): Map<Long, Int>
 
     fun countComplaint(postId: Long): Int
 

@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile
 class UpdateLostPostDto {
 
     data class Request(
-        val id: Long,
+        val id: Long? = null,
         val title: String?,
         val content: String?,
         val subwayLineId: Long?,

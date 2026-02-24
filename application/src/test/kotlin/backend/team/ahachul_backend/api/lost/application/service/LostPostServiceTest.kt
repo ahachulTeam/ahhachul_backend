@@ -10,6 +10,10 @@ import backend.team.ahachul_backend.api.lost.application.service.command.`in`.Up
 import backend.team.ahachul_backend.api.lost.domain.entity.CategoryEntity
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.model.*
+import backend.team.ahachul_backend.api.comment.application.command.CreateCommentCommand
+import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
+import backend.team.ahachul_backend.api.comment.domain.model.CommentVisibility
+import backend.team.ahachul_backend.api.comment.domain.model.PostType
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
@@ -32,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired
 
 class LostPostServiceTest(
     @Autowired val lostPostUseCase: LostPostUseCase,
+    @Autowired val commentUseCase: CommentUseCase,
     @Autowired val lostPostRepository: LostPostRepository,
     @Autowired val memberRepository: MemberRepository,
     @Autowired val subwayLineRepository: SubwayLineRepository,
@@ -109,6 +114,49 @@ class LostPostServiceTest(
             .extracting("content")
             .usingRecursiveComparison()
             .isEqualTo((2 downTo 1).map { "유실물$it" })
+    }
+
+    @Test
+    @DisplayName("유실물 목록 조회 시 댓글 수를 정확히 반환한다.")
+    fun searchLostPostsCommentCounts() {
+        // given
+        val firstPostId = lostPostUseCase.createLostPost(
+            createLostPostCommand(subwayLine.id, "첫번째 유실물", "휴대폰")
+        ).id
+        val secondPostId = lostPostUseCase.createLostPost(
+            createLostPostCommand(subwayLine.id, "두번째 유실물", "휴대폰")
+        ).id
+
+        repeat(2) {
+            commentUseCase.createComment(
+                CreateCommentCommand(
+                    postId = firstPostId,
+                    postType = PostType.LOST,
+                    upperCommentId = null,
+                    content = "첫번째 댓글 $it",
+                    visibility = CommentVisibility.PUBLIC
+                )
+            )
+        }
+        commentUseCase.createComment(
+            CreateCommentCommand(
+                postId = secondPostId,
+                postType = PostType.LOST,
+                upperCommentId = null,
+                content = "두번째 댓글",
+                visibility = CommentVisibility.PUBLIC
+            )
+        )
+
+        val searchCommand = createSearchLostPostCommand(null, subwayLine.id, null)
+
+        // when
+        val response = lostPostUseCase.searchLostPosts(searchCommand)
+        val commentCountMap = response.data.associateBy({ it.id }, { it.commentCnt })
+
+        // then
+        assertThat(commentCountMap[firstPostId]).isEqualTo(2)
+        assertThat(commentCountMap[secondPostId]).isEqualTo(1)
     }
 
     @Test

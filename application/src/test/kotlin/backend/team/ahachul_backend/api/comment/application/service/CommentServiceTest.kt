@@ -182,6 +182,36 @@ class CommentServiceTest(
     }
 
     @Test
+    @DisplayName("답글 생성 - 게시글 스코프 불일치 예외")
+    fun 답글_생성_게시글_스코프_불일치_예외() {
+        // given
+        val parentComment = commentUseCase.createComment(
+            CreateCommentCommand(
+                postId = communityPost.id,
+                postType = PostType.COMMUNITY,
+                upperCommentId = null,
+                content = "상위 댓글",
+                visibility = CommentVisibility.PUBLIC
+            )
+        )
+
+        val replyCommand = CreateCommentCommand(
+            postId = lostPost.id,
+            postType = PostType.LOST,
+            upperCommentId = parentComment.id,
+            content = "다른 게시글에 대한 답글",
+            visibility = CommentVisibility.PUBLIC
+        )
+
+        // when
+        val throwable = catchThrowable { commentUseCase.createComment(replyCommand) }
+
+        // then
+        assertThat(throwable).isInstanceOf(CommonException::class.java)
+        assertThat((throwable as CommonException).code).isEqualTo(ResponseCode.POST_NOT_FOUND)
+    }
+
+    @Test
     @DisplayName("코멘트 수정")
     fun 코멘트_수정() {
         // given

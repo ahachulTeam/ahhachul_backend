@@ -36,6 +36,10 @@ class CommentPersistence(
         return repository.countByLostPostId(postId)
     }
 
+    override fun countLostByPostIds(postIds: List<Long>): Map<Long, Int> {
+        return customRepository.countLostCommentsByPostIds(postIds)
+    }
+
     override fun countComplaint(postId: Long): Int {
         return repository.countByComplaintPostId(postId)
     }
