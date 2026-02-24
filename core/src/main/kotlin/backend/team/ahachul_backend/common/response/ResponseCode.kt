@@ -62,6 +62,10 @@ enum class ResponseCode(
     INVALID_STATION_TIMES_API_RESPONSE("804", "역 시간표 API 응답 값이 올바르지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FAILED_TO_GET_STATION_TIMES("805", "현재 역 시간 정보를 받을 수 없습니다.", HttpStatus.NOT_FOUND),
 
+    // DELAY PROOF
+    DELAY_PROOF_INVALID("900", "유효하지 않은 지연 증빙입니다.", HttpStatus.BAD_REQUEST),
+    DELAY_PROOF_EXPIRED("901", "만료된 지연 증빙입니다.", HttpStatus.GONE),
+
     // FILE
     FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 }

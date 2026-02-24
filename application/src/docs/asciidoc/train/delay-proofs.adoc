@@ -1,0 +1,47 @@
+=== /v2 지연 증빙
+
+==== 지연 증빙 발급
+
+.Request
+include::{snippets}/create-delay-proof-v2/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-delay-proof-v2/request-headers.adoc[]
+.Request Fields
+include::{snippets}/create-delay-proof-v2/request-fields.adoc[]
+.Response
+include::{snippets}/create-delay-proof-v2/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-delay-proof-v2/response-fields.adoc[]
+
+==== 지연 증빙 조회
+
+.Request
+include::{snippets}/get-delay-proof-v2/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-delay-proof-v2/path-parameters.adoc[]
+.Response
+include::{snippets}/get-delay-proof-v2/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-delay-proof-v2/response-fields.adoc[]
+
+==== 지하철 공식 긴급정보 조회
+
+.Request
+include::{snippets}/get-subway-incidents-v2/http-request.adoc[]
+.Query Parameters
+include::{snippets}/get-subway-incidents-v2/query-parameters.adoc[]
+.Response
+include::{snippets}/get-subway-incidents-v2/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-subway-incidents-v2/response-fields.adoc[]
+
+==== 커뮤니티 지연 시그널 조회
+
+.Request
+include::{snippets}/get-community-delay-signals-v2/http-request.adoc[]
+.Query Parameters
+include::{snippets}/get-community-delay-signals-v2/query-parameters.adoc[]
+.Response
+include::{snippets}/get-community-delay-signals-v2/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-community-delay-signals-v2/response-fields.adoc[]

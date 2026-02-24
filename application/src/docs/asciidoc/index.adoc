@@ -53,6 +53,7 @@ include::subway/subways.adoc[]
 == Train
 
 include::train/trains.adoc[]
+include::train/delay-proofs.adoc[]
 
 include::train/error.adoc[]
 
