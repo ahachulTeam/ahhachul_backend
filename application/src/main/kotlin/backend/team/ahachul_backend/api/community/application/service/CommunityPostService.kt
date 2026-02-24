@@ -1,5 +1,7 @@
 package backend.team.ahachul_backend.api.community.application.service
 
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleBookmarkReader
+import backend.team.ahachul_backend.api.article.domain.model.ArticleType
 import backend.team.ahachul_backend.api.community.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.community.application.command.`in`.*
 import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityHotPostCommand
@@ -45,7 +47,8 @@ class CommunityPostService(
     private val communityPostHashTagService: CommunityPostHashTagService,
     private val communityPostFileService: CommunityPostFileService,
 
-    private val viewsSupport: ViewsSupport
+    private val viewsSupport: ViewsSupport,
+    private val articleBookmarkReader: ArticleBookmarkReader,
 ): CommunityPostUseCase {
 
     private val logger = NamedLogger("HASHTAG_LOGGER")
@@ -98,6 +101,7 @@ class CommunityPostService(
 
     override fun getCommunityPost(command: GetCommunityPostCommand): GetCommunityPostDto.Response {
         val userId: String? = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
+        val memberId = userId?.toLongOrNull()
         val communityPost = communityPostReader.getByCustom(command.id, userId)
 
         if (communityPost.status == CommunityPostType.DELETED) {
@@ -107,11 +111,17 @@ class CommunityPostService(
         val views = viewsSupport.increase(command.id)
         val hashTags = communityPostHashTagReader.findAllByPostId(communityPost.id).map { it.hashTag.name }
         val communityPostFiles = communityPostFileReader.findAllByPostId(communityPost.id)
+        val bookmarkCnt = articleBookmarkReader.count(ArticleType.COMMUNITY, command.id)
+        val bookmarkYn = memberId?.let {
+            articleBookmarkReader.exists(ArticleType.COMMUNITY, command.id, it)
+        } ?: false
         return GetCommunityPostDto.Response.of(
-            communityPost,
-            hashTags,
-            views,
-            convertToImageDto(communityPostFiles)
+            getCommunityPost = communityPost,
+            hashTags = hashTags,
+            views = views,
+            images = convertToImageDto(communityPostFiles),
+            bookmarkCnt = bookmarkCnt,
+            bookmarkYn = bookmarkYn
         )
     }
 

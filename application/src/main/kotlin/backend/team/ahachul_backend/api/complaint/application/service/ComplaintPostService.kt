@@ -1,6 +1,9 @@
 package backend.team.ahachul_backend.api.complaint.application.service
 
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleBookmarkReader
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleLikeReader
+import backend.team.ahachul_backend.api.article.domain.model.ArticleType
 import backend.team.ahachul_backend.api.common.application.port.out.StationReader
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.complaint.adapter.web.`in`.dto.*
@@ -40,6 +43,8 @@ class ComplaintPostService(
     private val subwayLineStationReader: SubwayLineStationReader,
     private val memberReader: MemberReader,
     private val commentReader: CommentReader,
+    private val articleLikeReader: ArticleLikeReader,
+    private val articleBookmarkReader: ArticleBookmarkReader,
 ): ComplaintPostUseCase {
 
     override fun searchComplaintPosts(command: SearchComplaintPostCommand): PageInfoDto<SearchComplaintPostDto.Response> {
@@ -82,6 +87,7 @@ class ComplaintPostService(
     }
 
     override fun getComplaintPost(postId: Long): GetComplaintPostDto.Response {
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)?.toLongOrNull()
         val complaintPost = complaintPostReader.getComplaintPost(postId)
 
         if (complaintPost.status == ComplaintPostType.DELETED) {
@@ -90,9 +96,23 @@ class ComplaintPostService(
 
         val commentCnt = commentReader.countComplaint(postId)
         val files = complaintPostFileReader.findAllByPostId(postId)
+        val likeCnt = articleLikeReader.count(ArticleType.COMPLAINT, postId)
+        val bookmarkCnt = articleBookmarkReader.count(ArticleType.COMPLAINT, postId)
+        val likeYn = memberId?.let {
+            articleLikeReader.exists(ArticleType.COMPLAINT, postId, it)
+        } ?: false
+        val bookmarkYn = memberId?.let {
+            articleBookmarkReader.exists(ArticleType.COMPLAINT, postId, it)
+        } ?: false
 
         return GetComplaintPostDto.Response.of(
-            complaintPost, commentCnt, convertToImageDto(files)
+            complaintPost = complaintPost,
+            commentCnt = commentCnt,
+            images = convertToImageDto(files),
+            likeCnt = likeCnt,
+            bookmarkCnt = bookmarkCnt,
+            likeYn = likeYn,
+            bookmarkYn = bookmarkYn
         )
     }
 

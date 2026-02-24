@@ -41,6 +41,8 @@ enum class ResponseCode(
     ALREADY_HATED_POST("401", "이미 싫어요한 게시물입니다.", HttpStatus.BAD_REQUEST),
     REJECT_BY_LIKE_STATUS("402", "좋아요 누른 상태입니다.", HttpStatus.BAD_REQUEST),
     REJECT_BY_HATE_STATUS("403", "싫어요 누른 상태입니다.", HttpStatus.BAD_REQUEST),
+    ALREADY_BOOKMARKED_POST("405", "이미 북마크한 게시물입니다.", HttpStatus.BAD_REQUEST),
+    NOT_BOOKMARKED_POST("406", "북마크하지 않은 게시물입니다.", HttpStatus.BAD_REQUEST),
 
     // POST
     IMPOSSIBLE_RECOMMEND_LOST_POST("600", "추천할 수 없는 습득물 게시물입니다.", HttpStatus.BAD_REQUEST),

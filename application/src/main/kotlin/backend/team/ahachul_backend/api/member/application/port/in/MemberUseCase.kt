@@ -20,6 +20,8 @@ interface MemberUseCase {
 
     fun getBookmarkStation(): GetBookmarkStationDto.Response
 
+    fun getArticleHistories(limit: Int): GetArticleHistoryDto.Response
+
     fun searchMembers(command: SearchMemberCommand): SearchMemberDto.Response
     
     fun updateFcmToken(fcmToken: String)

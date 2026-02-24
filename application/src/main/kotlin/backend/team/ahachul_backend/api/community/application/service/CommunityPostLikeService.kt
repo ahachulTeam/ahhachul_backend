@@ -1,5 +1,9 @@
 package backend.team.ahachul_backend.api.community.application.service
 
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleLikeReader
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleLikeWriter
+import backend.team.ahachul_backend.api.article.domain.entity.ArticleLikeEntity
+import backend.team.ahachul_backend.api.article.domain.model.ArticleType
 import backend.team.ahachul_backend.api.community.application.port.`in`.CommunityPostLikeUseCase
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostLikeReader
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostLikeWriter
@@ -19,6 +23,8 @@ import java.time.LocalDateTime
 class CommunityPostLikeService (
     private val communityPostLikeWriter: CommunityPostLikeWriter,
     private val communityPostLikeReader: CommunityPostLikeReader,
+    private val articleLikeWriter: ArticleLikeWriter,
+    private val articleLikeReader: ArticleLikeReader,
 
     private val communityPostReader: CommunityPostReader,
     private val memberReader: MemberReader,
@@ -36,16 +42,27 @@ class CommunityPostLikeService (
         }
         if (postLike?.likeYn == YNType.N) {
             postLike.like()
+            syncArticleLike(memberId, postId)
             return
         }
         val communityPost = communityPostReader.getCommunityPost(postId)
+        val member = memberReader.getMember(memberId)
         communityPostLikeWriter.save(
             CommunityPostLikeEntity.of(
                 communityPost = communityPost,
-                member = memberReader.getMember(memberId),
+                member = member,
                 YNType.Y
             )
         )
+        if (!articleLikeReader.exists(ArticleType.COMMUNITY, postId, memberId)) {
+            articleLikeWriter.save(
+                ArticleLikeEntity.of(
+                    articleType = ArticleType.COMMUNITY,
+                    articleId = postId,
+                    member = member
+                )
+            )
+        }
 
         if (communityPostLikeSupport.isPossibleHotPost(communityPost)) {
             communityPost.hotPostYn = YNType.Y
@@ -63,6 +80,7 @@ class CommunityPostLikeService (
         } ?: throw CommonException(ResponseCode.BAD_REQUEST)
 
         communityPostLikeWriter.delete(postId, memberId)
+        articleLikeWriter.delete(ArticleType.COMMUNITY, postId, memberId)
     }
 
     @Transactional
@@ -74,6 +92,7 @@ class CommunityPostLikeService (
         }
         if (postLike?.likeYn == YNType.Y) {
             postLike.hate()
+            articleLikeWriter.delete(ArticleType.COMMUNITY, postId, memberId)
             return
         }
         communityPostLikeWriter.save(
@@ -83,6 +102,7 @@ class CommunityPostLikeService (
                 YNType.N
             )
         )
+        articleLikeWriter.delete(ArticleType.COMMUNITY, postId, memberId)
     }
 
     @Transactional
@@ -95,5 +115,20 @@ class CommunityPostLikeService (
         } ?: throw CommonException(ResponseCode.BAD_REQUEST)
 
         communityPostLikeWriter.delete(postId, memberId)
+        articleLikeWriter.delete(ArticleType.COMMUNITY, postId, memberId)
+    }
+
+    private fun syncArticleLike(memberId: Long, postId: Long) {
+        if (articleLikeReader.exists(ArticleType.COMMUNITY, postId, memberId)) {
+            return
+        }
+
+        articleLikeWriter.save(
+            ArticleLikeEntity.of(
+                articleType = ArticleType.COMMUNITY,
+                articleId = postId,
+                member = memberReader.getMember(memberId)
+            )
+        )
     }
 }

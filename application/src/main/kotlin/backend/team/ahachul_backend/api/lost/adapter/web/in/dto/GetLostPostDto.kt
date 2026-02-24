@@ -3,6 +3,7 @@ package backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto
 import backend.team.ahachul_backend.api.lost.domain.entity.LostPostEntity
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
+import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.dto.ImageDto
 import java.time.format.DateTimeFormatter
 
@@ -18,6 +19,10 @@ class GetLostPostDto {
         val subwayLineId: Long?,
         val stationId: Long?,
         val commentCnt: Int,
+        val likeCnt: Int,
+        val bookmarkCnt: Int,
+        val likeYn: YNType,
+        val bookmarkYn: YNType,
         val status: LostStatus,
         val storage: String?,
         val storageNumber: String?,
@@ -30,7 +35,16 @@ class GetLostPostDto {
         val lostType: LostType
     ) {
         companion object {
-            fun of(entity: LostPostEntity, commentCnt: Int, images: List<ImageDto>, recommendPosts: List<RecommendResponse>): Response {
+            fun of(
+                entity: LostPostEntity,
+                commentCnt: Int,
+                images: List<ImageDto>,
+                recommendPosts: List<RecommendResponse>,
+                likeCnt: Long,
+                bookmarkCnt: Long,
+                likeYn: Boolean,
+                bookmarkYn: Boolean
+            ): Response {
                 return Response(
                     id = entity.id,
                     title = entity.title,
@@ -41,6 +55,10 @@ class GetLostPostDto {
                     subwayLineId = entity.subwayLine?.id,
                     stationId = entity.station?.id,
                     commentCnt = commentCnt,
+                    likeCnt = likeCnt.toInt(),
+                    bookmarkCnt = bookmarkCnt.toInt(),
+                    likeYn = YNType.convert(likeYn),
+                    bookmarkYn = YNType.convert(bookmarkYn),
                     status = entity.status,
                     storage = entity.storage,
                     storageNumber = entity.storageNumber,

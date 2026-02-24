@@ -1,8 +1,17 @@
 package backend.team.ahachul_backend.api.member.application.service
 
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleBookmarkReader
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleLikeReader
+import backend.team.ahachul_backend.api.article.domain.model.ArticleType
 import backend.team.ahachul_backend.api.common.application.port.out.StationReader
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
+import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostReader
+import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
+import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintPostReader
+import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintPostType
+import backend.team.ahachul_backend.api.lost.application.port.out.LostPostReader
+import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
@@ -23,6 +32,8 @@ import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.text.Normalizer
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Service
 @Transactional(readOnly = true)
@@ -33,7 +44,12 @@ class MemberService(
     private val memberStationReader: MemberStationReader,
     private val subwayLineStationReader: SubwayLineStationReader,
     private val fcmTokenWriter: FcmTokenWriter,
-    private val authLogoutCacheUtils: AuthLogoutCacheUtils
+    private val authLogoutCacheUtils: AuthLogoutCacheUtils,
+    private val articleLikeReader: ArticleLikeReader,
+    private val articleBookmarkReader: ArticleBookmarkReader,
+    private val communityPostReader: CommunityPostReader,
+    private val complaintPostReader: ComplaintPostReader,
+    private val lostPostReader: LostPostReader,
 ) : MemberUseCase {
     companion object {
         private const val NICKNAME_MIN_LENGTH = 2
@@ -114,6 +130,28 @@ class MemberService(
         val bookmarkStations = memberStationReader.getByMember(member)
 
         return createBookmarkStationResponse(bookmarkStations)
+    }
+
+    override fun getArticleHistories(limit: Int): GetArticleHistoryDto.Response {
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong()
+        val normalizedLimit = limit.coerceIn(1, 100)
+
+        val likedArticles = articleLikeReader.findAllByMemberId(memberId)
+            .mapNotNull { like -> buildArticleHistoryOrNull(like.articleType, like.articleId, like.createdAt) }
+            .sortedByDescending { it.reactedAt }
+            .take(normalizedLimit)
+
+        val bookmarkedArticles = articleBookmarkReader.findAllByMemberId(memberId)
+            .mapNotNull { bookmark ->
+                buildArticleHistoryOrNull(bookmark.articleType, bookmark.articleId, bookmark.createdAt)
+            }
+            .sortedByDescending { it.reactedAt }
+            .take(normalizedLimit)
+
+        return GetArticleHistoryDto.Response(
+            likedArticles = likedArticles,
+            bookmarkedArticles = bookmarkedArticles
+        )
     }
 
     override fun searchMembers(command: SearchMemberCommand): SearchMemberDto.Response {
@@ -210,5 +248,74 @@ class MemberService(
 
     private fun normalizeInput(value: String): String {
         return Normalizer.normalize(value, Normalizer.Form.NFC).trim()
+    }
+
+    private fun buildArticleHistoryOrNull(
+        articleType: ArticleType,
+        articleId: Long,
+        reactedAt: LocalDateTime
+    ): GetArticleHistoryDto.ArticleHistory? {
+        return when (articleType) {
+            ArticleType.COMMUNITY -> {
+                val post = communityPostReader.getCommunityPost(articleId)
+                if (post.status == CommunityPostType.DELETED) {
+                    null
+                } else {
+                    GetArticleHistoryDto.ArticleHistory(
+                        articleType = ArticleType.COMMUNITY,
+                        articleId = post.id,
+                        title = post.title,
+                        contentPreview = post.content.take(120),
+                        writer = post.member?.nickname,
+                        subwayLineId = post.subwayLineEntity.id,
+                        stationId = post.station?.id,
+                        articleCreatedAt = formatDateTime(post.createdAt),
+                        reactedAt = formatDateTime(reactedAt)
+                    )
+                }
+            }
+
+            ArticleType.COMPLAINT -> {
+                val post = complaintPostReader.getComplaintPost(articleId)
+                if (post.status == ComplaintPostType.DELETED) {
+                    null
+                } else {
+                    GetArticleHistoryDto.ArticleHistory(
+                        articleType = ArticleType.COMPLAINT,
+                        articleId = post.id,
+                        title = post.content.take(24),
+                        contentPreview = post.content.take(120),
+                        writer = post.member?.nickname,
+                        subwayLineId = post.subwayLine.id,
+                        stationId = post.station?.id,
+                        articleCreatedAt = formatDateTime(post.createdAt),
+                        reactedAt = formatDateTime(reactedAt)
+                    )
+                }
+            }
+
+            ArticleType.LOST -> {
+                val post = lostPostReader.getLostPost(articleId)
+                if (post.type == LostPostType.DELETED) {
+                    null
+                } else {
+                    GetArticleHistoryDto.ArticleHistory(
+                        articleType = ArticleType.LOST,
+                        articleId = post.id,
+                        title = post.title,
+                        contentPreview = post.content.take(120),
+                        writer = post.member?.nickname ?: post.createdBy,
+                        subwayLineId = post.subwayLine?.id,
+                        stationId = post.station?.id,
+                        articleCreatedAt = formatDateTime(post.date),
+                        reactedAt = formatDateTime(reactedAt)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun formatDateTime(value: LocalDateTime): String {
+        return value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
     }
 }

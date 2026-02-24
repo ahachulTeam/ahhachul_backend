@@ -1,6 +1,9 @@
 package backend.team.ahachul_backend.api.lost.application.service
 
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleBookmarkReader
+import backend.team.ahachul_backend.api.article.application.port.out.ArticleLikeReader
+import backend.team.ahachul_backend.api.article.domain.model.ArticleType
 import backend.team.ahachul_backend.api.common.application.port.out.StationReader
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto.*
@@ -46,9 +49,12 @@ class LostPostService(
     private val memberReader: MemberReader,
     private val categoryReader: CategoryReader,
     private val commentReader: CommentReader,
+    private val articleLikeReader: ArticleLikeReader,
+    private val articleBookmarkReader: ArticleBookmarkReader,
 ): LostPostUseCase {
 
     override fun getLostPost(id: Long): GetLostPostDto.Response {
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)?.toLongOrNull()
         val entity = lostPostReader.getLostPost(id)
 
         if (entity.type == LostPostType.DELETED) {
@@ -58,13 +64,37 @@ class LostPostService(
         val recommendPosts = getRecommendPosts(entity.subwayLine, entity.category)
         val recommendPostsDto = mapRecommendPostsDto(recommendPosts)
         val commentCnt = commentReader.countLost(id)
+        val likeCnt = articleLikeReader.count(ArticleType.LOST, id)
+        val bookmarkCnt = articleBookmarkReader.count(ArticleType.LOST, id)
+        val likeYn = memberId?.let { articleLikeReader.exists(ArticleType.LOST, id, it) } ?: false
+        val bookmarkYn = memberId?.let {
+            articleBookmarkReader.exists(ArticleType.LOST, id, it)
+        } ?: false
 
         if (entity.origin == LostOrigin.LOST112) {
-            return GetLostPostDto.Response.of(entity, commentCnt, listOf(), recommendPostsDto)
+            return GetLostPostDto.Response.of(
+                entity = entity,
+                commentCnt = commentCnt,
+                images = listOf(),
+                recommendPosts = recommendPostsDto,
+                likeCnt = likeCnt,
+                bookmarkCnt = bookmarkCnt,
+                likeYn = likeYn,
+                bookmarkYn = bookmarkYn
+            )
         }
 
         val files = lostPostFileReader.findAllByPostId(id)
-        return GetLostPostDto.Response.of(entity, commentCnt, convertToImageDto(files), recommendPostsDto)
+        return GetLostPostDto.Response.of(
+            entity = entity,
+            commentCnt = commentCnt,
+            images = convertToImageDto(files),
+            recommendPosts = recommendPostsDto,
+            likeCnt = likeCnt,
+            bookmarkCnt = bookmarkCnt,
+            likeYn = likeYn,
+            bookmarkYn = bookmarkYn
+        )
     }
 
     private fun getRecommendPosts(subwayLine: SubwayLineEntity?, category:CategoryEntity?): List<LostPostEntity> {

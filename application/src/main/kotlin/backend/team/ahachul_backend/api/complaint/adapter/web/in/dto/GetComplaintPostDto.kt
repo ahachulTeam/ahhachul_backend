@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintPostEnt
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintPostType
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintType
 import backend.team.ahachul_backend.api.complaint.domain.model.ShortContentType
+import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.dto.ImageDto
 import java.time.format.DateTimeFormatter
 
@@ -19,6 +20,10 @@ class GetComplaintPostDto {
         val location: Int?,
         val status: ComplaintPostType,
         val commentCnt: Int,
+        val likeCnt: Int,
+        val bookmarkCnt: Int,
+        val likeYn: YNType,
+        val bookmarkYn: YNType,
         val subwayLineId: Long,
         val stationId: Long?,
         val createdBy: String,
@@ -30,7 +35,11 @@ class GetComplaintPostDto {
             fun of(
                 complaintPost: ComplaintPostEntity,
                 commentCnt: Int,
-                images: List<ImageDto>
+                images: List<ImageDto>,
+                likeCnt: Long,
+                bookmarkCnt: Long,
+                likeYn: Boolean,
+                bookmarkYn: Boolean
             ): Response {
                 return Response(
                     id = complaintPost.id,
@@ -42,6 +51,10 @@ class GetComplaintPostDto {
                     location = complaintPost.location,
                     status = complaintPost.status,
                     commentCnt = commentCnt,
+                    likeCnt = likeCnt.toInt(),
+                    bookmarkCnt = bookmarkCnt.toInt(),
+                    likeYn = YNType.convert(likeYn),
+                    bookmarkYn = YNType.convert(bookmarkYn),
                     subwayLineId = complaintPost.subwayLine.id,
                     stationId = complaintPost.station?.id,
                     createdBy = complaintPost.createdBy,

@@ -5,6 +5,7 @@ import backend.team.ahachul_backend.api.complaint.application.port.`in`.Complain
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintPostType
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintType
 import backend.team.ahachul_backend.api.complaint.domain.model.ShortContentType
+import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.dto.PageInfoDto
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
@@ -127,6 +128,10 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
             location = 1,
             status = ComplaintPostType.CREATED,
             commentCnt = 0,
+            likeCnt = 2,
+            bookmarkCnt = 1,
+            likeYn = YNType.Y,
+            bookmarkYn = YNType.N,
             subwayLineId = 1L,
             stationId = 151L,
             createdBy = "1",
@@ -165,6 +170,10 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.location").type(JsonFieldType.NUMBER).description("민원 열차 칸"),
                         fieldWithPath("result.status").type(JsonFieldType.STRING).description("민원 상태").attributes(getFormatAttribute("민원 코드 - 민원 상태")),
                         fieldWithPath("result.commentCnt").type(JsonFieldType.NUMBER).description("민원 댓글 수"),
+                        fieldWithPath("result.likeCnt").type(JsonFieldType.NUMBER).description("민원 좋아요 수"),
+                        fieldWithPath("result.bookmarkCnt").type(JsonFieldType.NUMBER).description("민원 북마크 수"),
+                        fieldWithPath("result.likeYn").type("YNType").description("민원 좋아요 여부").attributes(getFormatAttribute("Y, N")),
+                        fieldWithPath("result.bookmarkYn").type("YNType").description("민원 북마크 여부").attributes(getFormatAttribute("Y, N")),
                         fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("민원 지하철 노선"),
                         fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("민원 역 ID").optional(),
                         fieldWithPath("result.createdBy").type(JsonFieldType.STRING).description("작성자 ID"),

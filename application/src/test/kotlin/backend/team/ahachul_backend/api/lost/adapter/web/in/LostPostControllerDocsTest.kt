@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.lost.application.port.`in`.LostPostUseCase
 import backend.team.ahachul_backend.api.lost.domain.model.LostStatus
 import backend.team.ahachul_backend.api.lost.domain.model.LostType
+import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.dto.ImageDto
 import backend.team.ahachul_backend.common.dto.PageInfoDto
 import backend.team.ahachul_backend.config.controller.CommonDocsTestConfig
@@ -50,6 +51,10 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
             subwayLineId = 1,
             stationId = 151,
             commentCnt = 1,
+            likeCnt = 3,
+            bookmarkCnt = 2,
+            likeYn = YNType.N,
+            bookmarkYn = YNType.Y,
             status = LostStatus.PROGRESS,
             storage = "우리집",
             storageNumber = "02-2222-3333",
@@ -90,6 +95,10 @@ class LostPostControllerDocsTest: CommonDocsTestConfig() {
                     fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("유실 호선"),
                     fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("유실 역 ID").optional(),
                     fieldWithPath("result.commentCnt").type(JsonFieldType.NUMBER).description("유실물 쪽지 개수"),
+                    fieldWithPath("result.likeCnt").type(JsonFieldType.NUMBER).description("유실물 좋아요 수"),
+                    fieldWithPath("result.bookmarkCnt").type(JsonFieldType.NUMBER).description("유실물 북마크 수"),
+                    fieldWithPath("result.likeYn").type("YNType").description("유실물 좋아요 여부").attributes(getFormatAttribute("Y, N")),
+                    fieldWithPath("result.bookmarkYn").type("YNType").description("유실물 북마크 여부").attributes(getFormatAttribute("Y, N")),
                     fieldWithPath("result.isFromLost112").type(JsonFieldType.BOOLEAN).description("Lost112 여부"),
                     fieldWithPath("result.lostType").type(JsonFieldType.STRING).description("유실물 타입").attributes(getFormatAttribute("LOST(유실) / ACQUIRE(습득)")),
                     fieldWithPath("result.status").type(JsonFieldType.STRING).description("유실물 찾기 완료 여부").attributes(getFormatAttribute( "PROGRESS / COMPLETE")),

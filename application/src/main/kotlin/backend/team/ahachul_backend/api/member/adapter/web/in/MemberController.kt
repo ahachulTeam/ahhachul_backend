@@ -53,6 +53,14 @@ class MemberController(
         return CommonResponse.success(memberUseCase.getBookmarkStation())
     }
 
+    @Authentication
+    @GetMapping("/v1/members/article-histories")
+    fun getArticleHistories(
+        @RequestParam(required = false, defaultValue = "30") limit: Int
+    ): CommonResponse<GetArticleHistoryDto.Response> {
+        return CommonResponse.success(memberUseCase.getArticleHistories(limit))
+    }
+
     @GetMapping("/v1/members/search")
     fun searchMembers(
         request: SearchMemberDto.Request

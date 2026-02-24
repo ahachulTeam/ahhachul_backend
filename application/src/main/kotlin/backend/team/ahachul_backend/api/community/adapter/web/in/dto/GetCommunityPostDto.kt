@@ -17,8 +17,10 @@ class GetCommunityPostDto {
         val hashTags: List<String>,
         val viewCnt: Int,
         val likeCnt: Int,
+        val bookmarkCnt: Int,
         val hateCnt: Int,
         val likeYn: YNType,
+        val bookmarkYn: YNType,
         val hateYn: YNType,
         val hotPostYn: YNType,
         val regionType: RegionType,
@@ -30,7 +32,14 @@ class GetCommunityPostDto {
         val images: List<ImageDto>
     ) {
         companion object {
-            fun of(getCommunityPost: GetCommunityPost, hashTags: List<String>, views: Int, images: List<ImageDto>): Response {
+            fun of(
+                getCommunityPost: GetCommunityPost,
+                hashTags: List<String>,
+                views: Int,
+                images: List<ImageDto>,
+                bookmarkCnt: Long,
+                bookmarkYn: Boolean
+            ): Response {
                 return Response(
                     id = getCommunityPost.id,
                     title = getCommunityPost.title,
@@ -39,8 +48,10 @@ class GetCommunityPostDto {
                     hashTags = hashTags,
                     viewCnt = views,
                     likeCnt = getCommunityPost.likeCnt.toInt(),
+                    bookmarkCnt = bookmarkCnt.toInt(),
                     hateCnt = getCommunityPost.hateCnt.toInt(),
                     likeYn = YNType.convert(getCommunityPost.likeYn),
+                    bookmarkYn = YNType.convert(bookmarkYn),
                     hateYn = YNType.convert(getCommunityPost.hateYn),
                     hotPostYn = getCommunityPost.hotPostYn,
                     regionType = getCommunityPost.regionType,
