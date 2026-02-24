@@ -20,6 +20,10 @@ class SubwayLineStationPersistence(
         return subwayLineStationRepository.findAll()
     }
 
+    override fun findAllOrderedForGraph(): List<SubwayLineStationEntity> {
+        return subwayLineStationRepository.findAllByOrderBySubwayLineIdAscIdAsc()
+    }
+
     override fun findBySubwayLineIdAndStationId(subwayLineId: Long, stationId: Long): SubwayLineStationEntity {
         return subwayLineStationRepository.findBySubwayLineIdAndStationId(subwayLineId, stationId)
             ?: throw AdapterException(ResponseCode.INVALID_DOMAIN)

@@ -358,6 +358,261 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
+    fun getFavoriteRouteRecommendationsTest() {
+        // given
+        val response = FavoriteRouteDto.GraphResponse(
+            routes = listOf(
+                FavoriteRouteDto.Route(
+                    routeId = null,
+                    routeType = FavoriteRouteDto.RouteType.RECOMMENDED,
+                    title = null,
+                    sourceStationId = 1L,
+                    sourceStationName = "안암",
+                    destinationStationId = 2L,
+                    destinationStationName = "성수",
+                    nodes = listOf(
+                        FavoriteRouteDto.Node(1L, "안암", 0, true),
+                        FavoriteRouteDto.Node(2L, "성수", 1, true),
+                    ),
+                    edges = listOf(
+                        FavoriteRouteDto.Edge(1L, 2L, 6L, "6호선"),
+                    ),
+                    summary = FavoriteRouteDto.Summary(
+                        totalStops = 1,
+                        transferCount = 0,
+                        estimatedMinutes = 2,
+                    ),
+                )
+            )
+        )
+
+        given(memberUseCase.getFavoriteRouteRecommendations(3)).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v2/members/bookmarks/routes/recommendations")
+                .queryParam("limit", "3")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-favorite-route-recommendations",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("limit").description("추천 경로 최대 개수").optional(),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.routes").type(JsonFieldType.ARRAY).description("추천 경로 리스트"),
+                        fieldWithPath("result.routes[].routeId").type(JsonFieldType.NULL).description("추천 경로는 routeId 없음").optional(),
+                        fieldWithPath("result.routes[].routeType").type(JsonFieldType.STRING).description("경로 타입"),
+                        fieldWithPath("result.routes[].title").type(JsonFieldType.NULL).description("경로 제목(추천 경로는 없음)").optional(),
+                        fieldWithPath("result.routes[].sourceStationId").type(JsonFieldType.NUMBER).description("출발역 ID"),
+                        fieldWithPath("result.routes[].sourceStationName").type(JsonFieldType.STRING).description("출발역 이름"),
+                        fieldWithPath("result.routes[].destinationStationId").type(JsonFieldType.NUMBER).description("도착역 ID"),
+                        fieldWithPath("result.routes[].destinationStationName").type(JsonFieldType.STRING).description("도착역 이름"),
+                        fieldWithPath("result.routes[].nodes").type(JsonFieldType.ARRAY).description("그래프 노드"),
+                        fieldWithPath("result.routes[].nodes[].stationId").type(JsonFieldType.NUMBER).description("노드 역 ID"),
+                        fieldWithPath("result.routes[].nodes[].stationName").type(JsonFieldType.STRING).description("노드 역 이름"),
+                        fieldWithPath("result.routes[].nodes[].order").type(JsonFieldType.NUMBER).description("노드 순서"),
+                        fieldWithPath("result.routes[].nodes[].favorite").type(JsonFieldType.BOOLEAN).description("즐겨찾기 포함 여부"),
+                        fieldWithPath("result.routes[].edges").type(JsonFieldType.ARRAY).description("그래프 엣지"),
+                        fieldWithPath("result.routes[].edges[].fromStationId").type(JsonFieldType.NUMBER).description("엣지 출발역 ID"),
+                        fieldWithPath("result.routes[].edges[].toStationId").type(JsonFieldType.NUMBER).description("엣지 도착역 ID"),
+                        fieldWithPath("result.routes[].edges[].subwayLineId").type(JsonFieldType.NUMBER).description("엣지 노선 ID"),
+                        fieldWithPath("result.routes[].edges[].subwayLineName").type(JsonFieldType.STRING).description("엣지 노선 이름"),
+                        fieldWithPath("result.routes[].summary.totalStops").type(JsonFieldType.NUMBER).description("정거장 수"),
+                        fieldWithPath("result.routes[].summary.transferCount").type(JsonFieldType.NUMBER).description("환승 횟수"),
+                        fieldWithPath("result.routes[].summary.estimatedMinutes").type(JsonFieldType.NUMBER).description("예상 소요(분)"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun createFavoriteRouteTest() {
+        // given
+        val request = FavoriteRouteDto.CreateRequest(
+            sourceStationId = 1L,
+            destinationStationId = 2L,
+            title = "출근 루트",
+        )
+
+        val response = FavoriteRouteDto.Route(
+            routeId = 100L,
+            routeType = FavoriteRouteDto.RouteType.CUSTOM,
+            title = "출근 루트",
+            sourceStationId = 1L,
+            sourceStationName = "안암",
+            destinationStationId = 2L,
+            destinationStationName = "성수",
+            nodes = listOf(
+                FavoriteRouteDto.Node(1L, "안암", 0, true),
+                FavoriteRouteDto.Node(2L, "성수", 1, true),
+            ),
+            edges = listOf(
+                FavoriteRouteDto.Edge(1L, 2L, 6L, "6호선"),
+            ),
+            summary = FavoriteRouteDto.Summary(
+                totalStops = 1,
+                transferCount = 0,
+                estimatedMinutes = 2,
+            ),
+        )
+
+        given(memberUseCase.createFavoriteRoute(any())).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            post("/v2/members/bookmarks/routes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "create-favorite-route",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestFields(
+                        fieldWithPath("sourceStationId").type(JsonFieldType.NUMBER).description("출발역 ID"),
+                        fieldWithPath("destinationStationId").type(JsonFieldType.NUMBER).description("도착역 ID"),
+                        fieldWithPath("title").type(JsonFieldType.STRING).description("경로 제목").optional(),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.routeId").type(JsonFieldType.NUMBER).description("생성된 즐겨찾기 경로 ID"),
+                        fieldWithPath("result.routeType").type(JsonFieldType.STRING).description("경로 타입"),
+                        fieldWithPath("result.title").type(JsonFieldType.STRING).description("경로 제목").optional(),
+                        fieldWithPath("result.sourceStationId").type(JsonFieldType.NUMBER).description("출발역 ID"),
+                        fieldWithPath("result.sourceStationName").type(JsonFieldType.STRING).description("출발역 이름"),
+                        fieldWithPath("result.destinationStationId").type(JsonFieldType.NUMBER).description("도착역 ID"),
+                        fieldWithPath("result.destinationStationName").type(JsonFieldType.STRING).description("도착역 이름"),
+                        fieldWithPath("result.nodes").type(JsonFieldType.ARRAY).description("그래프 노드"),
+                        fieldWithPath("result.nodes[].stationId").type(JsonFieldType.NUMBER).description("노드 역 ID"),
+                        fieldWithPath("result.nodes[].stationName").type(JsonFieldType.STRING).description("노드 역 이름"),
+                        fieldWithPath("result.nodes[].order").type(JsonFieldType.NUMBER).description("노드 순서"),
+                        fieldWithPath("result.nodes[].favorite").type(JsonFieldType.BOOLEAN).description("즐겨찾기 포함 여부"),
+                        fieldWithPath("result.edges").type(JsonFieldType.ARRAY).description("그래프 엣지"),
+                        fieldWithPath("result.edges[].fromStationId").type(JsonFieldType.NUMBER).description("엣지 출발역 ID"),
+                        fieldWithPath("result.edges[].toStationId").type(JsonFieldType.NUMBER).description("엣지 도착역 ID"),
+                        fieldWithPath("result.edges[].subwayLineId").type(JsonFieldType.NUMBER).description("엣지 노선 ID"),
+                        fieldWithPath("result.edges[].subwayLineName").type(JsonFieldType.STRING).description("엣지 노선 이름"),
+                        fieldWithPath("result.summary.totalStops").type(JsonFieldType.NUMBER).description("정거장 수"),
+                        fieldWithPath("result.summary.transferCount").type(JsonFieldType.NUMBER).description("환승 횟수"),
+                        fieldWithPath("result.summary.estimatedMinutes").type(JsonFieldType.NUMBER).description("예상 소요(분)"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun getFavoriteRoutesTest() {
+        // given
+        val response = FavoriteRouteDto.GraphResponse(
+            routes = listOf(
+                FavoriteRouteDto.Route(
+                    routeId = 100L,
+                    routeType = FavoriteRouteDto.RouteType.CUSTOM,
+                    title = "출근 루트",
+                    sourceStationId = 1L,
+                    sourceStationName = "안암",
+                    destinationStationId = 2L,
+                    destinationStationName = "성수",
+                    nodes = listOf(
+                        FavoriteRouteDto.Node(1L, "안암", 0, true),
+                        FavoriteRouteDto.Node(2L, "성수", 1, true),
+                    ),
+                    edges = listOf(
+                        FavoriteRouteDto.Edge(1L, 2L, 6L, "6호선"),
+                    ),
+                    summary = FavoriteRouteDto.Summary(
+                        totalStops = 1,
+                        transferCount = 0,
+                        estimatedMinutes = 2,
+                    ),
+                )
+            )
+        )
+
+        given(memberUseCase.getFavoriteRoutes()).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v2/members/bookmarks/routes")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-favorite-routes",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.routes").type(JsonFieldType.ARRAY).description("사용자 지정 경로 리스트"),
+                        fieldWithPath("result.routes[].routeId").type(JsonFieldType.NUMBER).description("경로 ID"),
+                        fieldWithPath("result.routes[].routeType").type(JsonFieldType.STRING).description("경로 타입"),
+                        fieldWithPath("result.routes[].title").type(JsonFieldType.STRING).description("경로 제목").optional(),
+                        fieldWithPath("result.routes[].sourceStationId").type(JsonFieldType.NUMBER).description("출발역 ID"),
+                        fieldWithPath("result.routes[].sourceStationName").type(JsonFieldType.STRING).description("출발역 이름"),
+                        fieldWithPath("result.routes[].destinationStationId").type(JsonFieldType.NUMBER).description("도착역 ID"),
+                        fieldWithPath("result.routes[].destinationStationName").type(JsonFieldType.STRING).description("도착역 이름"),
+                        fieldWithPath("result.routes[].nodes").type(JsonFieldType.ARRAY).description("그래프 노드"),
+                        fieldWithPath("result.routes[].nodes[].stationId").type(JsonFieldType.NUMBER).description("노드 역 ID"),
+                        fieldWithPath("result.routes[].nodes[].stationName").type(JsonFieldType.STRING).description("노드 역 이름"),
+                        fieldWithPath("result.routes[].nodes[].order").type(JsonFieldType.NUMBER).description("노드 순서"),
+                        fieldWithPath("result.routes[].nodes[].favorite").type(JsonFieldType.BOOLEAN).description("즐겨찾기 포함 여부"),
+                        fieldWithPath("result.routes[].edges").type(JsonFieldType.ARRAY).description("그래프 엣지"),
+                        fieldWithPath("result.routes[].edges[].fromStationId").type(JsonFieldType.NUMBER).description("엣지 출발역 ID"),
+                        fieldWithPath("result.routes[].edges[].toStationId").type(JsonFieldType.NUMBER).description("엣지 도착역 ID"),
+                        fieldWithPath("result.routes[].edges[].subwayLineId").type(JsonFieldType.NUMBER).description("엣지 노선 ID"),
+                        fieldWithPath("result.routes[].edges[].subwayLineName").type(JsonFieldType.STRING).description("엣지 노선 이름"),
+                        fieldWithPath("result.routes[].summary.totalStops").type(JsonFieldType.NUMBER).description("정거장 수"),
+                        fieldWithPath("result.routes[].summary.transferCount").type(JsonFieldType.NUMBER).description("환승 횟수"),
+                        fieldWithPath("result.routes[].summary.estimatedMinutes").type(JsonFieldType.NUMBER).description("예상 소요(분)"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun deleteFavoriteRouteTest() {
+        // given
+        val response = FavoriteRouteDto.DeleteResponse(routeId = 100L)
+        given(memberUseCase.deleteFavoriteRoute(100L)).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            delete("/v2/members/bookmarks/routes/{routeId}", 100L)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "delete-favorite-route",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.routeId").type(JsonFieldType.NUMBER).description("삭제된 경로 ID"),
+                    )
+                )
+            )
+    }
+
+    @Test
     fun searchMembersTest() {
         //given
         val response = SearchMemberDto.Response(
