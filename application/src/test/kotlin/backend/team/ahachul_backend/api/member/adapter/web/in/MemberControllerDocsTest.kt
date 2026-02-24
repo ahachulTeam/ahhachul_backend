@@ -36,7 +36,12 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
             email = "email",
             maskedEmail = "em***@mail.com",
             gender = GenderType.MALE,
-            ageRange = "20"
+            ageRange = "20",
+            profilePublic = true,
+            emailPublic = false,
+            genderAgePublic = false,
+            postsPublic = true,
+            commentsPublic = true,
         )
 
         given(memberUseCase.getMember())
@@ -67,6 +72,11 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.maskedEmail").type(JsonFieldType.STRING).description("마스킹된 사용자 이메일").optional(),
                         fieldWithPath("result.gender").type("GenderType").description("사용자 성별").attributes(getFormatAttribute("MALE, FEMALE")).optional(),
                         fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("사용자 연령대").attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ...")).optional(),
+                        fieldWithPath("result.profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
+                        fieldWithPath("result.emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 여부"),
+                        fieldWithPath("result.genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부"),
+                        fieldWithPath("result.postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부"),
+                        fieldWithPath("result.commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부"),
                     )
                 )
             )
@@ -78,7 +88,12 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
         val response = UpdateMemberDto.Response(
             nickname = "nickname",
             gender = GenderType.MALE,
-            ageRange = "20"
+            ageRange = "20",
+            profilePublic = true,
+            emailPublic = false,
+            genderAgePublic = false,
+            postsPublic = true,
+            commentsPublic = true,
         )
 
         given(memberUseCase.updateMember(any()))
@@ -87,7 +102,12 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
         val request = UpdateMemberDto.Request(
             nickname = "nickname",
             gender = GenderType.MALE,
-            ageRange = "20"
+            ageRange = "20",
+            profilePublic = true,
+            emailPublic = false,
+            genderAgePublic = false,
+            postsPublic = true,
+            commentsPublic = true,
         )
 
         // when
@@ -114,6 +134,11 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("nickname").type(JsonFieldType.STRING).description("사용자 닉네임").optional(),
                         fieldWithPath("gender").type("GenderType").description("사용자 성별").attributes(getFormatAttribute("MALE, FEMALE")).optional(),
                         fieldWithPath("ageRange").type(JsonFieldType.STRING).description("사용자 연령대").attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ...")).optional(),
+                        fieldWithPath("profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부").optional(),
+                        fieldWithPath("emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 여부").optional(),
+                        fieldWithPath("genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부").optional(),
+                        fieldWithPath("postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부").optional(),
+                        fieldWithPath("commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부").optional(),
 
                         ),
                     responseFields(
@@ -121,6 +146,11 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.nickname").type(JsonFieldType.STRING).description("사용자 닉네임").optional(),
                         fieldWithPath("result.gender").type("GenderType").description("사용자 성별").attributes(getFormatAttribute("MALE, FEMALE")).optional(),
                         fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("사용자 연령대").attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ...")).optional(),
+                        fieldWithPath("result.profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
+                        fieldWithPath("result.emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 여부"),
+                        fieldWithPath("result.genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부"),
+                        fieldWithPath("result.postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부"),
+                        fieldWithPath("result.commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부"),
                     )
                 )
             )
@@ -396,6 +426,112 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result").optional().description("X")
                     )
                 ),
+            )
+    }
+
+    @Test
+    fun getMemberProfileTest() {
+        // given
+        val response = GetMemberProfileDto.Response(
+            memberId = 1,
+            nickname = "nickname",
+            email = "email@mail.com",
+            maskedEmail = "em***@mail.com",
+            gender = GenderType.MALE,
+            ageRange = "20",
+            isMine = false,
+            visibility = GetMemberProfileDto.Visibility(
+                profilePublic = true,
+                emailPublic = true,
+                genderAgePublic = true,
+                postsPublic = true,
+                commentsPublic = true,
+                profileVisible = true,
+                postsVisible = true,
+                commentsVisible = true,
+            ),
+            activities = GetMemberProfileDto.Activities(
+                posts = listOf(
+                    GetMemberProfileDto.PostActivity(
+                        articleType = backend.team.ahachul_backend.api.article.domain.model.ArticleType.COMMUNITY,
+                        articleId = 11,
+                        title = "제목",
+                        contentPreview = "본문",
+                        writer = "nickname",
+                        subwayLineId = 2,
+                        stationId = 201,
+                        createdAt = "2026-02-24 10:00:00.000",
+                    )
+                ),
+                comments = listOf(
+                    GetMemberProfileDto.CommentActivity(
+                        commentId = 51,
+                        articleType = backend.team.ahachul_backend.api.article.domain.model.ArticleType.COMMUNITY,
+                        articleId = 11,
+                        contentPreview = "댓글",
+                        writer = "nickname",
+                        createdAt = "2026-02-24 10:30:00.000",
+                    )
+                ),
+            )
+        )
+
+        given(memberUseCase.getMemberProfile("nickname", true, 20)).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v1/members/{nickname}/profile", "nickname")
+                .queryParam("asPublic", "true")
+                .queryParam("limit", "20")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-member-profile",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("asPublic").description("타인 시점 강제 렌더링 여부").optional(),
+                        parameterWithName("limit").description("활동 목록 최대 개수").optional(),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.memberId").type(JsonFieldType.NUMBER).description("회원 아이디"),
+                        fieldWithPath("result.nickname").type(JsonFieldType.STRING).description("닉네임").optional(),
+                        fieldWithPath("result.email").type(JsonFieldType.STRING).description("이메일").optional(),
+                        fieldWithPath("result.maskedEmail").type(JsonFieldType.STRING).description("마스킹 이메일").optional(),
+                        fieldWithPath("result.gender").type(JsonFieldType.STRING).description("성별").optional(),
+                        fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("연령대").optional(),
+                        fieldWithPath("result.isMine").type(JsonFieldType.BOOLEAN).description("본인 프로필 여부"),
+                        fieldWithPath("result.visibility.profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 설정"),
+                        fieldWithPath("result.visibility.emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 설정"),
+                        fieldWithPath("result.visibility.genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 설정"),
+                        fieldWithPath("result.visibility.postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 설정"),
+                        fieldWithPath("result.visibility.commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 설정"),
+                        fieldWithPath("result.visibility.profileVisible").type(JsonFieldType.BOOLEAN).description("현재 조회 기준 프로필 노출 여부"),
+                        fieldWithPath("result.visibility.postsVisible").type(JsonFieldType.BOOLEAN).description("현재 조회 기준 작성 글 노출 여부"),
+                        fieldWithPath("result.visibility.commentsVisible").type(JsonFieldType.BOOLEAN).description("현재 조회 기준 작성 댓글 노출 여부"),
+                        fieldWithPath("result.activities.posts").type(JsonFieldType.ARRAY).description("작성 글 목록"),
+                        fieldWithPath("result.activities.posts[].articleType").type(JsonFieldType.STRING).description("게시글 타입").optional(),
+                        fieldWithPath("result.activities.posts[].articleId").type(JsonFieldType.NUMBER).description("게시글 아이디").optional(),
+                        fieldWithPath("result.activities.posts[].title").type(JsonFieldType.STRING).description("게시글 제목").optional(),
+                        fieldWithPath("result.activities.posts[].contentPreview").type(JsonFieldType.STRING).description("게시글 미리보기").optional(),
+                        fieldWithPath("result.activities.posts[].writer").type(JsonFieldType.STRING).description("작성자").optional(),
+                        fieldWithPath("result.activities.posts[].subwayLineId").type(JsonFieldType.NUMBER).description("호선 아이디").optional(),
+                        fieldWithPath("result.activities.posts[].stationId").type(JsonFieldType.NUMBER).description("역 아이디").optional(),
+                        fieldWithPath("result.activities.posts[].createdAt").type(JsonFieldType.STRING).description("작성 시각").optional(),
+                        fieldWithPath("result.activities.comments").type(JsonFieldType.ARRAY).description("작성 댓글 목록"),
+                        fieldWithPath("result.activities.comments[].commentId").type(JsonFieldType.NUMBER).description("댓글 아이디").optional(),
+                        fieldWithPath("result.activities.comments[].articleType").type(JsonFieldType.STRING).description("원글 타입").optional(),
+                        fieldWithPath("result.activities.comments[].articleId").type(JsonFieldType.NUMBER).description("원글 아이디").optional(),
+                        fieldWithPath("result.activities.comments[].contentPreview").type(JsonFieldType.STRING).description("댓글 미리보기").optional(),
+                        fieldWithPath("result.activities.comments[].writer").type(JsonFieldType.STRING).description("작성자").optional(),
+                        fieldWithPath("result.activities.comments[].createdAt").type(JsonFieldType.STRING).description("작성 시각").optional(),
+                    )
+                )
             )
     }
 }

@@ -68,6 +68,16 @@ class MemberController(
         return CommonResponse.success(memberUseCase.searchMembers(request.toCommand()))
     }
 
+    @Authentication(required = false)
+    @GetMapping("/v1/members/{nickname}/profile")
+    fun getMemberProfile(
+        @PathVariable nickname: String,
+        @RequestParam(required = false, defaultValue = "false") asPublic: Boolean,
+        @RequestParam(required = false, defaultValue = "20") limit: Int,
+    ): CommonResponse<GetMemberProfileDto.Response> {
+        return CommonResponse.success(memberUseCase.getMemberProfile(nickname, asPublic, limit))
+    }
+
     @Authentication
     @PatchMapping("/v1/members/fcm-token")
     fun updateToken(

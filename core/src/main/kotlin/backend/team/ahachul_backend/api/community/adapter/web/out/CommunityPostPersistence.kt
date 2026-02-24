@@ -7,8 +7,10 @@ import backend.team.ahachul_backend.api.community.application.port.out.Community
 import backend.team.ahachul_backend.api.community.domain.GetCommunityPost
 import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.community.domain.entity.CommunityPostEntity
+import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.response.ResponseCode
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 
 @Component
@@ -36,5 +38,13 @@ class CommunityPostPersistence(
 
     override fun searchCommunityHotPosts(command: GetSliceCommunityHotPostCommand): List<SearchCommunityPost> {
         return customRepository.searchCommunityHotPosts(command)
+    }
+
+    override fun getRecentCommunityPostsByMemberId(memberId: Long, limit: Int): List<CommunityPostEntity> {
+        return repository.findByMemberIdAndStatusOrderByCreatedAtDesc(
+            memberId = memberId,
+            status = CommunityPostType.CREATED,
+            pageable = PageRequest.of(0, limit.coerceAtLeast(1)),
+        )
     }
 }

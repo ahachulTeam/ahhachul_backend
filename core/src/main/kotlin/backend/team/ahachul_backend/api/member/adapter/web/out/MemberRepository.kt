@@ -12,4 +12,6 @@ interface MemberRepository: JpaRepository<MemberEntity, Long> {
     fun existsByNicknameAndIdNot(nickname: String, id: Long): Boolean
 
     fun findByNicknameContaining(nickname: String): MutableList<MemberEntity>
+
+    fun findByNickname(nickname: String): MemberEntity?
 }

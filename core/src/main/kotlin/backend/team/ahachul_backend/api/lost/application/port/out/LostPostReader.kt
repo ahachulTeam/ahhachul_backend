@@ -14,4 +14,6 @@ interface LostPostReader {
     fun getRecommendLostPosts(command: GetRecommendLostPostsCommand): List<LostPostEntity>
 
     fun getRandomLostPosts(command: GetRecommendLostPostsCommand): List<LostPostEntity>
+
+    fun getRecentLostPostsByMemberId(memberId: Long, limit: Int): List<LostPostEntity>
 }
