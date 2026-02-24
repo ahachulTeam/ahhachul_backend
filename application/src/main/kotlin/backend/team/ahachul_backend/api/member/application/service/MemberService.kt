@@ -6,6 +6,8 @@ import backend.team.ahachul_backend.api.article.domain.model.ArticleType
 import backend.team.ahachul_backend.api.common.application.port.out.StationReader
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
+import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
+import backend.team.ahachul_backend.api.comment.domain.model.CommentType
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostReader
 import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintPostReader
@@ -19,6 +21,7 @@ import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCa
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
+import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberVisibilityCommand
 import backend.team.ahachul_backend.api.member.application.port.out.FcmTokenWriter
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationReader
@@ -50,6 +53,7 @@ class MemberService(
     private val communityPostReader: CommunityPostReader,
     private val complaintPostReader: ComplaintPostReader,
     private val lostPostReader: LostPostReader,
+    private val commentReader: CommentReader,
 ) : MemberUseCase {
     companion object {
         private const val NICKNAME_MIN_LENGTH = 2
@@ -60,6 +64,72 @@ class MemberService(
     override fun getMember(): GetMemberDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
         return GetMemberDto.Response.of(member)
+    }
+
+    override fun getMemberVisibility(): MemberVisibilityDto.Response {
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
+        return MemberVisibilityDto.Response.from(member)
+    }
+
+    @Transactional
+    override fun updateMemberVisibility(command: UpdateMemberVisibilityCommand): MemberVisibilityDto.Response {
+        val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
+        command.profilePublic?.let { member.changeProfilePublic(it) }
+        command.emailPublic?.let { member.changeEmailPublic(it) }
+        command.genderAgePublic?.let { member.changeGenderAgePublic(it) }
+        command.postsPublic?.let { member.changeActivityPostsPublic(it) }
+        command.commentsPublic?.let { member.changeActivityCommentsPublic(it) }
+        return MemberVisibilityDto.Response.from(member)
+    }
+
+    override fun getMemberProfile(nickname: String, asPublic: Boolean, limit: Int): GetMemberProfileDto.Response {
+        val targetMember = memberReader.getMemberByNickname(normalizeInput(nickname))
+        val loginMemberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)?.toLongOrNull()
+        val isMine = loginMemberId != null && loginMemberId == targetMember.id
+        val enforcePublicPolicy = asPublic || !isMine
+        val normalizedLimit = limit.coerceIn(1, 50)
+
+        val profileVisible = !enforcePublicPolicy || targetMember.isProfilePublic()
+        val postsVisible = !enforcePublicPolicy || targetMember.isActivityPostsPublic()
+        val commentsVisible = !enforcePublicPolicy || targetMember.isActivityCommentsPublic()
+        val emailVisible = profileVisible && (!enforcePublicPolicy || targetMember.isEmailPublic())
+        val genderAgeVisible = profileVisible && (!enforcePublicPolicy || targetMember.isGenderAgePublic())
+
+        val postActivities = if (postsVisible) {
+            buildRecentPostActivities(targetMember.id, normalizedLimit)
+        } else {
+            emptyList()
+        }
+
+        val commentActivities = if (commentsVisible) {
+            buildRecentCommentActivities(targetMember.id, normalizedLimit)
+        } else {
+            emptyList()
+        }
+
+        return GetMemberProfileDto.Response(
+            memberId = targetMember.id,
+            nickname = targetMember.nickname,
+            email = if (emailVisible) targetMember.email else null,
+            maskedEmail = if (emailVisible) maskEmail(targetMember.email) else null,
+            gender = if (genderAgeVisible) targetMember.gender else null,
+            ageRange = if (genderAgeVisible) targetMember.ageRange else null,
+            isMine = isMine,
+            visibility = GetMemberProfileDto.Visibility(
+                profilePublic = targetMember.isProfilePublic(),
+                emailPublic = targetMember.isEmailPublic(),
+                genderAgePublic = targetMember.isGenderAgePublic(),
+                postsPublic = targetMember.isActivityPostsPublic(),
+                commentsPublic = targetMember.isActivityCommentsPublic(),
+                profileVisible = profileVisible,
+                postsVisible = postsVisible,
+                commentsVisible = commentsVisible,
+            ),
+            activities = GetMemberProfileDto.Activities(
+                posts = postActivities,
+                comments = commentActivities,
+            )
+        )
     }
 
     @Transactional
@@ -317,5 +387,121 @@ class MemberService(
 
     private fun formatDateTime(value: LocalDateTime): String {
         return value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
+    }
+
+    private fun buildRecentPostActivities(memberId: Long, limit: Int): List<GetMemberProfileDto.PostActivity> {
+        val communityPosts = communityPostReader.getRecentCommunityPostsByMemberId(memberId, limit)
+            .filter { it.status == CommunityPostType.CREATED }
+            .map {
+                GetMemberProfileDto.PostActivity(
+                    articleType = ArticleType.COMMUNITY,
+                    articleId = it.id,
+                    title = it.title,
+                    contentPreview = it.content.take(120),
+                    writer = it.member?.nickname,
+                    subwayLineId = it.subwayLineEntity.id,
+                    stationId = it.station?.id,
+                    createdAt = formatDateTime(it.createdAt),
+                )
+            }
+
+        val complaintPosts = complaintPostReader.getRecentComplaintPostsByMemberId(memberId, limit)
+            .filter { it.status != ComplaintPostType.DELETED }
+            .map {
+                GetMemberProfileDto.PostActivity(
+                    articleType = ArticleType.COMPLAINT,
+                    articleId = it.id,
+                    title = it.content.take(24),
+                    contentPreview = it.content.take(120),
+                    writer = it.member?.nickname,
+                    subwayLineId = it.subwayLine.id,
+                    stationId = it.station?.id,
+                    createdAt = formatDateTime(it.createdAt),
+                )
+            }
+
+        val lostPosts = lostPostReader.getRecentLostPostsByMemberId(memberId, limit)
+            .filter { it.type == LostPostType.CREATED }
+            .map {
+                GetMemberProfileDto.PostActivity(
+                    articleType = ArticleType.LOST,
+                    articleId = it.id,
+                    title = it.title,
+                    contentPreview = it.content.take(120),
+                    writer = it.member?.nickname ?: it.createdBy,
+                    subwayLineId = it.subwayLine?.id,
+                    stationId = it.station?.id,
+                    createdAt = formatDateTime(it.createdAt),
+                )
+            }
+
+        return (communityPosts + complaintPosts + lostPosts)
+            .sortedByDescending { it.createdAt }
+            .take(limit)
+    }
+
+    private fun buildRecentCommentActivities(memberId: Long, limit: Int): List<GetMemberProfileDto.CommentActivity> {
+        return commentReader.getRecentCommentsByMemberId(memberId, limit)
+            .filter { it.status == CommentType.CREATED }
+            .mapNotNull { comment ->
+                val communityPost = comment.communityPost
+                if (communityPost != null && communityPost.status == CommunityPostType.CREATED) {
+                    return@mapNotNull GetMemberProfileDto.CommentActivity(
+                        commentId = comment.id,
+                        articleType = ArticleType.COMMUNITY,
+                        articleId = communityPost.id,
+                        contentPreview = comment.content.take(120),
+                        writer = comment.member.nickname,
+                        createdAt = formatDateTime(comment.createdAt),
+                    )
+                }
+
+                val complaintPost = comment.complaintPost
+                if (complaintPost != null && complaintPost.status != ComplaintPostType.DELETED) {
+                    return@mapNotNull GetMemberProfileDto.CommentActivity(
+                        commentId = comment.id,
+                        articleType = ArticleType.COMPLAINT,
+                        articleId = complaintPost.id,
+                        contentPreview = comment.content.take(120),
+                        writer = comment.member.nickname,
+                        createdAt = formatDateTime(comment.createdAt),
+                    )
+                }
+
+                val lostPost = comment.lostPost
+                if (lostPost != null && lostPost.type == LostPostType.CREATED) {
+                    return@mapNotNull GetMemberProfileDto.CommentActivity(
+                        commentId = comment.id,
+                        articleType = ArticleType.LOST,
+                        articleId = lostPost.id,
+                        contentPreview = comment.content.take(120),
+                        writer = comment.member.nickname,
+                        createdAt = formatDateTime(comment.createdAt),
+                    )
+                }
+
+                null
+            }
+            .sortedByDescending { it.createdAt }
+            .take(limit)
+    }
+
+    private fun maskEmail(email: String?): String? {
+        val value = email?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val parts = value.split("@")
+        if (parts.size != 2) {
+            return value
+        }
+
+        val local = parts[0]
+        val domain = parts[1]
+        if (local.isEmpty() || domain.isEmpty()) {
+            return value
+        }
+
+        val visibleCount = if (local.length <= 2) 1 else 2
+        val maskedCount = maxOf(local.length - visibleCount, 1)
+        val maskedLocal = local.take(visibleCount) + "*".repeat(maskedCount)
+        return "$maskedLocal@$domain"
     }
 }

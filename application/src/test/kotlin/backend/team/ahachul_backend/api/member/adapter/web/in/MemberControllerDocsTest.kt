@@ -365,6 +365,202 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
+    fun getMemberVisibilityTest() {
+        // given
+        val response = MemberVisibilityDto.Response(
+            profilePublic = true,
+            emailPublic = false,
+            genderAgePublic = false,
+            postsPublic = true,
+            commentsPublic = true,
+        )
+
+        given(memberUseCase.getMemberVisibility()).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v1/members/visibility")
+                .header("Authorization", "Bearer <Access Token>")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-member-visibility",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰")
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
+                        fieldWithPath("result.emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 여부"),
+                        fieldWithPath("result.genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부"),
+                        fieldWithPath("result.postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부"),
+                        fieldWithPath("result.commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun updateMemberVisibilityTest() {
+        // given
+        val request = MemberVisibilityDto.Request(
+            profilePublic = true,
+            emailPublic = true,
+            genderAgePublic = false,
+            postsPublic = false,
+            commentsPublic = true,
+        )
+
+        val response = MemberVisibilityDto.Response(
+            profilePublic = true,
+            emailPublic = true,
+            genderAgePublic = false,
+            postsPublic = false,
+            commentsPublic = true,
+        )
+
+        given(memberUseCase.updateMemberVisibility(any())).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            patch("/v1/members/visibility")
+                .header("Authorization", "Bearer <Access Token>")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "update-member-visibility",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰")
+                    ),
+                    requestFields(
+                        fieldWithPath("profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부").optional(),
+                        fieldWithPath("emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 여부").optional(),
+                        fieldWithPath("genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부").optional(),
+                        fieldWithPath("postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부").optional(),
+                        fieldWithPath("commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부").optional(),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
+                        fieldWithPath("result.emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 여부"),
+                        fieldWithPath("result.genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부"),
+                        fieldWithPath("result.postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부"),
+                        fieldWithPath("result.commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun getMemberProfileTest() {
+        // given
+        val response = GetMemberProfileDto.Response(
+            memberId = 1L,
+            nickname = "nickname",
+            email = null,
+            maskedEmail = null,
+            gender = null,
+            ageRange = null,
+            isMine = false,
+            visibility = GetMemberProfileDto.Visibility(
+                profilePublic = true,
+                emailPublic = false,
+                genderAgePublic = false,
+                postsPublic = false,
+                commentsPublic = true,
+                profileVisible = true,
+                postsVisible = false,
+                commentsVisible = true,
+            ),
+            activities = GetMemberProfileDto.Activities(
+                posts = listOf(),
+                comments = listOf(
+                    GetMemberProfileDto.CommentActivity(
+                        commentId = 10L,
+                        articleType = backend.team.ahachul_backend.api.article.domain.model.ArticleType.COMMUNITY,
+                        articleId = 101L,
+                        contentPreview = "댓글 내용",
+                        writer = "nickname",
+                        createdAt = "2026-02-24 17:00:00.000",
+                    )
+                )
+            )
+        )
+
+        given(memberUseCase.getMemberProfile("nickname", true, 20)).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v1/members/{nickname}/profile", "nickname")
+                .queryParam("asPublic", "true")
+                .queryParam("limit", "20")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-member-profile",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("asPublic").description("타인 공개 기준 강제 여부").optional(),
+                        parameterWithName("limit").description("활동 목록 최대 개수").optional(),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.memberId").type(JsonFieldType.NUMBER).description("회원 ID"),
+                        fieldWithPath("result.nickname").type(JsonFieldType.STRING).description("닉네임").optional(),
+                        fieldWithPath("result.email").type(JsonFieldType.STRING).description("이메일(비공개면 null)").optional(),
+                        fieldWithPath("result.maskedEmail").type(JsonFieldType.STRING).description("마스킹 이메일(비공개면 null)").optional(),
+                        fieldWithPath("result.gender").type(JsonFieldType.STRING).description("성별(비공개면 null)").optional(),
+                        fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("연령대(비공개면 null)").optional(),
+                        fieldWithPath("result.isMine").type(JsonFieldType.BOOLEAN).description("본인 프로필 여부"),
+                        fieldWithPath("result.visibility.profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 공개 설정"),
+                        fieldWithPath("result.visibility.emailPublic").type(JsonFieldType.BOOLEAN).description("이메일 공개 설정"),
+                        fieldWithPath("result.visibility.genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 설정"),
+                        fieldWithPath("result.visibility.postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 설정"),
+                        fieldWithPath("result.visibility.commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 설정"),
+                        fieldWithPath("result.visibility.profileVisible").type(JsonFieldType.BOOLEAN).description("현재 조회 기준 프로필 노출 가능 여부"),
+                        fieldWithPath("result.visibility.postsVisible").type(JsonFieldType.BOOLEAN).description("현재 조회 기준 작성 글 노출 가능 여부"),
+                        fieldWithPath("result.visibility.commentsVisible").type(JsonFieldType.BOOLEAN).description("현재 조회 기준 작성 댓글 노출 가능 여부"),
+                        fieldWithPath("result.activities.posts").type(JsonFieldType.ARRAY).description("작성 글 목록"),
+                        fieldWithPath("result.activities.posts[].articleType").type(JsonFieldType.STRING).description("게시글 타입").optional(),
+                        fieldWithPath("result.activities.posts[].articleId").type(JsonFieldType.NUMBER).description("게시글 ID").optional(),
+                        fieldWithPath("result.activities.posts[].title").type(JsonFieldType.STRING).description("제목").optional(),
+                        fieldWithPath("result.activities.posts[].contentPreview").type(JsonFieldType.STRING).description("본문 미리보기").optional(),
+                        fieldWithPath("result.activities.posts[].writer").type(JsonFieldType.STRING).description("작성자").optional(),
+                        fieldWithPath("result.activities.posts[].subwayLineId").type(JsonFieldType.NUMBER).description("호선 ID").optional(),
+                        fieldWithPath("result.activities.posts[].stationId").type(JsonFieldType.NUMBER).description("역 ID").optional(),
+                        fieldWithPath("result.activities.posts[].createdAt").type(JsonFieldType.STRING).description("작성 시각").optional(),
+                        fieldWithPath("result.activities.comments").type(JsonFieldType.ARRAY).description("작성 댓글 목록"),
+                        fieldWithPath("result.activities.comments[].commentId").type(JsonFieldType.NUMBER).description("댓글 ID").optional(),
+                        fieldWithPath("result.activities.comments[].articleType").type(JsonFieldType.STRING).description("원글 타입").optional(),
+                        fieldWithPath("result.activities.comments[].articleId").type(JsonFieldType.NUMBER).description("원글 ID").optional(),
+                        fieldWithPath("result.activities.comments[].contentPreview").type(JsonFieldType.STRING).description("댓글 미리보기").optional(),
+                        fieldWithPath("result.activities.comments[].writer").type(JsonFieldType.STRING).description("작성자").optional(),
+                        fieldWithPath("result.activities.comments[].createdAt").type(JsonFieldType.STRING).description("작성 시각").optional(),
+                    )
+                )
+            )
+    }
+
+    @Test
     fun updateTokenTest() {
         // given
         BDDMockito.willDoNothing().given(memberUseCase).updateFcmToken(any())

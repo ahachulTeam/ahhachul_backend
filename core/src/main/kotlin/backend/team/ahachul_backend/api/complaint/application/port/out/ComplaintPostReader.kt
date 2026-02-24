@@ -8,4 +8,6 @@ interface ComplaintPostReader {
     fun getComplaintPost(id: Long): ComplaintPostEntity
 
     fun getComplaintPosts(command: GetSliceComplaintPostsCommand): List<ComplaintPostEntity>
+
+    fun getRecentComplaintPostsByMemberId(memberId: Long, limit: Int): List<ComplaintPostEntity>
 }

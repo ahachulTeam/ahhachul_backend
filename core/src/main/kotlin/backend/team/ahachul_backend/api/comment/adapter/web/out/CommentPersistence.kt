@@ -7,6 +7,8 @@ import backend.team.ahachul_backend.api.comment.domain.SearchComment
 import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity
 import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.api.comment.domain.model.CommentType
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 
 @Component
@@ -47,4 +49,13 @@ class CommentPersistence(
     override fun searchComments(command: GetCommentsCommand): List<SearchComment> {
         return customRepository.searchComments(command)
     }
+
+    override fun getRecentCommentsByMemberId(memberId: Long, limit: Int): List<CommentEntity> {
+        return repository.findByMemberIdAndStatusOrderByCreatedAtDesc(
+            memberId = memberId,
+            status = CommentType.CREATED,
+            pageable = PageRequest.of(0, limit.coerceAtLeast(1))
+        )
+    }
+}
 }

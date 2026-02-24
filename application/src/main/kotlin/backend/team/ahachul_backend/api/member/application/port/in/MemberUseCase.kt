@@ -5,10 +5,17 @@ import backend.team.ahachul_backend.api.member.application.command.SearchMemberC
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.CheckNicknameCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberCommand
+import backend.team.ahachul_backend.api.member.application.port.`in`.command.UpdateMemberVisibilityCommand
 
 interface MemberUseCase {
 
     fun getMember(): GetMemberDto.Response
+
+    fun getMemberVisibility(): MemberVisibilityDto.Response
+
+    fun updateMemberVisibility(command: UpdateMemberVisibilityCommand): MemberVisibilityDto.Response
+
+    fun getMemberProfile(nickname: String, asPublic: Boolean, limit: Int): GetMemberProfileDto.Response
 
     fun updateMember(command: UpdateMemberCommand): UpdateMemberDto.Response
 

@@ -202,6 +202,7 @@ class DelayProofService(
             GetSliceCommunityPostCommand(
                 categoryType = null,
                 subwayLines = listOf(subwayLineReader.getById(subwayLineId)),
+                stationId = null,
                 content = null,
                 hashTag = null,
                 writer = null,

@@ -9,6 +9,7 @@ import backend.team.ahachul_backend.api.report.domain.ReportEntity
 import backend.team.ahachul_backend.common.domain.entity.BaseEntity
 import backend.team.ahachul_backend.common.exception.DomainException
 import backend.team.ahachul_backend.common.domain.model.RegionType
+import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.dto.AppleUserInfoDto
 import backend.team.ahachul_backend.common.dto.GoogleUserInfoDto
 import backend.team.ahachul_backend.common.dto.KakaoMemberInfoDto
@@ -41,6 +42,21 @@ class MemberEntity(
 
     @Enumerated(EnumType.STRING)
     var regionType: RegionType = RegionType.METROPOLITAN,
+
+    @Enumerated(EnumType.STRING)
+    var profilePublicYn: YNType = YNType.Y,
+
+    @Enumerated(EnumType.STRING)
+    var emailPublicYn: YNType = YNType.N,
+
+    @Enumerated(EnumType.STRING)
+    var genderAgePublicYn: YNType = YNType.N,
+
+    @Enumerated(EnumType.STRING)
+    var activityPostsPublicYn: YNType = YNType.Y,
+
+    @Enumerated(EnumType.STRING)
+    var activityCommentsPublicYn: YNType = YNType.Y,
 
     @OneToMany(mappedBy = "targetMember")
     var memberReports: MutableList<ReportEntity> = mutableListOf(),
@@ -98,6 +114,36 @@ class MemberEntity(
     fun changeAgeRange(ageRange: String) {
         this.ageRange = ageRange
     }
+
+    fun changeProfilePublic(isPublic: Boolean) {
+        this.profilePublicYn = YNType.convert(isPublic)
+    }
+
+    fun changeEmailPublic(isPublic: Boolean) {
+        this.emailPublicYn = YNType.convert(isPublic)
+    }
+
+    fun changeGenderAgePublic(isPublic: Boolean) {
+        this.genderAgePublicYn = YNType.convert(isPublic)
+    }
+
+    fun changeActivityPostsPublic(isPublic: Boolean) {
+        this.activityPostsPublicYn = YNType.convert(isPublic)
+    }
+
+    fun changeActivityCommentsPublic(isPublic: Boolean) {
+        this.activityCommentsPublicYn = YNType.convert(isPublic)
+    }
+
+    fun isProfilePublic(): Boolean = profilePublicYn.isY()
+
+    fun isEmailPublic(): Boolean = emailPublicYn.isY()
+
+    fun isGenderAgePublic(): Boolean = genderAgePublicYn.isY()
+
+    fun isActivityPostsPublic(): Boolean = activityPostsPublicYn.isY()
+
+    fun isActivityCommentsPublic(): Boolean = activityCommentsPublicYn.isY()
 
     fun isNeedAdditionalUserInfo(): Boolean {
         return nickname == null
