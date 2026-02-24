@@ -5,6 +5,7 @@ import backend.team.ahachul_backend.api.complaint.domain.entity.ComplaintPostEnt
 import backend.team.ahachul_backend.api.complaint.domain.entity.QComplaintPostEntity.complaintPostEntity
 import backend.team.ahachul_backend.api.complaint.domain.model.ComplaintPostType
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
+import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
@@ -37,8 +38,11 @@ class CustomComplaintPostRepository(
         subwayLine?.let { complaintPostEntity.subwayLine.eq(subwayLine) }
 
     private fun subwayLinesEq(subwayLines: List<SubwayLineEntity>?) =
-        subwayLines?.takeIf { it.isNotEmpty() }
-            ?.let { complaintPostEntity.subwayLine.`in`(it) }
+        when {
+            subwayLines == null -> null
+            subwayLines.isEmpty() -> Expressions.booleanTemplate("1 = 0")
+            else -> complaintPostEntity.subwayLine.`in`(subwayLines)
+        }
 
     private fun contentLike(keyword: String?) =
         keyword?.let { complaintPostEntity.content.contains(keyword) }

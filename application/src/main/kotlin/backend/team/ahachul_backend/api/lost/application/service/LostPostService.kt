@@ -1,6 +1,8 @@
 package backend.team.ahachul_backend.api.lost.application.service
 
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
+import backend.team.ahachul_backend.api.common.application.port.out.StationReader
+import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.lost.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.lost.application.port.`in`.LostPostUseCase
 import backend.team.ahachul_backend.api.lost.application.port.out.CategoryReader
@@ -38,6 +40,8 @@ class LostPostService(
     private val lostPostFileReader: LostPostFileReader,
     private val lostPostFileService: LostPostFileService,
     private val subwayLineReader: SubwayLineReader,
+    private val stationReader: StationReader,
+    private val subwayLineStationReader: SubwayLineStationReader,
     private val memberReader: MemberReader,
     private val categoryReader: CategoryReader,
     private val commentReader: CommentReader,
@@ -110,7 +114,8 @@ class LostPostService(
     }
 
     override fun searchLostPosts(command: SearchLostPostCommand): PageInfoDto<SearchLostPostsDto.Response> {
-        val subwayLines = command.subwayLineIds?.stream()
+        val subwayLineIds = resolveSubwayLineIds(command.subwayLineIds, command.stationId)
+        val subwayLines = subwayLineIds?.stream()
             ?.map { subwayLineReader.getById(it) }
             ?.toList()
 
@@ -232,5 +237,30 @@ class LostPostService(
 
     companion object {
         const val DEFAULT_RECOMMEND_SIZE = 12L
+    }
+
+    private fun resolveSubwayLineIds(requestedLineIds: List<Long>?, stationId: Long?): List<Long>? {
+        val stationLineIds = stationId?.let {
+            val station = stationReader.getById(it)
+            subwayLineStationReader.findByStation(station)
+                .map { subwayLineStation -> subwayLineStation.subwayLine.id }
+                .distinct()
+        }
+
+        if (requestedLineIds == null && stationLineIds == null) {
+            return null
+        }
+
+        if (requestedLineIds == null) {
+            return stationLineIds
+        }
+
+        if (stationLineIds == null) {
+            return requestedLineIds
+        }
+
+        return requestedLineIds
+            .intersect(stationLineIds.toSet())
+            .toList()
     }
 }

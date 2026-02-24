@@ -115,8 +115,11 @@ class CustomLostPostRepository(
         subwayLine?.let { lostPostEntity.subwayLine.eq(subwayLine) }
 
     private fun subwayLinesEq(subwayLines: List<SubwayLineEntity>?) =
-        subwayLines?.takeIf { it.isNotEmpty() }
-            ?.let { lostPostEntity.subwayLine.`in`(it) }
+        when {
+            subwayLines == null -> null
+            subwayLines.isEmpty() -> Expressions.booleanTemplate("1 = 0")
+            else -> lostPostEntity.subwayLine.`in`(subwayLines)
+        }
 
     private fun lostTypeEq(lostType: LostType?) =
         lostType?.let { lostPostEntity.lostType.eq(lostType) }

@@ -1,5 +1,9 @@
 package backend.team.ahachul_backend.api.lost.application.service
 
+import backend.team.ahachul_backend.api.common.adapter.web.out.StationRepository
+import backend.team.ahachul_backend.api.common.adapter.web.out.SubwayLineStationRepository
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
+import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
 import backend.team.ahachul_backend.api.lost.adapter.web.out.CategoryRepository
 import backend.team.ahachul_backend.api.lost.adapter.web.out.LostPostRepository
 import backend.team.ahachul_backend.api.lost.application.port.`in`.LostPostUseCase
@@ -40,7 +44,9 @@ class LostPostServiceTest(
     @Autowired val lostPostRepository: LostPostRepository,
     @Autowired val memberRepository: MemberRepository,
     @Autowired val subwayLineRepository: SubwayLineRepository,
-    @Autowired val categoryRepository: CategoryRepository
+    @Autowired val categoryRepository: CategoryRepository,
+    @Autowired val stationRepository: StationRepository,
+    @Autowired val subwayLineStationRepository: SubwayLineStationRepository,
 ): CommonServiceTestConfig() {
 
     lateinit var member: MemberEntity
@@ -185,6 +191,52 @@ class LostPostServiceTest(
             .extracting("subwayLineId")
             .usingRecursiveComparison()
             .isEqualTo((1.. 3).map {subwayLine1.id}.toList())
+    }
+
+    @Test
+    @DisplayName("유실물 조회 시 역-호선 교집합으로 필터링한다.")
+    fun searchLostPostsByStationIntersection() {
+        // given
+        val subwayLine1 = createSubwayLine("1호선")
+        val subwayLine2 = createSubwayLine("2호선")
+        val station = stationRepository.save(StationEntity(name = "테스트역"))
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                station = station,
+                subwayLine = subwayLine1
+            )
+        )
+
+        lostPostUseCase.createLostPost(createLostPostCommand(subwayLine1.id, "1호선 유실물", "휴대폰"))
+        lostPostUseCase.createLostPost(createLostPostCommand(subwayLine2.id, "2호선 유실물", "휴대폰"))
+
+        val stationOnlyCommand = SearchLostPostCommand(
+            lostType = LostType.ACQUIRE,
+            subwayLineIds = null,
+            stationId = station.id,
+            keyword = null,
+            category = "휴대폰",
+            pageToken = null,
+            pageSize = 10
+        )
+        val mismatchCommand = SearchLostPostCommand(
+            lostType = LostType.ACQUIRE,
+            subwayLineIds = listOf(subwayLine2.id),
+            stationId = station.id,
+            keyword = null,
+            category = "휴대폰",
+            pageToken = null,
+            pageSize = 10
+        )
+
+        // when
+        val stationOnlyResult = lostPostUseCase.searchLostPosts(stationOnlyCommand)
+        val mismatchResult = lostPostUseCase.searchLostPosts(mismatchCommand)
+
+        // then
+        assertThat(stationOnlyResult.data).hasSize(1)
+        assertThat(stationOnlyResult.data.first().subwayLineId).isEqualTo(subwayLine1.id)
+        assertThat(mismatchResult.data).isEmpty()
     }
 
     @Test
@@ -444,6 +496,7 @@ class LostPostServiceTest(
         return SearchLostPostCommand(
             lostType = LostType.ACQUIRE,
             subwayLineIds = listOf(subwayLineId),
+            stationId = null,
             keyword = keyword,
             category = "휴대폰",
             pageToken = pageToken,

@@ -10,6 +10,7 @@ class SearchComplaintPostDto {
 
     data class Request(
         val subwayLineIds: String?,
+        val stationId: Long?,
         val keyword: String?,
     ) {
         fun toCommand(pageToken: String?, pageSize: Int): SearchComplaintPostCommand {
@@ -17,6 +18,7 @@ class SearchComplaintPostDto {
                 subwayLineIds = subwayLineIds?.let {
                     it.split(",").map { x -> x.toLong() }
                 },
+                stationId = stationId,
                 keyword = keyword,
                 pageToken = pageToken,
                 pageSize = pageSize

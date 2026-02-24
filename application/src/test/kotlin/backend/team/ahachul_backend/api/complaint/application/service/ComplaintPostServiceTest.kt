@@ -1,5 +1,9 @@
 package backend.team.ahachul_backend.api.complaint.application.service
 
+import backend.team.ahachul_backend.api.common.adapter.web.out.StationRepository
+import backend.team.ahachul_backend.api.common.adapter.web.out.SubwayLineStationRepository
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
+import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
 import backend.team.ahachul_backend.api.complaint.adapter.out.ComplaintPostRepository
 import backend.team.ahachul_backend.api.complaint.application.command.`in`.CreateComplaintPostCommand
 import backend.team.ahachul_backend.api.complaint.application.command.`in`.SearchComplaintPostCommand
@@ -30,6 +34,8 @@ class ComplaintPostServiceTest(
     @Autowired val complaintPostRepository: ComplaintPostRepository,
     @Autowired val memberRepository: MemberRepository,
     @Autowired val subwayLineRepository: SubwayLineRepository,
+    @Autowired val stationRepository: StationRepository,
+    @Autowired val subwayLineStationRepository: SubwayLineStationRepository,
 ) : CommonServiceTestConfig() {
 
     lateinit var member: MemberEntity
@@ -84,6 +90,7 @@ class ComplaintPostServiceTest(
         // when
         val searchComplaintPostCommand = SearchComplaintPostCommand(
             subwayLineIds = listOf(subwayLine.id),
+            stationId = null,
             keyword = null,
             pageToken = null,
             pageSize = 10
@@ -129,6 +136,7 @@ class ComplaintPostServiceTest(
         // when
         val searchComplaintPostCommand = SearchComplaintPostCommand(
             subwayLineIds = listOf(subwayLine.id),
+            stationId = null,
             keyword = "용",
             pageToken = null,
             pageSize = 10
@@ -174,6 +182,7 @@ class ComplaintPostServiceTest(
         // when
         val searchComplaintPostCommand = SearchComplaintPostCommand(
             subwayLineIds = listOf(subwayLine.id, subwayLine2.id),
+            stationId = null,
             keyword = null,
             pageToken = null,
             pageSize = 10
@@ -186,6 +195,70 @@ class ComplaintPostServiceTest(
         assertThat(searchComplaintPosts.data[0].content).isEqualTo(complaintPost2.content)
         assertThat(searchComplaintPosts.data[1].id).isEqualTo(complaintPost1.id)
         assertThat(searchComplaintPosts.data[1].content).isEqualTo(complaintPost1.content)
+    }
+
+    @Test
+    fun 민원_조회_역_필터_교집합() {
+        // given
+        val station = stationRepository.save(StationEntity(name = "테스트역"))
+        subwayLineStationRepository.save(
+            SubwayLineStationEntity(
+                station = station,
+                subwayLine = subwayLine
+            )
+        )
+
+        val createPrimaryLinePost = CreateComplaintPostCommand(
+            complaintType = ComplaintType.ENVIRONMENTAL_COMPLAINT,
+            shortContentType = ShortContentType.SELF,
+            content = "1호선 내용",
+            phoneNumber = null,
+            trainNo = null,
+            location = null,
+            subwayLineId = subwayLine.id,
+            imageFiles = listOf(),
+        )
+        val createSecondaryLinePost = CreateComplaintPostCommand(
+            complaintType = ComplaintType.ENVIRONMENTAL_COMPLAINT,
+            shortContentType = ShortContentType.SELF,
+            content = "2호선 내용",
+            phoneNumber = null,
+            trainNo = null,
+            location = null,
+            subwayLineId = subwayLine2.id,
+            imageFiles = listOf(),
+        )
+
+        val primaryPost = complaintPostRepository.save(
+            ComplaintPostEntity.of(createPrimaryLinePost, member, subwayLine)
+        )
+        complaintPostRepository.save(
+            ComplaintPostEntity.of(createSecondaryLinePost, member, subwayLine2)
+        )
+
+        val stationOnlyCommand = SearchComplaintPostCommand(
+            subwayLineIds = null,
+            stationId = station.id,
+            keyword = null,
+            pageToken = null,
+            pageSize = 10
+        )
+        val mismatchCommand = SearchComplaintPostCommand(
+            subwayLineIds = listOf(subwayLine2.id),
+            stationId = station.id,
+            keyword = null,
+            pageToken = null,
+            pageSize = 10
+        )
+
+        // when
+        val stationOnlyResult = complaintPostUseCase.searchComplaintPosts(stationOnlyCommand)
+        val mismatchResult = complaintPostUseCase.searchComplaintPosts(mismatchCommand)
+
+        // then
+        assertThat(stationOnlyResult.data).hasSize(1)
+        assertThat(stationOnlyResult.data.first().id).isEqualTo(primaryPost.id)
+        assertThat(mismatchResult.data).isEmpty()
     }
 
     @Test

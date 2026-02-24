@@ -66,6 +66,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
         val result = mockMvc.perform(
             get("/v1/complaint-posts")
                 .queryParam("subwayLineIds", "1,2")
+                .queryParam("stationId", "151")
                 .queryParam("keyword", "검색 키워드 이름")
                 .queryParam("pageToken", "MTIzMTI5MTU6MTI=")
                 .queryParam("pageSize", "10")
@@ -81,6 +82,7 @@ class ComplaintPostControllerDocsTest : CommonDocsTestConfig() {
                     getDocsResponse(),
                     queryParameters(
                         parameterWithName("subwayLineIds").description("민원 호선 리스트").optional(),
+                        parameterWithName("stationId").description("역 ID").optional(),
                         parameterWithName("keyword").description("검색 키워드 명칭").optional(),
                         parameterWithName("pageToken").description("base64로 인코딩 된 페이지 토큰 문자열").optional(),
                         parameterWithName("pageSize").description("페이지 노출 데이터 수. index 0부터 시작"),

@@ -9,6 +9,7 @@ class SearchLostPostsDto {
     data class Request(
         val lostType: LostType,
         val subwayLineIds: String?,
+        val stationId: Long?,
         val category: String?,
         val keyword: String?,
     ) {
@@ -18,6 +19,7 @@ class SearchLostPostsDto {
                 subwayLineIds = subwayLineIds?.let {
                     it.split(",").map { x -> x.toLong() }
                 },
+                stationId = stationId,
                 keyword = keyword,
                 category = category,
                 pageToken = pageToken,
