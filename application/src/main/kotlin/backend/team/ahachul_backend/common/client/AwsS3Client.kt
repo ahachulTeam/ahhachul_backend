@@ -5,7 +5,6 @@ import backend.team.ahachul_backend.common.logging.Logger
 import backend.team.ahachul_backend.common.properties.AwsS3Properties
 import backend.team.ahachul_backend.common.response.ResponseCode
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.CannedAccessControlList
 import com.amazonaws.services.s3.model.PutObjectRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
@@ -22,18 +21,24 @@ class AwsS3Client(
 
     fun upload(file: MultipartFile): String {
         val uuid = generateRandomUUID()
+        val tempFile = convertToFile(file)
         try {
             s3Client.putObject(
                 PutObjectRequest(
                     s3Properties.bucketName,
                     uuid,
-                    convertToFile(file)
-                ).withCannedAcl(CannedAccessControlList.PublicRead)
+                    tempFile
+                )
             )
-        } catch (e: CommonException) {
-            logger.error(e.message, ResponseCode.BAD_REQUEST, e)
+            return uuid
+        } catch (e: Exception) {
+            logger.error("S3 upload failed. key=$uuid", ResponseCode.FILE_UPLOAD_FAILED, e)
+            throw CommonException(ResponseCode.FILE_UPLOAD_FAILED, e)
+        } finally {
+            if (!tempFile.delete()) {
+                tempFile.deleteOnExit()
+            }
         }
-        return uuid
     }
 
     fun upload(files: List<MultipartFile>): List<String> {
@@ -52,7 +57,10 @@ class AwsS3Client(
     }
 
     private fun convertToFile(multipartFile: MultipartFile): File {
-        val tempFile = File.createTempFile(multipartFile.originalFilename!!, "")
+        val fileName = multipartFile.originalFilename
+            ?.takeIf { it.isNotBlank() }
+            ?: "upload-file"
+        val tempFile = File.createTempFile(fileName, "")
         multipartFile.inputStream.use { input ->
             tempFile.outputStream().use { output ->
                 input.copyTo(output)

@@ -77,5 +77,6 @@ enum class ResponseCode(
     MESSAGE_ROOM_FORBIDDEN("904", "해당 쪽지방에 접근할 수 없습니다.", HttpStatus.FORBIDDEN),
 
     // FILE
-    FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+    FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_UPLOAD_FAILED("811", "파일 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.", HttpStatus.INTERNAL_SERVER_ERROR);
 }
