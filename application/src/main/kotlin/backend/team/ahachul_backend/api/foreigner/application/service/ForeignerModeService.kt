@@ -1,33 +1,84 @@
 package backend.team.ahachul_backend.api.foreigner.application.service
 
+import backend.team.ahachul_backend.api.common.application.port.out.StationReader
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
+import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
+import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
+import backend.team.ahachul_backend.api.community.application.command.`in`.SearchCommunityHotPostCommand
+import backend.team.ahachul_backend.api.community.application.command.out.GetSliceCommunityHotPostCommand
 import backend.team.ahachul_backend.api.community.application.port.out.CommunityPostReader
 import backend.team.ahachul_backend.api.community.domain.model.CommunityPostType
 import backend.team.ahachul_backend.api.foreigner.adapter.`in`.dto.ForeignerModeDto
+import backend.team.ahachul_backend.api.foreigner.adapter.`in`.dto.ForeignerStationSocialDto
 import backend.team.ahachul_backend.api.foreigner.application.port.`in`.ForeignerModeUseCase
+import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.CreateForeignerStationSocialMeetupCommand
 import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.ForeignerLocale
 import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.GetForeignerStationGuideCommand
+import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.GetForeignerStationSocialHotspotsCommand
+import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.GetForeignerStationSocialOverviewCommand
+import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.JoinForeignerStationSocialMeetupCommand
+import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.OpenForeignerStationSocialMatchCommand
+import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.ReviewForeignerStationSocialParticipantCommand
 import backend.team.ahachul_backend.api.foreigner.application.port.`in`.dto.TranslateCommunityPostCommand
+import backend.team.ahachul_backend.api.foreigner.application.port.out.StationSocialMeetupParticipantReader
+import backend.team.ahachul_backend.api.foreigner.application.port.out.StationSocialMeetupParticipantWriter
+import backend.team.ahachul_backend.api.foreigner.application.port.out.StationSocialMeetupReader
+import backend.team.ahachul_backend.api.foreigner.application.port.out.StationSocialMeetupWriter
+import backend.team.ahachul_backend.api.foreigner.domain.entity.StationSocialMeetupEntity
+import backend.team.ahachul_backend.api.foreigner.domain.entity.StationSocialMeetupParticipantEntity
+import backend.team.ahachul_backend.api.foreigner.domain.model.StationSocialMeetupStatusType
+import backend.team.ahachul_backend.api.foreigner.domain.model.StationSocialParticipantStatusType
+import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
+import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
+import backend.team.ahachul_backend.api.message.application.port.out.MessageRoomReader
+import backend.team.ahachul_backend.api.message.application.port.out.MessageRoomWriter
+import backend.team.ahachul_backend.api.message.application.port.out.MessageWriter
+import backend.team.ahachul_backend.api.message.domain.entity.MessageEntity
+import backend.team.ahachul_backend.api.message.domain.entity.MessageRoomEntity
+import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
+import backend.team.ahachul_backend.common.domain.model.YNType
 import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
+import org.springframework.data.domain.Sort
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.time.OffsetDateTime
 import java.util.Locale
 
 @Service
 @Transactional(readOnly = true)
 class ForeignerModeService(
+    private val stationReader: StationReader,
     private val subwayLineStationReader: SubwayLineStationReader,
     private val communityPostReader: CommunityPostReader,
+    private val memberReader: MemberReader,
+    private val stationSocialMeetupReader: StationSocialMeetupReader,
+    private val stationSocialMeetupWriter: StationSocialMeetupWriter,
+    private val stationSocialMeetupParticipantReader: StationSocialMeetupParticipantReader,
+    private val stationSocialMeetupParticipantWriter: StationSocialMeetupParticipantWriter,
+    private val messageRoomReader: MessageRoomReader,
+    private val messageRoomWriter: MessageRoomWriter,
+    private val messageWriter: MessageWriter,
     private val objectMapper: ObjectMapper,
 ) : ForeignerModeUseCase {
 
     private data class TranslationResult(
         val text: String,
         val fallback: Boolean,
+    )
+
+    private data class HotspotSeed(
+        val stationCandidates: List<String>,
+        val preferredLineName: String?,
+        val districtLabelByLocale: Map<ForeignerLocale, String>,
+        val summaryByLocale: Map<ForeignerLocale, String>,
+        val contentTagsByLocale: Map<ForeignerLocale, List<String>>,
     )
 
     override fun getStationGuide(command: GetForeignerStationGuideCommand): ForeignerModeDto.StationGuideResponse {
@@ -84,6 +135,473 @@ class ForeignerModeService(
             isFallback = isFallback,
             notice = buildTranslationNotice(command.targetLocale),
         )
+    }
+
+    override fun getStationSocialHotspots(
+        command: GetForeignerStationSocialHotspotsCommand,
+    ): ForeignerStationSocialDto.HotspotsResponse {
+        val now = LocalDateTime.now()
+        val hotspots = HOTSPOT_SEEDS.mapNotNull { seed ->
+            val station = findStationByCandidates(seed.stationCandidates) ?: return@mapNotNull null
+            val stationMappings = subwayLineStationReader.findByStation(station)
+            if (stationMappings.isEmpty()) {
+                return@mapNotNull null
+            }
+
+            val selectedMapping = selectPreferredLine(seed.preferredLineName, stationMappings) ?: stationMappings.first()
+            val romanizedName = toTitleCaseRomanized(romanizeText(station.name))
+            val localizedStationName = localizeStationName(station.name, romanizedName, command.locale)
+            val localizedLineName = localizeSubwayLineName(selectedMapping.subwayLine.name, command.locale)
+            val reviews = loadStationReviewPosts(station.id, stationMappings.map { it.subwayLine }, limit = 3)
+
+            ForeignerStationSocialDto.HotspotStation(
+                stationId = station.id,
+                subwayLineId = selectedMapping.subwayLine.id,
+                stationNameKo = station.name,
+                stationNameLocalized = localizedStationName,
+                lineNameLocalized = localizedLineName,
+                romanizedName = romanizedName,
+                districtLabel = seed.districtLabelByLocale[command.locale] ?: seed.districtLabelByLocale[ForeignerLocale.EN].orEmpty(),
+                summary = seed.summaryByLocale[command.locale] ?: seed.summaryByLocale[ForeignerLocale.EN].orEmpty(),
+                contentTags = seed.contentTagsByLocale[command.locale] ?: seed.contentTagsByLocale[ForeignerLocale.EN].orEmpty(),
+                upcomingMeetupCount = stationSocialMeetupReader.countByStationAndStatusAndMeetupAtAfter(
+                    stationId = station.id,
+                    status = StationSocialMeetupStatusType.OPEN,
+                    from = now,
+                ),
+                reviewCount = reviews.size,
+            )
+        }
+
+        return ForeignerStationSocialDto.HotspotsResponse(
+            generatedAt = OffsetDateTime.now().toString(),
+            locale = command.locale.code,
+            hotspots = hotspots,
+        )
+    }
+
+    override fun getStationSocialOverview(
+        command: GetForeignerStationSocialOverviewCommand,
+    ): ForeignerStationSocialDto.OverviewResponse {
+        val station = stationReader.getById(command.stationId)
+        val mappings = subwayLineStationReader.findByStation(station).sortedBy { it.subwayLine.id }
+        if (mappings.isEmpty()) {
+            throw CommonException(ResponseCode.INVALID_DOMAIN)
+        }
+
+        val selectedMapping = command.subwayLineId?.let {
+            runCatching { subwayLineStationReader.findBySubwayLineIdAndStationId(it, station.id) }.getOrNull()
+        } ?: mappings.first()
+
+        val viewerMemberId = runCatching { getMemberId() }.getOrNull()
+        val viewerNationality = command.nationalityCode
+
+        val from = LocalDate.now().atStartOfDay()
+        val to = from.plusDays(31)
+        val candidateMeetups = stationSocialMeetupReader.findByStationAndRange(
+            stationId = station.id,
+            from = from,
+            to = to,
+            status = StationSocialMeetupStatusType.OPEN,
+        )
+
+        val filteredMeetups = candidateMeetups
+            .filter { meetup ->
+                includeByNationalityPolicy(
+                    meetup = meetup,
+                    sameNationalityOnly = command.sameNationalityOnly,
+                    nationalityCode = viewerNationality,
+                )
+            }
+            .take(command.limit)
+
+        val meetupItems = filteredMeetups.map { meetup ->
+            val participants = stationSocialMeetupParticipantReader.findByMeetupId(meetup.id)
+            val filteredParticipants = participants.filter { participant ->
+                includeParticipantByNationality(
+                    participant = participant,
+                    sameNationalityOnly = command.sameNationalityOnly,
+                    nationalityCode = viewerNationality,
+                )
+            }
+            val acceptedCount = participants.count { it.status == StationSocialParticipantStatusType.ACCEPTED }.toLong()
+
+            ForeignerStationSocialDto.MeetupItem(
+                meetupId = meetup.id,
+                title = meetup.title,
+                description = meetup.description,
+                meetupAt = meetup.meetupAt.format(ISO_DATE_TIME_FORMATTER),
+                maxParticipants = meetup.maxParticipants,
+                acceptedCount = acceptedCount,
+                hostMemberId = meetup.hostMember.id,
+                hostNickname = meetup.hostMember.nickname ?: "알 수 없음",
+                nationalityCode = meetup.nationalityCode,
+                sameNationalityOnly = meetup.sameNationalityOnlyYn.isY(),
+                status = meetup.status.name,
+                mine = viewerMemberId == meetup.hostMember.id,
+                participants = filteredParticipants.map { participant ->
+                    ForeignerStationSocialDto.ParticipantItem(
+                        participantId = participant.id,
+                        memberId = participant.member.id,
+                        nickname = participant.member.nickname ?: "알 수 없음",
+                        nationalityCode = participant.nationalityCode,
+                        status = participant.status.name,
+                        mine = viewerMemberId == participant.member.id,
+                    )
+                },
+            )
+        }
+
+        val calendar = filteredMeetups.groupBy { it.meetupAt.toLocalDate() }
+            .entries
+            .sortedBy { it.key }
+            .map { (date, meetups) ->
+                ForeignerStationSocialDto.CalendarItem(
+                    date = date.toString(),
+                    meetupCount = meetups.size,
+                )
+            }
+
+        val reviewPosts = loadStationReviewPosts(station.id, mappings.map { it.subwayLine }, limit = 10)
+            .map { review ->
+                ForeignerStationSocialDto.ReviewPostItem(
+                    postId = review.id,
+                    title = review.title,
+                    preview = truncate(extractLexicalText(review.content), 120),
+                    writer = review.writer,
+                    createdAt = review.createdAt.format(ISO_DATE_TIME_FORMATTER),
+                )
+            }
+
+        val romanizedName = toTitleCaseRomanized(romanizeText(station.name))
+        val stationLocalized = localizeStationName(station.name, romanizedName, command.locale)
+        val lineLocalized = localizeSubwayLineName(selectedMapping.subwayLine.name, command.locale)
+        val guide = buildCultureGuide(command.locale)
+
+        return ForeignerStationSocialDto.OverviewResponse(
+            generatedAt = OffsetDateTime.now().toString(),
+            locale = command.locale.code,
+            station = ForeignerStationSocialDto.StationInfo(
+                stationId = station.id,
+                subwayLineId = selectedMapping.subwayLine.id,
+                stationNameKo = station.name,
+                stationNameLocalized = stationLocalized,
+                lineNameKo = selectedMapping.subwayLine.name,
+                lineNameLocalized = lineLocalized,
+                romanizedName = romanizedName,
+                pronunciation = toPronunciation(station.name),
+                cultureTips = listOf(
+                    guide.lastTrainTip,
+                    guide.transferEtiquetteTip,
+                    guide.safetyTip,
+                    guide.emergencyPhrase,
+                ),
+            ),
+            sameNationalityOnly = command.sameNationalityOnly,
+            nationalityCode = viewerNationality,
+            calendar = calendar,
+            meetups = meetupItems,
+            reviewPosts = reviewPosts,
+        )
+    }
+
+    @Transactional
+    override fun createStationSocialMeetup(
+        command: CreateForeignerStationSocialMeetupCommand,
+    ): ForeignerStationSocialDto.CreateMeetupResponse {
+        val memberId = getMemberId()
+        val hostMember = memberReader.getMember(memberId)
+        val lineStation = subwayLineStationReader.findBySubwayLineIdAndStationId(command.subwayLineId, command.stationId)
+
+        val normalizedTitle = command.title.trim()
+        val normalizedDescription = command.description.trim()
+        if (normalizedTitle.isBlank() || normalizedDescription.isBlank()) {
+            throw CommonException(ResponseCode.BAD_REQUEST)
+        }
+        if (command.maxParticipants !in 2..500) {
+            throw CommonException(ResponseCode.BAD_REQUEST)
+        }
+        if (command.sameNationalityOnly && command.nationalityCode.isNullOrBlank()) {
+            throw CommonException(ResponseCode.BAD_REQUEST)
+        }
+
+        val meetup = stationSocialMeetupWriter.save(
+            StationSocialMeetupEntity.of(
+                station = lineStation.station,
+                subwayLine = lineStation.subwayLine,
+                hostMember = hostMember,
+                title = normalizedTitle,
+                description = normalizedDescription,
+                meetupAt = command.meetupAt,
+                maxParticipants = command.maxParticipants,
+                nationalityCode = command.nationalityCode,
+                sameNationalityOnlyYn = YNType.convert(command.sameNationalityOnly),
+            ),
+        )
+
+        stationSocialMeetupParticipantWriter.save(
+            StationSocialMeetupParticipantEntity.of(
+                meetup = meetup,
+                member = hostMember,
+                status = StationSocialParticipantStatusType.ACCEPTED,
+                introductionMessage = "host",
+                nationalityCode = command.nationalityCode,
+            ),
+        )
+
+        return ForeignerStationSocialDto.CreateMeetupResponse(
+            meetupId = meetup.id,
+            createdAt = meetup.createdAt.format(ISO_DATE_TIME_FORMATTER),
+        )
+    }
+
+    @Transactional
+    override fun joinStationSocialMeetup(
+        command: JoinForeignerStationSocialMeetupCommand,
+    ): ForeignerStationSocialDto.JoinMeetupResponse {
+        val memberId = getMemberId()
+        val member = memberReader.getMember(memberId)
+        val meetup = stationSocialMeetupReader.getById(command.meetupId)
+        validateJoinRequest(meetup, command.nationalityCode, memberId)
+
+        val participant = stationSocialMeetupParticipantReader.findByMeetupIdAndMemberId(meetup.id, memberId)?.apply {
+            if (status == StationSocialParticipantStatusType.REQUESTED || status == StationSocialParticipantStatusType.ACCEPTED) {
+                throw CommonException(ResponseCode.STATION_SOCIAL_JOIN_FORBIDDEN)
+            }
+            request(command.introductionMessage, command.nationalityCode)
+        } ?: StationSocialMeetupParticipantEntity.of(
+            meetup = meetup,
+            member = member,
+            status = StationSocialParticipantStatusType.REQUESTED,
+            introductionMessage = command.introductionMessage,
+            nationalityCode = command.nationalityCode,
+        )
+
+        val saved = stationSocialMeetupParticipantWriter.save(participant)
+        return ForeignerStationSocialDto.JoinMeetupResponse(
+            meetupId = meetup.id,
+            participantId = saved.id,
+            status = saved.status.name,
+        )
+    }
+
+    @Transactional
+    override fun reviewStationSocialParticipant(
+        command: ReviewForeignerStationSocialParticipantCommand,
+    ): ForeignerStationSocialDto.ReviewParticipantResponse {
+        val memberId = getMemberId()
+        val meetup = stationSocialMeetupReader.getById(command.meetupId)
+        if (!meetup.isHost(memberId)) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_JOIN_FORBIDDEN)
+        }
+
+        val participant = stationSocialMeetupParticipantReader.getParticipantById(command.participantId)
+        if (participant.meetup.id != meetup.id) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_PARTICIPANT_NOT_FOUND)
+        }
+
+        if (command.approve) {
+            val acceptedCount = stationSocialMeetupParticipantReader.countByMeetupIdAndStatus(
+                meetup.id,
+                StationSocialParticipantStatusType.ACCEPTED,
+            )
+            if (!participant.isAccepted() && acceptedCount >= meetup.maxParticipants) {
+                throw CommonException(ResponseCode.STATION_SOCIAL_CAPACITY_EXCEEDED)
+            }
+            participant.approve()
+            if (acceptedCount + 1 >= meetup.maxParticipants) {
+                meetup.close()
+                stationSocialMeetupWriter.save(meetup)
+            }
+        } else {
+            participant.reject()
+        }
+
+        val saved = stationSocialMeetupParticipantWriter.save(participant)
+        return ForeignerStationSocialDto.ReviewParticipantResponse(
+            meetupId = meetup.id,
+            participantId = saved.id,
+            status = saved.status.name,
+        )
+    }
+
+    @Transactional
+    override fun openStationSocialMatch(
+        command: OpenForeignerStationSocialMatchCommand,
+    ): ForeignerStationSocialDto.OpenMatchResponse {
+        val memberId = getMemberId()
+        val meetup = stationSocialMeetupReader.getById(command.meetupId)
+        val participants = stationSocialMeetupParticipantReader.findByMeetupId(meetup.id)
+
+        val callable = meetup.isHost(memberId) || participants.any {
+            it.member.id == memberId && it.status == StationSocialParticipantStatusType.ACCEPTED
+        }
+        if (!callable) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_JOIN_FORBIDDEN)
+        }
+        if (command.targetMemberId == memberId) {
+            throw CommonException(ResponseCode.INVALID_MESSAGE_REQUEST)
+        }
+
+        val targetAllowed = meetup.hostMember.id == command.targetMemberId || participants.any {
+            it.member.id == command.targetMemberId &&
+                it.status == StationSocialParticipantStatusType.ACCEPTED &&
+                it.matchOpenYn.isY()
+        }
+        if (!targetAllowed) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_PARTICIPANT_NOT_FOUND)
+        }
+
+        val sender = memberReader.getMember(memberId)
+        val target = memberReader.getMember(command.targetMemberId)
+        val room = resolveMessageRoom(sender, target)
+        val message = messageWriter.save(
+            MessageEntity.of(
+                messageRoom = room,
+                senderMember = sender,
+                content = command.openingMessage?.takeIf { it.isNotBlank() }
+                    ?: "안녕하세요! ${meetup.title} 모임에서 매칭되어 연락드려요.",
+            ),
+        )
+        room.updateLastMessage(message.content, message.createdAt)
+
+        return ForeignerStationSocialDto.OpenMatchResponse(
+            meetupId = meetup.id,
+            targetMemberId = target.id,
+            roomId = room.id,
+            messageId = message.id,
+        )
+    }
+
+    private fun getMemberId(): Long {
+        return RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)?.toLongOrNull()
+            ?: throw CommonException(ResponseCode.INVALID_AUTH)
+    }
+
+    private fun validateJoinRequest(
+        meetup: StationSocialMeetupEntity,
+        nationalityCode: String?,
+        memberId: Long,
+    ) {
+        if (!meetup.isOpen()) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_JOIN_FORBIDDEN)
+        }
+        if (meetup.isHost(memberId)) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_JOIN_FORBIDDEN)
+        }
+        if (
+            meetup.sameNationalityOnlyYn.isY() &&
+            !meetup.nationalityCode.isNullOrBlank() &&
+            meetup.nationalityCode != nationalityCode
+        ) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_NATIONALITY_MISMATCH)
+        }
+
+        val acceptedCount = stationSocialMeetupParticipantReader.countByMeetupIdAndStatus(
+            meetupId = meetup.id,
+            status = StationSocialParticipantStatusType.ACCEPTED,
+        )
+        if (acceptedCount >= meetup.maxParticipants) {
+            throw CommonException(ResponseCode.STATION_SOCIAL_CAPACITY_EXCEEDED)
+        }
+    }
+
+    private fun resolveMessageRoom(sender: MemberEntity, receiver: MemberEntity): MessageRoomEntity {
+        val normalizedPair = normalizeMemberPair(sender.id, receiver.id)
+        val existed = messageRoomReader.findByMemberPair(
+            memberAId = normalizedPair.first,
+            memberBId = normalizedPair.second,
+        )
+        if (existed != null) {
+            return existed
+        }
+        val memberA = if (sender.id == normalizedPair.first) sender else receiver
+        val memberB = if (sender.id == normalizedPair.second) sender else receiver
+        return messageRoomWriter.save(MessageRoomEntity.of(memberA = memberA, memberB = memberB))
+    }
+
+    private fun normalizeMemberPair(memberId: Long, otherMemberId: Long): Pair<Long, Long> {
+        return if (memberId < otherMemberId) {
+            memberId to otherMemberId
+        } else {
+            otherMemberId to memberId
+        }
+    }
+
+    private fun includeByNationalityPolicy(
+        meetup: StationSocialMeetupEntity,
+        sameNationalityOnly: Boolean,
+        nationalityCode: String?,
+    ): Boolean {
+        if (!sameNationalityOnly) {
+            return true
+        }
+        if (nationalityCode.isNullOrBlank()) {
+            return true
+        }
+        return meetup.nationalityCode == null || meetup.nationalityCode == nationalityCode
+    }
+
+    private fun includeParticipantByNationality(
+        participant: StationSocialMeetupParticipantEntity,
+        sameNationalityOnly: Boolean,
+        nationalityCode: String?,
+    ): Boolean {
+        if (!sameNationalityOnly || nationalityCode.isNullOrBlank()) {
+            return true
+        }
+        return participant.nationalityCode == null || participant.nationalityCode == nationalityCode
+    }
+
+    private fun findStationByCandidates(candidates: List<String>): StationEntity? {
+        candidates.forEach { candidate ->
+            val station = runCatching { stationReader.getByName(candidate) }.getOrNull()
+            if (station != null) {
+                return station
+            }
+        }
+        return null
+    }
+
+    private fun selectPreferredLine(
+        preferredLineName: String?,
+        stationMappings: List<SubwayLineStationEntity>,
+    ): SubwayLineStationEntity? {
+        if (stationMappings.isEmpty()) {
+            return null
+        }
+        if (preferredLineName == null) {
+            return stationMappings.sortedBy { it.subwayLine.id }.first()
+        }
+        return stationMappings.find { it.subwayLine.name == preferredLineName }
+            ?: stationMappings.sortedBy { it.subwayLine.id }.first()
+    }
+
+    private fun loadStationReviewPosts(
+        stationId: Long,
+        subwayLines: List<SubwayLineEntity>,
+        limit: Int,
+    ) = communityPostReader.searchCommunityHotPosts(
+        GetSliceCommunityHotPostCommand.from(
+            SearchCommunityHotPostCommand(
+                subwayLineIds = subwayLines.map { it.id },
+                stationId = stationId,
+                content = null,
+                hashTag = null,
+                writer = null,
+                sort = Sort.by(Sort.Order.desc("createdAt")),
+                pageToken = null,
+                pageSize = limit.coerceIn(1, 50),
+            ),
+            subwayLines = subwayLines,
+        ),
+    )
+
+    private fun truncate(value: String, maxLength: Int): String {
+        if (value.length <= maxLength) {
+            return value
+        }
+        return "${value.take(maxLength - 1)}…"
     }
 
     private fun buildTemplates(
@@ -447,10 +965,115 @@ class ForeignerModeService(
     }
 
     companion object {
+        private val ISO_DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
         private const val HANGUL_BASE = 0xAC00
         private const val HANGUL_LAST = 0xD7A3
         private const val JUNGSEONG_COUNT = 21
         private const val JONGSEONG_COUNT = 28
+
+        private val HOTSPOT_SEEDS = listOf(
+            HotspotSeed(
+                stationCandidates = listOf("명동", "명동역"),
+                preferredLineName = "4호선",
+                districtLabelByLocale = mapOf(
+                    ForeignerLocale.KO to "명동 관광/쇼핑",
+                    ForeignerLocale.EN to "Myeong-dong shopping district",
+                    ForeignerLocale.TH to "ย่านช้อปปิ้งมย็องดง",
+                    ForeignerLocale.CN to "明洞购物区",
+                ),
+                summaryByLocale = mapOf(
+                    ForeignerLocale.KO to "뷰티/약국/패션 소비가 집중되는 핵심 관광 허브",
+                    ForeignerLocale.EN to "A major tourism hub for beauty, pharmacy, and fashion shopping",
+                    ForeignerLocale.TH to "ฮับท่องเที่ยวหลักด้านบิวตี้ ร้านยา และแฟชั่น",
+                    ForeignerLocale.CN to "以美妆、药妆与时尚购物为主的核心旅游枢纽",
+                ),
+                contentTagsByLocale = mapOf(
+                    ForeignerLocale.EN to listOf("Beauty", "Pharmacy", "Duty Free", "Street Food"),
+                    ForeignerLocale.KO to listOf("뷰티", "약국", "면세", "길거리음식"),
+                ),
+            ),
+            HotspotSeed(
+                stationCandidates = listOf("성수", "성수역"),
+                preferredLineName = "2호선",
+                districtLabelByLocale = mapOf(
+                    ForeignerLocale.KO to "성수 라이프스타일",
+                    ForeignerLocale.EN to "Seongsu lifestyle district",
+                    ForeignerLocale.TH to "ย่านไลฟ์สไตล์ซองซู",
+                    ForeignerLocale.CN to "圣水生活方式街区",
+                ),
+                summaryByLocale = mapOf(
+                    ForeignerLocale.KO to "편집숍/팝업/브랜드 쇼룸이 밀집한 트렌드 중심지",
+                    ForeignerLocale.EN to "Trend-focused area packed with select shops and pop-up stores",
+                    ForeignerLocale.TH to "ย่านเทรนด์ที่รวมร้านคัดสรรและป๊อปอัปสโตร์",
+                    ForeignerLocale.CN to "聚集精选店与快闪店的潮流中心区域",
+                ),
+                contentTagsByLocale = mapOf(
+                    ForeignerLocale.EN to listOf("Select Shop", "Popup", "Design", "Cafe"),
+                    ForeignerLocale.KO to listOf("편집숍", "팝업", "디자인", "카페"),
+                ),
+            ),
+            HotspotSeed(
+                stationCandidates = listOf("홍대입구", "홍대입구역"),
+                preferredLineName = "2호선",
+                districtLabelByLocale = mapOf(
+                    ForeignerLocale.KO to "홍대 문화/야간",
+                    ForeignerLocale.EN to "Hongdae culture and nightlife",
+                    ForeignerLocale.TH to "ย่านวัฒนธรรมและไนต์ไลฟ์ฮงแด",
+                    ForeignerLocale.CN to "弘大文化与夜生活区",
+                ),
+                summaryByLocale = mapOf(
+                    ForeignerLocale.KO to "공연/거리예술/야간 상권 중심의 젊은 관광지",
+                    ForeignerLocale.EN to "Youth-driven area known for street performances and nightlife",
+                    ForeignerLocale.TH to "พื้นที่วัยรุ่นเด่นด้านการแสดงริมถนนและไนต์ไลฟ์",
+                    ForeignerLocale.CN to "以街头演出与夜间商圈著称的年轻活力区域",
+                ),
+                contentTagsByLocale = mapOf(
+                    ForeignerLocale.EN to listOf("Street 공연", "Nightlife", "Budget Food", "Vintage"),
+                    ForeignerLocale.KO to listOf("공연", "야간", "가성비맛집", "빈티지"),
+                ),
+            ),
+            HotspotSeed(
+                stationCandidates = listOf("강남", "강남역"),
+                preferredLineName = "2호선",
+                districtLabelByLocale = mapOf(
+                    ForeignerLocale.KO to "강남 비즈/쇼핑",
+                    ForeignerLocale.EN to "Gangnam business & shopping",
+                    ForeignerLocale.TH to "ย่านธุรกิจและช้อปปิ้งกังนัม",
+                    ForeignerLocale.CN to "江南商务购物区",
+                ),
+                summaryByLocale = mapOf(
+                    ForeignerLocale.KO to "대형 상업시설과 글로벌 브랜드 접근성이 높은 중심지",
+                    ForeignerLocale.EN to "Core district with major retail complexes and global brands",
+                    ForeignerLocale.TH to "ศูนย์กลางที่เข้าถึงห้างใหญ่และแบรนด์สากลง่าย",
+                    ForeignerLocale.CN to "大型商业设施与全球品牌集中、可达性高的中心区",
+                ),
+                contentTagsByLocale = mapOf(
+                    ForeignerLocale.EN to listOf("Business", "Shopping", "Medical", "Transit"),
+                    ForeignerLocale.KO to listOf("비즈니스", "쇼핑", "의료", "환승"),
+                ),
+            ),
+            HotspotSeed(
+                stationCandidates = listOf("안국", "안국역"),
+                preferredLineName = "3호선",
+                districtLabelByLocale = mapOf(
+                    ForeignerLocale.KO to "안국 전통/문화",
+                    ForeignerLocale.EN to "Anguk heritage district",
+                    ForeignerLocale.TH to "ย่านมรดกวัฒนธรรมอันกุก",
+                    ForeignerLocale.CN to "安国传统文化区",
+                ),
+                summaryByLocale = mapOf(
+                    ForeignerLocale.KO to "궁궐/한옥/전통 콘텐츠를 체험하기 좋은 역사 권역",
+                    ForeignerLocale.EN to "Historic area for palaces, hanok villages, and cultural experiences",
+                    ForeignerLocale.TH to "เขตประวัติศาสตร์เหมาะกับวัง ฮันอก และวัฒนธรรมดั้งเดิม",
+                    ForeignerLocale.CN to "适合体验宫殿、韩屋与传统文化的历史街区",
+                ),
+                contentTagsByLocale = mapOf(
+                    ForeignerLocale.EN to listOf("Hanok", "Museum", "Palace", "Traditional Food"),
+                    ForeignerLocale.KO to listOf("한옥", "박물관", "궁궐", "전통음식"),
+                ),
+            ),
+        )
 
         private val CHOSEONG_ROMANIZATION = arrayOf(
             "g", "kk", "n", "d", "tt", "r", "m", "b", "pp", "s", "ss", "", "j", "jj", "ch", "k", "t", "p", "h",

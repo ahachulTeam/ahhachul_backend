@@ -75,6 +75,11 @@ enum class ResponseCode(
     INVALID_MESSAGE_REQUEST("902", "유효하지 않은 쪽지 요청입니다.", HttpStatus.BAD_REQUEST),
     MESSAGE_ROOM_NOT_FOUND("903", "쪽지방이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     MESSAGE_ROOM_FORBIDDEN("904", "해당 쪽지방에 접근할 수 없습니다.", HttpStatus.FORBIDDEN),
+    STATION_SOCIAL_MEETUP_NOT_FOUND("905", "외국인 모임이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    STATION_SOCIAL_PARTICIPANT_NOT_FOUND("906", "모임 참가자 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    STATION_SOCIAL_JOIN_FORBIDDEN("907", "모임 참여/승인 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    STATION_SOCIAL_CAPACITY_EXCEEDED("908", "모임 정원이 초과되어 승인할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    STATION_SOCIAL_NATIONALITY_MISMATCH("909", "모임 국적 정책과 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
 
     // FILE
     FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

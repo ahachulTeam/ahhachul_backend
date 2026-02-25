@@ -23,3 +23,83 @@ include::{snippets}/get-foreigner-community-post-translation/query-parameters.ad
 include::{snippets}/get-foreigner-community-post-translation/http-response.adoc[]
 .Response Fields
 include::{snippets}/get-foreigner-community-post-translation/response-fields.adoc[]
+
+==== 외국인 역 소셜 핫스팟 조회
+
+.Request
+include::{snippets}/get-foreigner-station-social-hotspots/http-request.adoc[]
+.Query Parameters
+include::{snippets}/get-foreigner-station-social-hotspots/query-parameters.adoc[]
+.Response
+include::{snippets}/get-foreigner-station-social-hotspots/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-foreigner-station-social-hotspots/response-fields.adoc[]
+
+==== 외국인 역 소셜 상세 조회
+
+.Request
+include::{snippets}/get-foreigner-station-social-overview/http-request.adoc[]
+.Query Parameters
+include::{snippets}/get-foreigner-station-social-overview/query-parameters.adoc[]
+.Response
+include::{snippets}/get-foreigner-station-social-overview/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-foreigner-station-social-overview/response-fields.adoc[]
+
+==== 외국인 역 소셜 모임 생성
+
+.Request
+include::{snippets}/create-foreigner-station-social-meetup/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-foreigner-station-social-meetup/request-headers.adoc[]
+.Request Fields
+include::{snippets}/create-foreigner-station-social-meetup/request-fields.adoc[]
+.Response
+include::{snippets}/create-foreigner-station-social-meetup/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-foreigner-station-social-meetup/response-fields.adoc[]
+
+==== 외국인 역 소셜 모임 참여 요청
+
+.Request
+include::{snippets}/join-foreigner-station-social-meetup/http-request.adoc[]
+.Request Headers
+include::{snippets}/join-foreigner-station-social-meetup/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/join-foreigner-station-social-meetup/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/join-foreigner-station-social-meetup/request-fields.adoc[]
+.Response
+include::{snippets}/join-foreigner-station-social-meetup/http-response.adoc[]
+.Response Fields
+include::{snippets}/join-foreigner-station-social-meetup/response-fields.adoc[]
+
+==== 외국인 역 소셜 참여 승인/거절
+
+.Request
+include::{snippets}/review-foreigner-station-social-participant/http-request.adoc[]
+.Request Headers
+include::{snippets}/review-foreigner-station-social-participant/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/review-foreigner-station-social-participant/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/review-foreigner-station-social-participant/request-fields.adoc[]
+.Response
+include::{snippets}/review-foreigner-station-social-participant/http-response.adoc[]
+.Response Fields
+include::{snippets}/review-foreigner-station-social-participant/response-fields.adoc[]
+
+==== 외국인 역 소셜 매칭 시작
+
+.Request
+include::{snippets}/open-foreigner-station-social-match/http-request.adoc[]
+.Request Headers
+include::{snippets}/open-foreigner-station-social-match/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/open-foreigner-station-social-match/path-parameters.adoc[]
+.Request Fields
+include::{snippets}/open-foreigner-station-social-match/request-fields.adoc[]
+.Response
+include::{snippets}/open-foreigner-station-social-match/http-response.adoc[]
+.Response Fields
+include::{snippets}/open-foreigner-station-social-match/response-fields.adoc[]
