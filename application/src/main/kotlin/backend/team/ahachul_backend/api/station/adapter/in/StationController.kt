@@ -30,6 +30,12 @@ class StationController(
         return CommonResponse.success(result)
     }
 
+    @GetMapping("/v2/stations/times/quality-report")
+    fun getStationTimesQualityReport(request: GetStationTimesDto.QualityReportRequest): CommonResponse<GetStationTimesDto.QualityReportResponse> {
+        val result = stationUseCase.getStationTimesQualityReport(request.toCommand())
+        return CommonResponse.success(result)
+    }
+
     @GetMapping("/v2/stations/times/last-train-risk")
     fun getLastTrainRisk(request: GetStationTimesDto.LastTrainRiskRequest): CommonResponse<GetStationTimesDto.LastTrainRiskResponse> {
         val result = stationUseCase.getLastTrainRisk(request.toCommand())

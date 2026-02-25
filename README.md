@@ -112,6 +112,20 @@
 ./gradlew :application:bootRun --args='--spring.profiles.active=local --server.port=18080'
 ```
 
+### 로컬 인프라 기동 (MySQL + Redis)
+
+운영 유사 환경 점검이 필요할 때 아래 compose를 사용합니다.
+
+```bash
+docker compose -f docker-compose.local-infra.yml up -d
+```
+
+준비 상태 체크:
+
+```bash
+curl http://localhost:8080/health-check/readiness
+```
+
 
 
 ## ERD 

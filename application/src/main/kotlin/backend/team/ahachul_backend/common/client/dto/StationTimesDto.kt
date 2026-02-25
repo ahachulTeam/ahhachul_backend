@@ -10,6 +10,7 @@ class StationTimesDto {
         const val DEFAULT_START_INDEX = 1
         const val DEFAULT_END_INDEX = 300
         const val SUCCESS_CODE = "INFO-000"
+        const val NO_DATA_CODE = "INFO-200"
     }
 
     data class Request(
@@ -46,7 +47,11 @@ class StationTimesDto {
         @JsonProperty("row") val rows: List<StationTimeRow>,
     ) {
         fun isFail(): Boolean {
-            return totalCount == 0 || SUCCESS_CODE != result.code || rows.isEmpty()
+            return result.code != SUCCESS_CODE && result.code != NO_DATA_CODE
+        }
+
+        fun isNoData(): Boolean {
+            return result.code == NO_DATA_CODE || rows.isEmpty() || totalCount == 0
         }
     }
     

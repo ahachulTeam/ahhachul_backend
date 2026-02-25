@@ -3,6 +3,7 @@ package backend.team.ahachul_backend.api.station.adapter.`in`.dto
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationLastTrainRiskCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationQuickExitCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesFullCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesQualityReportCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
 import backend.team.ahachul_backend.api.train.domain.model.TrainType
@@ -14,14 +15,21 @@ class GetStationTimesDto {
         val stationId: Long,
         val subwayLineId: Long,
         val upDownType: UpDownType,
-        val stationTimeWeekType: StationTimeWeekType,
+        val stationTimeWeekType: StationTimeWeekType? = null,
+        val weekTag: Int? = null,
     ) {
+        private fun resolveStationTimeWeekType(): StationTimeWeekType {
+            return stationTimeWeekType
+                ?: StationTimeWeekType.fromPublicCodeOrNull(weekTag)
+                ?: StationTimeWeekType.WEEKDAY
+        }
+
         fun toCommand(): GetStationTimesCommand {
             return GetStationTimesCommand(
                 stationId = stationId,
                 subwayLineId = subwayLineId,
                 upDownType = upDownType,
-                stationTimeWeekType = stationTimeWeekType,
+                stationTimeWeekType = resolveStationTimeWeekType(),
             )
         }
     }
@@ -84,6 +92,7 @@ class GetStationTimesDto {
     data class SummaryResponse(
         val stationTimeWeekType: StationTimeWeekType,
         val summaries: List<UpDownSummary>,
+        val meta: SummaryMeta,
     )
 
     data class UpDownSummary(
@@ -92,6 +101,54 @@ class GetStationTimesDto {
         val lastDepartureTime: String?,
         val firstDestinationStationName: String?,
         val lastDestinationStationName: String?,
+    )
+
+    data class SummaryMeta(
+        val generatedAt: String,
+        val availabilityStatus: StationSummaryAvailabilityStatus,
+        val coveragePercent: Int,
+        val guidanceMessage: String,
+        val sourceDetails: List<SummarySourceDetail>,
+    )
+
+    data class SummarySourceDetail(
+        val upDownType: UpDownType,
+        val dataSource: StationSummaryDataSource,
+        val stationTimesCount: Int,
+        val fallbackReasonCode: String?,
+    )
+
+    data class QualityReportRequest(
+        val stationTimeWeekType: StationTimeWeekType = StationTimeWeekType.WEEKDAY,
+        val samplePerLine: Int = 10,
+    ) {
+        fun toCommand(): GetStationTimesQualityReportCommand {
+            return GetStationTimesQualityReportCommand(
+                stationTimeWeekType = stationTimeWeekType,
+                samplePerLine = samplePerLine.coerceIn(1, 50),
+            )
+        }
+    }
+
+    data class QualityReportResponse(
+        val generatedAt: String,
+        val stationTimeWeekType: StationTimeWeekType,
+        val totalLineCount: Int,
+        val totalSampledStations: Int,
+        val totalNoDataStations: Int,
+        val overallNoDataRatioPercent: Int,
+        val lines: List<LineQualityReport>,
+    )
+
+    data class LineQualityReport(
+        val subwayLineId: Long,
+        val subwayLineName: String,
+        val sampledStations: Int,
+        val noDataStations: Int,
+        val noDataRatioPercent: Int,
+        val fallbackStations: Int,
+        val missingStationCodeStations: Int,
+        val qualityLevel: StationTimeQualityLevel,
     )
 
     data class LastTrainRiskRequest(
@@ -159,5 +216,17 @@ class GetStationTimesDto {
 
     enum class QuickExitConfidenceLevel {
         HIGH, MEDIUM, LOW
+    }
+
+    enum class StationSummaryAvailabilityStatus {
+        AVAILABLE, PARTIAL, EMPTY
+    }
+
+    enum class StationSummaryDataSource {
+        CACHE, API, FALLBACK_EMPTY
+    }
+
+    enum class StationTimeQualityLevel {
+        GOOD, WARN, CRITICAL
     }
 }

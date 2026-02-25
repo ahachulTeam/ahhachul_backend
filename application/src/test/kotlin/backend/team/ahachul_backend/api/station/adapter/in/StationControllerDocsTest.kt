@@ -72,7 +72,8 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         parameterWithName("stationId").description("정류장 ID"),
                         parameterWithName("subwayLineId").description("지하철 노선 ID"),
                         parameterWithName("upDownType").description("상행(UP), 하행(DOWN)"),
-                        parameterWithName("stationTimeWeekType").description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)\n")
+                        parameterWithName("stationTimeWeekType").optional().description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)"),
+                        parameterWithName("weekTag").optional().description("레거시 요일 코드(1=평일, 2=토요일, 3=공휴일)")
                     ),
                     PayloadDocumentation.responseFields(
                         *commonResponseFields(),
@@ -106,6 +107,26 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                     firstDestinationStationName = "수서",
                     lastDestinationStationName = "구파발",
                 )
+            ),
+            meta = GetStationTimesDto.SummaryMeta(
+                generatedAt = "2026-02-25T12:10:00+09:00",
+                availabilityStatus = GetStationTimesDto.StationSummaryAvailabilityStatus.AVAILABLE,
+                coveragePercent = 100,
+                guidanceMessage = "첫차/막차 정보를 정상적으로 제공 중입니다.",
+                sourceDetails = listOf(
+                    GetStationTimesDto.SummarySourceDetail(
+                        upDownType = UpDownType.UP,
+                        dataSource = GetStationTimesDto.StationSummaryDataSource.API,
+                        stationTimesCount = 120,
+                        fallbackReasonCode = null,
+                    ),
+                    GetStationTimesDto.SummarySourceDetail(
+                        upDownType = UpDownType.DOWN,
+                        dataSource = GetStationTimesDto.StationSummaryDataSource.CACHE,
+                        stationTimesCount = 118,
+                        fallbackReasonCode = null,
+                    ),
+                ),
             ),
         )
 
@@ -141,6 +162,88 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.summaries[].lastDepartureTime").type(JsonFieldType.STRING).optional().description("막차 출발시간 - hh:mm:ss"),
                         fieldWithPath("result.summaries[].firstDestinationStationName").type(JsonFieldType.STRING).optional().description("첫차 종착역명"),
                         fieldWithPath("result.summaries[].lastDestinationStationName").type(JsonFieldType.STRING).optional().description("막차 종착역명"),
+                        fieldWithPath("result.meta.generatedAt").type(JsonFieldType.STRING).description("요약 생성 시각"),
+                        fieldWithPath("result.meta.availabilityStatus").type(JsonFieldType.STRING).description("요약 가용성 상태(AVAILABLE/PARTIAL/EMPTY)"),
+                        fieldWithPath("result.meta.coveragePercent").type(JsonFieldType.NUMBER).description("방향별 커버리지 비율(%)"),
+                        fieldWithPath("result.meta.guidanceMessage").type(JsonFieldType.STRING).description("사용자 안내 문구"),
+                        fieldWithPath("result.meta.sourceDetails[].upDownType").type(JsonFieldType.STRING).description("상행/하행"),
+                        fieldWithPath("result.meta.sourceDetails[].dataSource").type(JsonFieldType.STRING).description("데이터 소스(CACHE/API/FALLBACK_EMPTY)"),
+                        fieldWithPath("result.meta.sourceDetails[].stationTimesCount").type(JsonFieldType.NUMBER).description("해당 방향 시간표 개수"),
+                        fieldWithPath("result.meta.sourceDetails[].fallbackReasonCode").type(JsonFieldType.STRING).optional().description("fallback 발생 코드"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun getStationTimesQualityReport() {
+        val response = GetStationTimesDto.QualityReportResponse(
+            generatedAt = "2026-02-25T12:15:00+09:00",
+            stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+            totalLineCount = 2,
+            totalSampledStations = 20,
+            totalNoDataStations = 7,
+            overallNoDataRatioPercent = 35,
+            lines = listOf(
+                GetStationTimesDto.LineQualityReport(
+                    subwayLineId = 3,
+                    subwayLineName = "3호선",
+                    sampledStations = 10,
+                    noDataStations = 1,
+                    noDataRatioPercent = 10,
+                    fallbackStations = 0,
+                    missingStationCodeStations = 0,
+                    qualityLevel = GetStationTimesDto.StationTimeQualityLevel.GOOD,
+                ),
+                GetStationTimesDto.LineQualityReport(
+                    subwayLineId = 18,
+                    subwayLineName = "신분당선",
+                    sampledStations = 10,
+                    noDataStations = 6,
+                    noDataRatioPercent = 60,
+                    fallbackStations = 2,
+                    missingStationCodeStations = 1,
+                    qualityLevel = GetStationTimesDto.StationTimeQualityLevel.WARN,
+                ),
+            ),
+        )
+
+        given(stationUseCase.getStationTimesQualityReport(any()))
+            .willReturn(response)
+
+        val result = mockMvc.perform(
+            get("/v2/stations/times/quality-report")
+                .queryParam("stationTimeWeekType", StationTimeWeekType.WEEKDAY.name)
+                .queryParam("samplePerLine", "10")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-station-times-quality-report",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("stationTimeWeekType").optional().description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)"),
+                        parameterWithName("samplePerLine").optional().description("노선별 샘플링 역 개수(1~50)")
+                    ),
+                    PayloadDocumentation.responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.generatedAt").type(JsonFieldType.STRING).description("리포트 생성 시각"),
+                        fieldWithPath("result.stationTimeWeekType").type(JsonFieldType.STRING).description("요일 구분"),
+                        fieldWithPath("result.totalLineCount").type(JsonFieldType.NUMBER).description("리포트 대상 노선 수"),
+                        fieldWithPath("result.totalSampledStations").type(JsonFieldType.NUMBER).description("전체 샘플링 역 수"),
+                        fieldWithPath("result.totalNoDataStations").type(JsonFieldType.NUMBER).description("전체 no-data 역 수"),
+                        fieldWithPath("result.overallNoDataRatioPercent").type(JsonFieldType.NUMBER).description("전체 no-data 비율(%)"),
+                        fieldWithPath("result.lines[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 ID"),
+                        fieldWithPath("result.lines[].subwayLineName").type(JsonFieldType.STRING).description("노선명"),
+                        fieldWithPath("result.lines[].sampledStations").type(JsonFieldType.NUMBER).description("샘플링 역 수"),
+                        fieldWithPath("result.lines[].noDataStations").type(JsonFieldType.NUMBER).description("no-data 역 수"),
+                        fieldWithPath("result.lines[].noDataRatioPercent").type(JsonFieldType.NUMBER).description("no-data 비율(%)"),
+                        fieldWithPath("result.lines[].fallbackStations").type(JsonFieldType.NUMBER).description("fallback 발생 역 수"),
+                        fieldWithPath("result.lines[].missingStationCodeStations").type(JsonFieldType.NUMBER).description("역 코드 누락 역 수"),
+                        fieldWithPath("result.lines[].qualityLevel").type(JsonFieldType.STRING).description("품질 등급(GOOD/WARN/CRITICAL)")
                     )
                 )
             )

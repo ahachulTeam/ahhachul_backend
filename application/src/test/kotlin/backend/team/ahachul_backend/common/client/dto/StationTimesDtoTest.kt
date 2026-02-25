@@ -81,8 +81,8 @@ class StationTimesDtoTest {
 
     @ParameterizedTest
     @MethodSource("failCase")
-    @DisplayName("역 시간표 API 실패 여부를 체크한다.")
-    fun isFail(failResponse: String) {
+    @DisplayName("역 시간표 API가 비정상 코드면 실패로 판단한다.")
+    fun isFailWhenInvalidCode(failResponse: String) {
         //given
         val response = objectMapper.readValue(failResponse, StationTimesDto.Response::class.java)
 
@@ -93,42 +93,25 @@ class StationTimesDtoTest {
         assertThat(isFail).isTrue()
     }
 
+    @ParameterizedTest
+    @MethodSource("noDataCase")
+    @DisplayName("역 시간표 API가 INFO-200 또는 빈 row이면 no-data로 처리한다.")
+    fun isNoData(noDataResponse: String) {
+        //given
+        val response = objectMapper.readValue(noDataResponse, StationTimesDto.Response::class.java)
+
+        //when
+        val isFail = response.isFail()
+        val isNoData = response.stationTimesTable.isNoData()
+
+        //then
+        assertThat(isFail).isFalse()
+        assertThat(isNoData).isTrue()
+    }
+
     companion object {
         @JvmStatic
         fun failCase(): Stream<String> = Stream.of(
-            // list_total_count: 0
-            """ 
-            {
-              "SearchSTNTimeTableByIDService": {
-                "list_total_count": 0,
-                "RESULT": {
-                  "CODE": "INFO-000",
-                  "MESSAGE": "정상 처리되었습니다"
-                },
-                "row": [
-                  {
-                    "LINE_NUM": "03호선", 
-                    "FR_CODE": "349", 
-                    "STATION_CD": "0339", 
-                    "STATION_NM": "수서", 
-                    "TRAIN_NO": "3018", 
-                    "ARRIVETIME": "00:00:00", 
-                    "LEFTTIME": "05:22:00", 
-                    "ORIGINSTATION": "0339", 
-                    "DESTSTATION": "0310", 
-                    "SUBWAYSNAME": "수서", 
-                    "SUBWAYENAME": "구파발", 
-                    "WEEK_TAG": "1", 
-                    "INOUT_TAG": "1",
-                    "FL_FLAG": "", 
-                    "DESTSTATION2": "", 
-                    "EXPRESS_YN": "G", 
-                    "BRANCH_LINE": "" 
-                  }
-                ]
-              }
-            }
-            """,
             // RESULT.CODE: INFO-001 성공 코드 아닐 시
             """
             {
@@ -159,6 +142,23 @@ class StationTimesDtoTest {
                     "BRANCH_LINE": "" 
                   }
                 ]
+              }
+            }
+            """
+        )
+
+        @JvmStatic
+        fun noDataCase(): Stream<String> = Stream.of(
+            // INFO-200 은 no-data 처리
+            """
+            {
+              "SearchSTNTimeTableByIDService": {
+                "list_total_count": 0,
+                "RESULT": {
+                  "CODE": "INFO-200",
+                  "MESSAGE": "해당하는 데이터가 없습니다."
+                },
+                "row": []
               }
             }
             """,

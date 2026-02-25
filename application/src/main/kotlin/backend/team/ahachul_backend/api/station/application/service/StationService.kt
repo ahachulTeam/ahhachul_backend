@@ -11,6 +11,7 @@ import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetSta
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationQuickExitCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesQualityReportCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.SearchSubwayRouteCommand
 import backend.team.ahachul_backend.api.train.domain.model.UpDownType
 import backend.team.ahachul_backend.common.client.SeoulTrainClient
@@ -71,6 +72,13 @@ class StationService(
         val stationNamesById: Map<Long, String>,
     )
 
+    private data class SummaryStationTimesLoadResult(
+        val upDownType: UpDownType,
+        val stationTimes: List<GetStationTimesDto.StationTimes>,
+        val dataSource: GetStationTimesDto.StationSummaryDataSource,
+        val fallbackReasonCode: String?,
+    )
+
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesApiGet")
     override fun getStationTimes(command: GetStationTimesCommand): GetStationTimesDto.Response {
         return GetStationTimesDto.Response(loadStationTimes(command))
@@ -110,8 +118,8 @@ class StationService(
 
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesSummaryApiGet")
     override fun getStationTimesSummary(command: GetStationTimesSummaryCommand): GetStationTimesDto.SummaryResponse {
-        val summaries = UpDownType.values().map { upDownType ->
-            val stationTimes = loadStationTimesForSummary(
+        val loadResults = UpDownType.values().map { upDownType ->
+            loadStationTimesForSummary(
                 GetStationTimesCommand(
                     stationId = command.stationId,
                     subwayLineId = command.subwayLineId,
@@ -119,12 +127,15 @@ class StationService(
                     stationTimeWeekType = command.stationTimeWeekType,
                 )
             )
-            val sortedByDepartureTime = stationTimes.sortedBy { it.departureTime }
+        }
+
+        val summaries = loadResults.map { result ->
+            val sortedByDepartureTime = result.stationTimes.sortedBy { it.departureTime }
             val firstTrain = sortedByDepartureTime.firstOrNull()
             val lastTrain = sortedByDepartureTime.lastOrNull()
 
             GetStationTimesDto.UpDownSummary(
-                upDownType = upDownType,
+                upDownType = result.upDownType,
                 firstDepartureTime = firstTrain?.departureTime,
                 lastDepartureTime = lastTrain?.departureTime,
                 firstDestinationStationName = firstTrain?.arrivalStationName,
@@ -135,21 +146,210 @@ class StationService(
         return GetStationTimesDto.SummaryResponse(
             stationTimeWeekType = command.stationTimeWeekType,
             summaries = summaries,
+            meta = buildSummaryMeta(loadResults, summaries),
         )
     }
 
-    private fun loadStationTimesForSummary(command: GetStationTimesCommand): List<GetStationTimesDto.StationTimes> {
+    override fun getStationTimesQualityReport(command: GetStationTimesQualityReportCommand): GetStationTimesDto.QualityReportResponse {
+        val lineReports = subwayLineStationReader.findAll()
+            .groupBy { it.subwayLine.id to it.subwayLine.name }
+            .toSortedMap(compareBy({ it.first }, { it.second }))
+            .map { (lineInfo, stations) ->
+                val sampledStations = stations
+                    .distinctBy { it.station.id }
+                    .sortedBy { it.station.id }
+                    .take(command.samplePerLine)
+
+                var noDataStations = 0
+                var fallbackStations = 0
+                var missingStationCodeStations = 0
+
+                sampledStations.forEach { station ->
+                    if (station.stationCode.isNullOrBlank()) {
+                        noDataStations += 1
+                        missingStationCodeStations += 1
+                        fallbackStations += 1
+                        return@forEach
+                    }
+
+                    val upResult = loadStationTimesForSummary(
+                        GetStationTimesCommand(
+                            stationId = station.station.id,
+                            subwayLineId = station.subwayLine.id,
+                            upDownType = UpDownType.UP,
+                            stationTimeWeekType = command.stationTimeWeekType,
+                        )
+                    )
+                    val downResult = loadStationTimesForSummary(
+                        GetStationTimesCommand(
+                            stationId = station.station.id,
+                            subwayLineId = station.subwayLine.id,
+                            upDownType = UpDownType.DOWN,
+                            stationTimeWeekType = command.stationTimeWeekType,
+                        )
+                    )
+
+                    val isNoDataStation = upResult.stationTimes.isEmpty() && downResult.stationTimes.isEmpty()
+                    if (isNoDataStation) {
+                        noDataStations += 1
+                    }
+
+                    if (upResult.dataSource == GetStationTimesDto.StationSummaryDataSource.FALLBACK_EMPTY ||
+                        downResult.dataSource == GetStationTimesDto.StationSummaryDataSource.FALLBACK_EMPTY
+                    ) {
+                        fallbackStations += 1
+                    }
+                }
+
+                val sampledCount = sampledStations.size
+                val noDataRatioPercent = calculateRatioPercent(noDataStations, sampledCount)
+
+                GetStationTimesDto.LineQualityReport(
+                    subwayLineId = lineInfo.first,
+                    subwayLineName = lineInfo.second,
+                    sampledStations = sampledCount,
+                    noDataStations = noDataStations,
+                    noDataRatioPercent = noDataRatioPercent,
+                    fallbackStations = fallbackStations,
+                    missingStationCodeStations = missingStationCodeStations,
+                    qualityLevel = resolveQualityLevel(noDataRatioPercent),
+                )
+            }
+
+        val totalSampledStations = lineReports.sumOf { it.sampledStations }
+        val totalNoDataStations = lineReports.sumOf { it.noDataStations }
+
+        return GetStationTimesDto.QualityReportResponse(
+            generatedAt = OffsetDateTime.now().toString(),
+            stationTimeWeekType = command.stationTimeWeekType,
+            totalLineCount = lineReports.size,
+            totalSampledStations = totalSampledStations,
+            totalNoDataStations = totalNoDataStations,
+            overallNoDataRatioPercent = calculateRatioPercent(totalNoDataStations, totalSampledStations),
+            lines = lineReports,
+        )
+    }
+
+    private fun loadStationTimesForSummary(command: GetStationTimesCommand): SummaryStationTimesLoadResult {
         return try {
-            loadStationTimes(command)
+            val subwayLineStation = subwayLineStationReader.findBySubwayLineIdAndStationId(command.subwayLineId, command.stationId)
+            val stationCode = subwayLineStation.stationCode ?: throw BusinessException(ResponseCode.NOT_EXIST_PUBLIC_STATION_CODE)
+
+            val cacheCommand = command.toCacheCommand(stationCode)
+            val cached = stationTimesCacheUtils.getStationTimesByCache(cacheCommand)
+            if (cached != null) {
+                return SummaryStationTimesLoadResult(
+                    upDownType = command.upDownType,
+                    stationTimes = cached,
+                    dataSource = GetStationTimesDto.StationSummaryDataSource.CACHE,
+                    fallbackReasonCode = null,
+                )
+            }
+
+            val response = seoulTrainClient.getStationTimesByApi(command.toRequest(stationCode))
+            if (response.isFail()) {
+                throw BusinessException(ResponseCode.INVALID_STATION_TIMES_API_RESPONSE)
+            }
+
+            val stationTimes = response.toStationTimes()
+            stationTimesCacheUtils.setStationTimesCache(cacheCommand, stationTimes)
+            SummaryStationTimesLoadResult(
+                upDownType = command.upDownType,
+                stationTimes = stationTimes,
+                dataSource = GetStationTimesDto.StationSummaryDataSource.API,
+                fallbackReasonCode = null,
+            )
         } catch (e: BusinessException) {
             if (e.code == ResponseCode.FAILED_STATION_TIMES_API ||
-                e.code == ResponseCode.INVALID_STATION_TIMES_API_RESPONSE
+                e.code == ResponseCode.INVALID_STATION_TIMES_API_RESPONSE ||
+                e.code == ResponseCode.NOT_EXIST_PUBLIC_STATION_CODE
             ) {
                 logger.error("station times summary fallback to empty list", e)
-                emptyList()
+                SummaryStationTimesLoadResult(
+                    upDownType = command.upDownType,
+                    stationTimes = emptyList(),
+                    dataSource = GetStationTimesDto.StationSummaryDataSource.FALLBACK_EMPTY,
+                    fallbackReasonCode = e.code.code,
+                )
             } else {
                 throw e
             }
+        }
+    }
+
+    private fun buildSummaryMeta(
+        loadResults: List<SummaryStationTimesLoadResult>,
+        summaries: List<GetStationTimesDto.UpDownSummary>,
+    ): GetStationTimesDto.SummaryMeta {
+        val availabilityStatus = resolveSummaryAvailabilityStatus(summaries)
+        return GetStationTimesDto.SummaryMeta(
+            generatedAt = OffsetDateTime.now().toString(),
+            availabilityStatus = availabilityStatus,
+            coveragePercent = calculateCoveragePercent(summaries),
+            guidanceMessage = resolveSummaryGuidanceMessage(availabilityStatus, loadResults),
+            sourceDetails = loadResults.map {
+                GetStationTimesDto.SummarySourceDetail(
+                    upDownType = it.upDownType,
+                    dataSource = it.dataSource,
+                    stationTimesCount = it.stationTimes.size,
+                    fallbackReasonCode = it.fallbackReasonCode,
+                )
+            },
+        )
+    }
+
+    private fun resolveSummaryAvailabilityStatus(
+        summaries: List<GetStationTimesDto.UpDownSummary>,
+    ): GetStationTimesDto.StationSummaryAvailabilityStatus {
+        val availableDirectionCount = summaries.count {
+            !it.firstDepartureTime.isNullOrBlank() || !it.lastDepartureTime.isNullOrBlank()
+        }
+        return when {
+            availableDirectionCount >= UpDownType.values().size -> GetStationTimesDto.StationSummaryAvailabilityStatus.AVAILABLE
+            availableDirectionCount == 0 -> GetStationTimesDto.StationSummaryAvailabilityStatus.EMPTY
+            else -> GetStationTimesDto.StationSummaryAvailabilityStatus.PARTIAL
+        }
+    }
+
+    private fun calculateCoveragePercent(
+        summaries: List<GetStationTimesDto.UpDownSummary>,
+    ): Int {
+        val totalDirections = UpDownType.values().size
+        val availableDirections = summaries.count {
+            !it.firstDepartureTime.isNullOrBlank() || !it.lastDepartureTime.isNullOrBlank()
+        }
+        return calculateRatioPercent(availableDirections, totalDirections)
+    }
+
+    private fun resolveSummaryGuidanceMessage(
+        availabilityStatus: GetStationTimesDto.StationSummaryAvailabilityStatus,
+        loadResults: List<SummaryStationTimesLoadResult>,
+    ): String {
+        return when (availabilityStatus) {
+            GetStationTimesDto.StationSummaryAvailabilityStatus.AVAILABLE -> "첫차/막차 정보를 정상적으로 제공 중입니다."
+            GetStationTimesDto.StationSummaryAvailabilityStatus.PARTIAL -> "일부 방향의 시간표 정보만 제공됩니다."
+            GetStationTimesDto.StationSummaryAvailabilityStatus.EMPTY -> {
+                if (loadResults.any { it.dataSource == GetStationTimesDto.StationSummaryDataSource.FALLBACK_EMPTY }) {
+                    "시간표 연동이 지연되어 정보가 비어 있습니다."
+                } else {
+                    "해당 역/노선의 시간표 데이터가 제공되지 않습니다."
+                }
+            }
+        }
+    }
+
+    private fun calculateRatioPercent(numerator: Int, denominator: Int): Int {
+        if (denominator <= 0) {
+            return 0
+        }
+        return ((numerator * 100.0) / denominator).toInt()
+    }
+
+    private fun resolveQualityLevel(noDataRatioPercent: Int): GetStationTimesDto.StationTimeQualityLevel {
+        return when {
+            noDataRatioPercent <= 20 -> GetStationTimesDto.StationTimeQualityLevel.GOOD
+            noDataRatioPercent <= 60 -> GetStationTimesDto.StationTimeQualityLevel.WARN
+            else -> GetStationTimesDto.StationTimeQualityLevel.CRITICAL
         }
     }
 

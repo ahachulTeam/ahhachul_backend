@@ -2,18 +2,13 @@ package backend.team.ahachul_backend.common.client.impl
 
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.StationTimeWeekType
 import backend.team.ahachul_backend.api.train.domain.model.UpDownType
-import backend.team.ahachul_backend.common.client.SeoulTrainClient
 import backend.team.ahachul_backend.common.client.dto.StationTimesDto
-import backend.team.ahachul_backend.common.exception.BusinessException
 import backend.team.ahachul_backend.common.properties.PublicDataProperties
-import backend.team.ahachul_backend.common.response.ResponseCode
-import backend.team.ahachul_backend.config.controller.CommonServiceTestConfig
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.test.web.client.MockRestServiceServer
@@ -22,22 +17,36 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestTemplate
 
-class SeoulTrainClientImplTest(
-    @Autowired val seoulTrainClient: SeoulTrainClient,
-    @Autowired val restTemplate: RestTemplate,
-    @Autowired val publicDataProperties: PublicDataProperties,
-) : CommonServiceTestConfig() {
+class SeoulTrainClientImplTest {
 
+    private lateinit var restTemplate: RestTemplate
     private lateinit var mockServer: MockRestServiceServer
+    private lateinit var publicDataProperties: PublicDataProperties
+    private lateinit var seoulTrainClient: SeoulTrainClientImpl
 
     @BeforeEach
     fun setUp() {
+        restTemplate = RestTemplate()
         mockServer = MockRestServiceServer.createServer(restTemplate)
+        publicDataProperties = PublicDataProperties(
+            realTimeStationArrivalPrefixUri = "http://swopenAPI.seoul.go.kr/api/subway",
+            realTimeStationArrivalSuffixUri = "/json/realtimeStationArrival",
+            realTimeStationArrivalToken = "test-token",
+            realTimeCongestionUrl = "https://apis.openapi.sk.com/puzzle/subway/congestion/rltm/trains",
+            realTimeCongestionAppKey = "test-app-key",
+            stationTimesPrefixUri = "http://openapi.seoul.go.kr:8088",
+            stationTimesSuffixUri = "/json/SearchSTNTimeTableByIDService",
+        )
+        seoulTrainClient = SeoulTrainClientImpl(
+            restTemplate = restTemplate,
+            publicDataProperties = publicDataProperties,
+            objectMapper = ObjectMapper(),
+        )
     }
 
     @Test
-    @DisplayName("역 시간표 API 조회 시 실패")
-    fun getStationTimesByApiWithFail() {
+    @DisplayName("역 시간표 API가 RESULT 단독 응답(INFO-200)을 반환하면 빈 시간표로 처리한다")
+    fun getStationTimesByApiWithNoData() {
         //given
         val request = StationTimesDto.Request(
             stationCd = "0339",
@@ -63,10 +72,13 @@ class SeoulTrainClientImplTest(
                 withSuccess(failResponse, MediaType.APPLICATION_JSON)
             )
 
-        //when & then
-        assertThatThrownBy { seoulTrainClient.getStationTimesByApi(request) }
-            .isExactlyInstanceOf(BusinessException::class.java)
-            .hasMessage(ResponseCode.FAILED_STATION_TIMES_API.message)
+        //when
+        val response = seoulTrainClient.getStationTimesByApi(request)
+
+        // then
+        assertThat(response.isFail()).isFalse()
+        assertThat(response.stationTimesTable.result.code).isEqualTo("INFO-200")
+        assertThat(response.stationTimesTable.rows).isEmpty()
     }
 
     @Test
@@ -151,5 +163,4 @@ class SeoulTrainClientImplTest(
         assertThat(response.stationTimesTable.rows.size).isEqualTo(2)
         assertThat(response.stationTimesTable.rows[0].stationNm).isEqualTo("수서")
     }
-
 }

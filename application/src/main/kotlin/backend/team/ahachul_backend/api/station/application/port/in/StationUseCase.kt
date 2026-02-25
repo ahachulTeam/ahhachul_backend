@@ -7,6 +7,7 @@ import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetSta
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationQuickExitCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesQualityReportCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.SearchSubwayRouteCommand
 
 interface StationUseCase {
@@ -16,6 +17,8 @@ interface StationUseCase {
     fun getStationTimesFull(command: GetStationTimesFullCommand): GetStationTimesDto.FullResponse
 
     fun getStationTimesSummary(command: GetStationTimesSummaryCommand): GetStationTimesDto.SummaryResponse
+
+    fun getStationTimesQualityReport(command: GetStationTimesQualityReportCommand): GetStationTimesDto.QualityReportResponse
 
     fun getLastTrainRisk(command: GetStationLastTrainRiskCommand): GetStationTimesDto.LastTrainRiskResponse
 
