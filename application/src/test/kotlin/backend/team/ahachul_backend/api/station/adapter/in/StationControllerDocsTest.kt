@@ -1,6 +1,8 @@
 package backend.team.ahachul_backend.api.station.adapter.`in`
 
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimesDto
+import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteDto
+import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteQualityV3Dto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.StationTimeWeekType
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
 import backend.team.ahachul_backend.api.train.domain.model.TrainType
@@ -354,6 +356,124 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.recommendations[].directionHint").type(JsonFieldType.STRING).description("동선 힌트"),
                         fieldWithPath("result.recommendations[].walkingBenefitMinutes").type(JsonFieldType.NUMBER).description("예상 단축 시간(분)"),
                         fieldWithPath("result.recommendations[].confidenceLevel").type(JsonFieldType.STRING).description("신뢰도(HIGH/MEDIUM/LOW)"),
+                    )
+                )
+            )
+    }
+
+    @Test
+    fun searchSubwayRoutesV3() {
+        val response = SearchSubwayRouteQualityV3Dto.Response(
+            modelVersion = "ROUTE_QUALITY_V3",
+            generatedAt = "2026-02-25T23:55:00+09:00",
+            sourceStationId = 622L,
+            destinationStationId = 101L,
+            strategy = SearchSubwayRouteDto.RouteSearchStrategy.BALANCED,
+            walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.LESS_STAIRS,
+            stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+            routes = listOf(
+                SearchSubwayRouteQualityV3Dto.Route(
+                    rank = 1,
+                    nodes = listOf(
+                        SearchSubwayRouteQualityV3Dto.Node(
+                            stationId = 622,
+                            stationName = "교대",
+                            order = 0,
+                            isTransfer = false,
+                        ),
+                        SearchSubwayRouteQualityV3Dto.Node(
+                            stationId = 101,
+                            stationName = "강남",
+                            order = 1,
+                            isTransfer = false,
+                        )
+                    ),
+                    edges = listOf(
+                        SearchSubwayRouteQualityV3Dto.Edge(
+                            fromStationId = 622,
+                            toStationId = 101,
+                            subwayLineId = 2,
+                            subwayLineName = "2호선",
+                        )
+                    ),
+                    summary = SearchSubwayRouteQualityV3Dto.Summary(
+                        totalStops = 1,
+                        transferCount = 0,
+                        estimatedMinutes = 4,
+                    ),
+                    quality = SearchSubwayRouteQualityV3Dto.Quality(
+                        totalScore = 88,
+                        transferRiskScore = 100,
+                        walkingScore = 92,
+                        lastTrainSafetyScore = 80,
+                        delayResilienceScore = 76,
+                        delayProbabilityPercent = 24,
+                        confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.HIGH,
+                        badges = listOf(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.BEST_RECOMMENDED),
+                        reasons = listOf("환승 0회로 비교적 안정적인 환승 동선입니다."),
+                    ),
+                )
+            ),
+        )
+
+        given(stationUseCase.searchSubwayRoutesV3(any()))
+            .willReturn(response)
+
+        val result = mockMvc.perform(
+            get("/v3/subway/routes/search")
+                .queryParam("sourceStationId", "622")
+                .queryParam("destinationStationId", "101")
+                .queryParam("strategy", SearchSubwayRouteDto.RouteSearchStrategy.BALANCED.name)
+                .queryParam("alternatives", "3")
+                .queryParam("walkingPreference", SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.LESS_STAIRS.name)
+                .queryParam("stationTimeWeekType", StationTimeWeekType.WEEKDAY.name)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "search-subway-routes-v3",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("sourceStationId").description("출발역 ID"),
+                        parameterWithName("destinationStationId").description("도착역 ID"),
+                        parameterWithName("strategy").optional().description("경로 탐색 전략(BALANCED/MIN_TRANSFER/MIN_STOP)"),
+                        parameterWithName("alternatives").optional().description("대체 경로 수(1~4)"),
+                        parameterWithName("walkingPreference").optional().description("보행 선호(FAST/LESS_STAIRS)"),
+                        parameterWithName("stationTimeWeekType").optional().description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)"),
+                    ),
+                    PayloadDocumentation.responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.modelVersion").type(JsonFieldType.STRING).description("경로 품질 모델 버전"),
+                        fieldWithPath("result.generatedAt").type(JsonFieldType.STRING).description("응답 생성 시각"),
+                        fieldWithPath("result.sourceStationId").type(JsonFieldType.NUMBER).description("출발역 ID"),
+                        fieldWithPath("result.destinationStationId").type(JsonFieldType.NUMBER).description("도착역 ID"),
+                        fieldWithPath("result.strategy").type(JsonFieldType.STRING).description("경로 탐색 전략"),
+                        fieldWithPath("result.walkingPreference").type(JsonFieldType.STRING).description("보행 선호"),
+                        fieldWithPath("result.stationTimeWeekType").type(JsonFieldType.STRING).description("요일 구분"),
+                        fieldWithPath("result.routes[].rank").type(JsonFieldType.NUMBER).description("추천 순위"),
+                        fieldWithPath("result.routes[].nodes[].stationId").type(JsonFieldType.NUMBER).description("역 ID"),
+                        fieldWithPath("result.routes[].nodes[].stationName").type(JsonFieldType.STRING).description("역 이름"),
+                        fieldWithPath("result.routes[].nodes[].order").type(JsonFieldType.NUMBER).description("경로 상 순서"),
+                        fieldWithPath("result.routes[].nodes[].isTransfer").type(JsonFieldType.BOOLEAN).description("환승 여부"),
+                        fieldWithPath("result.routes[].edges[].fromStationId").type(JsonFieldType.NUMBER).description("출발역 ID"),
+                        fieldWithPath("result.routes[].edges[].toStationId").type(JsonFieldType.NUMBER).description("도착역 ID"),
+                        fieldWithPath("result.routes[].edges[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 ID"),
+                        fieldWithPath("result.routes[].edges[].subwayLineName").type(JsonFieldType.STRING).description("노선명"),
+                        fieldWithPath("result.routes[].summary.totalStops").type(JsonFieldType.NUMBER).description("정차 수"),
+                        fieldWithPath("result.routes[].summary.transferCount").type(JsonFieldType.NUMBER).description("환승 수"),
+                        fieldWithPath("result.routes[].summary.estimatedMinutes").type(JsonFieldType.NUMBER).description("예상 소요 시간(분)"),
+                        fieldWithPath("result.routes[].quality.totalScore").type(JsonFieldType.NUMBER).description("종합 품질 점수(0~100)"),
+                        fieldWithPath("result.routes[].quality.transferRiskScore").type(JsonFieldType.NUMBER).description("환승 리스크 점수"),
+                        fieldWithPath("result.routes[].quality.walkingScore").type(JsonFieldType.NUMBER).description("보행 부담 점수"),
+                        fieldWithPath("result.routes[].quality.lastTrainSafetyScore").type(JsonFieldType.NUMBER).description("막차 안전도 점수"),
+                        fieldWithPath("result.routes[].quality.delayResilienceScore").type(JsonFieldType.NUMBER).description("지연 복원력 점수"),
+                        fieldWithPath("result.routes[].quality.delayProbabilityPercent").type(JsonFieldType.NUMBER).description("지연 확률(%)"),
+                        fieldWithPath("result.routes[].quality.confidenceLevel").type(JsonFieldType.STRING).description("품질 점수 신뢰도(HIGH/MEDIUM/LOW)"),
+                        fieldWithPath("result.routes[].quality.badges").type(JsonFieldType.ARRAY).description("리스크/추천 배지"),
+                        fieldWithPath("result.routes[].quality.reasons").type(JsonFieldType.ARRAY).description("추천 사유"),
                     )
                 )
             )

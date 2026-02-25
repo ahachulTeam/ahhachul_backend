@@ -2,6 +2,7 @@ package backend.team.ahachul_backend.api.station.adapter.`in`
 
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimesDto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteDto
+import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteQualityV3Dto
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
 import backend.team.ahachul_backend.common.response.CommonResponse
 import org.springframework.web.bind.annotation.GetMapping
@@ -51,6 +52,12 @@ class StationController(
     @GetMapping("/v2/subway/routes/search")
     fun searchSubwayRoutes(request: SearchSubwayRouteDto.Request): CommonResponse<SearchSubwayRouteDto.Response> {
         val result = stationUseCase.searchSubwayRoutes(request.toCommand())
+        return CommonResponse.success(result)
+    }
+
+    @GetMapping("/v3/subway/routes/search")
+    fun searchSubwayRoutesV3(request: SearchSubwayRouteQualityV3Dto.Request): CommonResponse<SearchSubwayRouteQualityV3Dto.Response> {
+        val result = stationUseCase.searchSubwayRoutesV3(request.toCommand())
         return CommonResponse.success(result)
     }
 }

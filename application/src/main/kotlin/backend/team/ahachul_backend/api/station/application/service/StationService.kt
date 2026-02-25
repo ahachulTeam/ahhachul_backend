@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineSt
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimesDto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteDto
+import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteQualityV3Dto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.StationTimeWeekType
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesFullCommand
@@ -13,6 +14,7 @@ import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetSta
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesQualityReportCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.SearchSubwayRouteCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.SearchSubwayRouteQualityV3Command
 import backend.team.ahachul_backend.api.train.domain.model.UpDownType
 import backend.team.ahachul_backend.common.client.SeoulTrainClient
 import backend.team.ahachul_backend.common.config.CircuitBreakerConfig.Companion.CUSTOM_CIRCUIT_BREAKER
@@ -25,6 +27,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.springframework.data.redis.RedisConnectionFailureException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.PriorityQueue
 
@@ -83,6 +86,14 @@ class StationService(
         val stationTimes: List<GetStationTimesDto.StationTimes>,
         val dataSource: GetStationTimesDto.StationSummaryDataSource,
         val fallbackReasonCode: String?,
+    )
+
+    private data class LastTrainSafetyEvaluation(
+        val score: Int,
+        val confidenceLevel: SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel,
+        val reason: String,
+        val isRisk: Boolean,
+        val hasData: Boolean,
     )
 
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesApiGet")
@@ -788,6 +799,303 @@ class StationService(
             strategy = command.strategy,
             routes = routes,
         )
+    }
+
+    override fun searchSubwayRoutesV3(command: SearchSubwayRouteQualityV3Command): SearchSubwayRouteQualityV3Dto.Response {
+        val nowAt = OffsetDateTime.now()
+        val base = searchSubwayRoutes(
+            SearchSubwayRouteCommand(
+                sourceStationId = command.sourceStationId,
+                destinationStationId = command.destinationStationId,
+                strategy = command.strategy,
+                alternatives = command.alternatives,
+            )
+        )
+
+        val scoredRoutes = base.routes
+            .map { route ->
+                val quality = evaluateRouteQuality(route, command, nowAt)
+                SearchSubwayRouteQualityV3Dto.Route(
+                    rank = route.rank,
+                    nodes = route.nodes.map {
+                        SearchSubwayRouteQualityV3Dto.Node(
+                            stationId = it.stationId,
+                            stationName = it.stationName,
+                            order = it.order,
+                            isTransfer = it.isTransfer,
+                        )
+                    },
+                    edges = route.edges.map {
+                        SearchSubwayRouteQualityV3Dto.Edge(
+                            fromStationId = it.fromStationId,
+                            toStationId = it.toStationId,
+                            subwayLineId = it.subwayLineId,
+                            subwayLineName = it.subwayLineName,
+                        )
+                    },
+                    summary = SearchSubwayRouteQualityV3Dto.Summary(
+                        totalStops = route.summary.totalStops,
+                        transferCount = route.summary.transferCount,
+                        estimatedMinutes = route.summary.estimatedMinutes,
+                    ),
+                    quality = quality,
+                )
+            }
+            .sortedWith(
+                compareByDescending<SearchSubwayRouteQualityV3Dto.Route> { it.quality.totalScore }
+                    .thenBy { it.summary.estimatedMinutes }
+                    .thenBy { it.summary.transferCount }
+            )
+            .mapIndexed { index, route ->
+                val badges = if (index == 0) {
+                    (listOf(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.BEST_RECOMMENDED) + route.quality.badges)
+                        .distinct()
+                } else {
+                    route.quality.badges
+                }
+                route.copy(
+                    rank = index + 1,
+                    quality = route.quality.copy(badges = badges),
+                )
+            }
+
+        return SearchSubwayRouteQualityV3Dto.Response(
+            modelVersion = "ROUTE_QUALITY_V3",
+            generatedAt = nowAt.toString(),
+            sourceStationId = command.sourceStationId,
+            destinationStationId = command.destinationStationId,
+            strategy = command.strategy,
+            walkingPreference = command.walkingPreference,
+            stationTimeWeekType = command.stationTimeWeekType,
+            routes = scoredRoutes,
+        )
+    }
+
+    private fun evaluateRouteQuality(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+        nowAt: OffsetDateTime,
+    ): SearchSubwayRouteQualityV3Dto.Quality {
+        val transferRiskScore = (100 - route.summary.transferCount * 25).coerceIn(0, 100)
+        val walkingTransferPenalty = when (command.walkingPreference) {
+            SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.FAST -> 20
+            SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.LESS_STAIRS -> 30
+        }
+        val walkingStopPenalty = when (command.walkingPreference) {
+            SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.FAST -> 3
+            SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.LESS_STAIRS -> 2
+        }
+        val walkingScore = (
+            100 - route.summary.transferCount * walkingTransferPenalty - route.summary.totalStops * walkingStopPenalty
+            ).coerceIn(0, 100)
+
+        val lastTrainSafety = evaluateLastTrainSafety(route, command, nowAt)
+        val delayProbabilityPercent = estimateDelayProbabilityPercent(route, nowAt)
+        val delayResilienceScore = (100 - delayProbabilityPercent).coerceIn(0, 100)
+        val totalScore = (
+            transferRiskScore * 30 +
+                walkingScore * 20 +
+                lastTrainSafety.score * 25 +
+                delayResilienceScore * 25
+            ) / 100
+
+        val badges = mutableListOf<SearchSubwayRouteQualityV3Dto.RouteQualityBadge>()
+        val reasons = mutableListOf<String>()
+
+        if (route.summary.transferCount >= 3) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.TRANSFER_HEAVY)
+            reasons.add("환승 ${route.summary.transferCount}회로 이동 실패 리스크가 있습니다.")
+        } else {
+            reasons.add("환승 ${route.summary.transferCount}회로 비교적 안정적인 환승 동선입니다.")
+        }
+
+        if (walkingScore <= 45) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.WALKING_HEAVY)
+            reasons.add("보행/계단 부담이 큰 경로입니다.")
+        }
+
+        if (lastTrainSafety.isRisk) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.LAST_TRAIN_RISK)
+        }
+        reasons.add(lastTrainSafety.reason)
+
+        if (delayProbabilityPercent >= 45) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.DELAY_RISK)
+            reasons.add("지연 가능성 ${delayProbabilityPercent}%로 우회 경로 검토가 필요합니다.")
+        } else {
+            reasons.add("지연 가능성 ${delayProbabilityPercent}%로 상대적으로 안정적인 구간입니다.")
+        }
+
+        if (!lastTrainSafety.hasData) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.DATA_LIMITED)
+        }
+
+        return SearchSubwayRouteQualityV3Dto.Quality(
+            totalScore = totalScore.coerceIn(0, 100),
+            transferRiskScore = transferRiskScore,
+            walkingScore = walkingScore,
+            lastTrainSafetyScore = lastTrainSafety.score,
+            delayResilienceScore = delayResilienceScore,
+            delayProbabilityPercent = delayProbabilityPercent,
+            confidenceLevel = resolveConfidenceLevel(lastTrainSafety),
+            badges = badges.distinct(),
+            reasons = reasons,
+        )
+    }
+
+    private fun resolveConfidenceLevel(
+        lastTrainSafety: LastTrainSafetyEvaluation,
+    ): SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel {
+        return when {
+            !lastTrainSafety.hasData -> SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.LOW
+            lastTrainSafety.isRisk -> SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.MEDIUM
+            else -> SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.HIGH
+        }
+    }
+
+    private fun evaluateLastTrainSafety(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+        nowAt: OffsetDateTime,
+    ): LastTrainSafetyEvaluation {
+        val firstLineId = route.edges.firstOrNull()?.subwayLineId
+            ?: return LastTrainSafetyEvaluation(
+                score = 55,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.LOW,
+                reason = "단일 역 경로로 막차 안전도 산정 데이터가 부족합니다.",
+                isRisk = false,
+                hasData = false,
+            )
+
+        val allTimes = runCatching {
+            val upTimes = loadStationTimesForLastTrainRisk(
+                GetStationTimesCommand(
+                    stationId = command.sourceStationId,
+                    subwayLineId = firstLineId,
+                    upDownType = UpDownType.UP,
+                    stationTimeWeekType = command.stationTimeWeekType,
+                )
+            )
+            val downTimes = loadStationTimesForLastTrainRisk(
+                GetStationTimesCommand(
+                    stationId = command.sourceStationId,
+                    subwayLineId = firstLineId,
+                    upDownType = UpDownType.DOWN,
+                    stationTimeWeekType = command.stationTimeWeekType,
+                )
+            )
+            upTimes + downTimes
+        }.getOrElse {
+            emptyList()
+        }
+
+        val lastDepartureTime = allTimes
+            .maxByOrNull { it.departureTime }
+            ?.departureTime
+            ?: return LastTrainSafetyEvaluation(
+                score = 55,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.LOW,
+                reason = "막차 데이터가 부족해 안전도를 중립 점수로 반영했습니다.",
+                isRisk = false,
+                hasData = false,
+            )
+
+        val minutesToLastTrain = resolveMinutesUntilDeparture(nowAt, lastDepartureTime)
+            ?: return LastTrainSafetyEvaluation(
+                score = 50,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.LOW,
+                reason = "막차 시각 형식이 불완전하여 안전도 정확도가 낮습니다.",
+                isRisk = false,
+                hasData = false,
+            )
+
+        val requiredMinutes = route.summary.estimatedMinutes + 8
+        val margin = minutesToLastTrain - requiredMinutes
+
+        return when {
+            margin >= 45 -> LastTrainSafetyEvaluation(
+                score = 95,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.HIGH,
+                reason = "막차 대비 ${margin}분 여유가 있어 안전도가 높습니다.",
+                isRisk = false,
+                hasData = true,
+            )
+
+            margin >= 25 -> LastTrainSafetyEvaluation(
+                score = 80,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.HIGH,
+                reason = "막차 대비 ${margin}분 여유가 있습니다.",
+                isRisk = false,
+                hasData = true,
+            )
+
+            margin >= 10 -> LastTrainSafetyEvaluation(
+                score = 65,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.MEDIUM,
+                reason = "막차 여유가 ${margin}분으로 촉박할 수 있습니다.",
+                isRisk = false,
+                hasData = true,
+            )
+
+            margin >= 0 -> LastTrainSafetyEvaluation(
+                score = 45,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.MEDIUM,
+                reason = "막차 여유가 ${margin}분으로 낮아 위험 구간입니다.",
+                isRisk = true,
+                hasData = true,
+            )
+
+            else -> LastTrainSafetyEvaluation(
+                score = 20,
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.MEDIUM,
+                reason = "예상 소요가 막차보다 ${-margin}분 늦어 막차 위험이 큽니다.",
+                isRisk = true,
+                hasData = true,
+            )
+        }
+    }
+
+    private fun resolveMinutesUntilDeparture(nowAt: OffsetDateTime, departureTime: String): Int? {
+        val parsed = runCatching { LocalTime.parse(departureTime) }.getOrNull() ?: return null
+        var departureAt = nowAt
+            .withHour(parsed.hour)
+            .withMinute(parsed.minute)
+            .withSecond(parsed.second)
+            .withNano(0)
+
+        if (departureAt.isBefore(nowAt)) {
+            departureAt = departureAt.plusDays(1)
+        }
+        return ((departureAt.toEpochSecond() - nowAt.toEpochSecond()) / 60).toInt()
+    }
+
+    private fun estimateDelayProbabilityPercent(
+        route: SearchSubwayRouteDto.Route,
+        nowAt: OffsetDateTime,
+    ): Int {
+        var probability = 10
+        probability += route.summary.transferCount * 14
+        probability += (route.summary.totalStops / 2)
+
+        if (isPeakHour(nowAt)) {
+            probability += 12
+        }
+        if (route.summary.estimatedMinutes >= 45) {
+            probability += 8
+        }
+        if (route.summary.estimatedMinutes >= 60) {
+            probability += 8
+        }
+        if (route.edges.any { it.subwayLineName == "2호선" || it.subwayLineName == "9호선" }) {
+            probability += 10
+        }
+
+        return probability.coerceIn(5, 95)
+    }
+
+    private fun isPeakHour(nowAt: OffsetDateTime): Boolean {
+        val hour = nowAt.hour
+        return (hour in 7..9) || (hour in 18..20)
     }
 
     private fun loadStationTimes(command: GetStationTimesCommand): List<GetStationTimesDto.StationTimes> {
