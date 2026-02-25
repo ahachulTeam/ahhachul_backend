@@ -42,12 +42,14 @@ class DelayProofDto {
 
     data class GetCommunityDelaySignalsRequest(
         val subwayLineId: Long,
+        val stationId: Long?,
         val windowMinutes: Int?,
         val limit: Int?,
     ) {
         fun toCommand(): GetCommunityDelaySignalsCommand {
             return GetCommunityDelaySignalsCommand(
                 subwayLineId = subwayLineId,
+                stationId = stationId,
                 windowMinutes = windowMinutes,
                 limit = limit,
             )
@@ -83,11 +85,16 @@ class DelayProofDto {
     data class GetCommunityDelaySignalsResponse(
         val generatedAt: String,
         val subwayLineId: Long,
+        val stationId: Long?,
         val windowMinutes: Int,
+        val timeSlotMinutes: Int,
         val signalCount: Int,
         val distinctAuthors: Int,
         val medianReportedDelayMin: Int?,
         val confidenceLevel: String,
+        val reliabilityBadgeLevel: String,
+        val sameTimeSlotSignalCount: Int,
+        val sameTimeSlotDistinctAuthors: Int,
         val signals: List<CommunityDelaySignal>,
     )
 

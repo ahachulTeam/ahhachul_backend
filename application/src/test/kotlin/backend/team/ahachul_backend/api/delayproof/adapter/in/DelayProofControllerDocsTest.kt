@@ -248,11 +248,16 @@ class DelayProofControllerDocsTest : CommonDocsTestConfig() {
         val response = DelayProofDto.GetCommunityDelaySignalsResponse(
             generatedAt = "2026-02-24T01:20:00Z",
             subwayLineId = 2,
+            stationId = 201,
             windowMinutes = 30,
+            timeSlotMinutes = 10,
             signalCount = 18,
             distinctAuthors = 11,
             medianReportedDelayMin = 8,
             confidenceLevel = "HIGH",
+            reliabilityBadgeLevel = "SPIKE",
+            sameTimeSlotSignalCount = 7,
+            sameTimeSlotDistinctAuthors = 5,
             signals = listOf(
                 DelayProofDto.CommunityDelaySignal(
                     postId = 1001,
@@ -271,6 +276,7 @@ class DelayProofControllerDocsTest : CommonDocsTestConfig() {
         mockMvc.perform(
             get("/v2/community/delay-signals")
                 .queryParam("subwayLineId", "2")
+                .queryParam("stationId", "201")
                 .queryParam("windowMinutes", "30")
                 .queryParam("limit", "20"),
         )
@@ -282,6 +288,7 @@ class DelayProofControllerDocsTest : CommonDocsTestConfig() {
                     getDocsResponse(),
                     queryParameters(
                         parameterWithName("subwayLineId").description("지하철 노선 ID"),
+                        parameterWithName("stationId").optional().description("정류장 ID"),
                         parameterWithName("windowMinutes").optional().description("집계 윈도우(분)"),
                         parameterWithName("limit").optional().description("조회 개수"),
                     ),
@@ -289,11 +296,16 @@ class DelayProofControllerDocsTest : CommonDocsTestConfig() {
                         *commonResponseFields(),
                         fieldWithPath("result.generatedAt").type(JsonFieldType.STRING).description("응답 생성 시각"),
                         fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).optional().description("정류장 ID"),
                         fieldWithPath("result.windowMinutes").type(JsonFieldType.NUMBER).description("집계 윈도우(분)"),
+                        fieldWithPath("result.timeSlotMinutes").type(JsonFieldType.NUMBER).description("동일 시간대 집계 슬롯(분)"),
                         fieldWithPath("result.signalCount").type(JsonFieldType.NUMBER).description("시그널 수"),
                         fieldWithPath("result.distinctAuthors").type(JsonFieldType.NUMBER).description("작성자 수"),
                         fieldWithPath("result.medianReportedDelayMin").type(JsonFieldType.NUMBER).optional().description("지연 분 중앙값"),
                         fieldWithPath("result.confidenceLevel").type(JsonFieldType.STRING).description("신뢰도"),
+                        fieldWithPath("result.reliabilityBadgeLevel").type(JsonFieldType.STRING).description("동일 시간대 다중 제보 배지"),
+                        fieldWithPath("result.sameTimeSlotSignalCount").type(JsonFieldType.NUMBER).description("최대 동일 슬롯 제보 수"),
+                        fieldWithPath("result.sameTimeSlotDistinctAuthors").type(JsonFieldType.NUMBER).description("최대 동일 슬롯 작성자 수"),
                         fieldWithPath("result.signals[]").type(JsonFieldType.ARRAY).description("시그널 목록"),
                         fieldWithPath("result.signals[].postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
                         fieldWithPath("result.signals[].createdAt").type(JsonFieldType.STRING).description("작성 시각"),

@@ -43,6 +43,7 @@ class DelayProofService(
     private val delayKeywords = listOf("지연", "연착", "운행중단", "사고", "고장", "멈춤", "늦")
     private val delayMinuteRegex = Regex("(\\d{1,3})\\s*분")
     private val snippetLimit = 90
+    private val reliabilitySlotMinutes = 10
 
     override fun createDelayProof(command: CreateDelayProofCommand): DelayProofDto.CreateResponse {
         val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)
@@ -59,6 +60,7 @@ class DelayProofService(
 
         val communitySummary = summarizeCommunitySignals(
             subwayLineId = command.subwayLineId,
+            stationId = command.stationId,
             windowMinutes = delayProofProperties.communityWindowMinutes.toInt(),
             limit = delayProofProperties.signalPageSize,
         )
@@ -186,6 +188,7 @@ class DelayProofService(
     override fun getCommunityDelaySignals(command: GetCommunityDelaySignalsCommand): DelayProofDto.GetCommunityDelaySignalsResponse {
         return summarizeCommunitySignals(
             subwayLineId = command.subwayLineId,
+            stationId = command.stationId,
             windowMinutes = command.windowMinutes ?: delayProofProperties.communityWindowMinutes.toInt(),
             limit = command.limit ?: delayProofProperties.signalPageSize,
         )
@@ -204,6 +207,7 @@ class DelayProofService(
 
         val communitySummary = summarizeCommunitySignals(
             subwayLineId = command.subwayLineId,
+            stationId = command.stationId,
             windowMinutes = command.windowMinutes ?: delayProofProperties.communityWindowMinutes.toInt(),
             limit = command.signalLimit ?: delayProofProperties.signalPageSize,
         )
@@ -279,6 +283,7 @@ class DelayProofService(
 
     private fun summarizeCommunitySignals(
         subwayLineId: Long,
+        stationId: Long?,
         windowMinutes: Int,
         limit: Int,
     ): DelayProofDto.GetCommunityDelaySignalsResponse {
@@ -289,7 +294,7 @@ class DelayProofService(
             GetSliceCommunityPostCommand(
                 categoryType = null,
                 subwayLines = listOf(subwayLineReader.getById(subwayLineId)),
-                stationId = null,
+                stationId = stationId,
                 content = null,
                 hashTag = null,
                 writer = null,
@@ -303,30 +308,66 @@ class DelayProofService(
         val cutoff = LocalDateTime.now().minusMinutes(normalizedWindowMinutes.toLong())
         val matchedSignals = posts
             .filter { it.createdAt >= cutoff }
-            .mapNotNull { toDelaySignal(it) }
+            .mapNotNull { post ->
+                val signal = toDelaySignal(post) ?: return@mapNotNull null
+                MatchedDelaySignal(
+                    createdAt = post.createdAt,
+                    writer = post.writer,
+                    signal = signal,
+                )
+            }
 
         val distinctAuthors = matchedSignals.map { it.writer }.toSet().size
-        val delayMinutes = matchedSignals.mapNotNull { it.reportedDelayMin }.sorted()
+        val delayMinutes = matchedSignals.mapNotNull { it.signal.reportedDelayMin }.sorted()
         val median = delayMinutes.takeIf { it.isNotEmpty() }?.let { values ->
             values[values.size / 2]
         }
+        val peakSlotMetric = matchedSignals
+            .groupBy { toSlotKey(it.createdAt, reliabilitySlotMinutes) }
+            .values
+            .map { groupedSignals ->
+                SlotMetric(
+                    signalCount = groupedSignals.size,
+                    distinctAuthors = groupedSignals.map { it.writer }.toSet().size,
+                )
+            }
+            .maxWithOrNull(compareBy<SlotMetric> { it.signalCount }.thenBy { it.distinctAuthors })
+            ?: SlotMetric.EMPTY
 
         val confidence = when {
             matchedSignals.size >= 10 && distinctAuthors >= 5 -> "HIGH"
             matchedSignals.size >= 4 && distinctAuthors >= 2 -> "MEDIUM"
             else -> "LOW"
         }
+        val reliabilityBadgeLevel = when {
+            peakSlotMetric.signalCount >= 6 && peakSlotMetric.distinctAuthors >= 4 -> "SPIKE"
+            peakSlotMetric.signalCount >= 3 && peakSlotMetric.distinctAuthors >= 2 -> "ELEVATED"
+            else -> "NONE"
+        }
 
         return DelayProofDto.GetCommunityDelaySignalsResponse(
             generatedAt = OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
             subwayLineId = subwayLineId,
+            stationId = stationId,
             windowMinutes = normalizedWindowMinutes,
+            timeSlotMinutes = reliabilitySlotMinutes,
             signalCount = matchedSignals.size,
             distinctAuthors = distinctAuthors,
             medianReportedDelayMin = median,
             confidenceLevel = confidence,
-            signals = matchedSignals,
+            reliabilityBadgeLevel = reliabilityBadgeLevel,
+            sameTimeSlotSignalCount = peakSlotMetric.signalCount,
+            sameTimeSlotDistinctAuthors = peakSlotMetric.distinctAuthors,
+            signals = matchedSignals.map { it.signal },
         )
+    }
+
+    private fun toSlotKey(createdAt: LocalDateTime, slotMinutes: Int): LocalDateTime {
+        val flooredMinute = (createdAt.minute / slotMinutes) * slotMinutes
+        return createdAt
+            .withMinute(flooredMinute)
+            .withSecond(0)
+            .withNano(0)
     }
 
     private fun toDelaySignal(post: SearchCommunityPost): DelayProofDto.CommunityDelaySignal? {
@@ -343,6 +384,21 @@ class DelayProofService(
             reportedDelayMin = minutes,
             snippet = snippet,
         )
+    }
+
+    private data class MatchedDelaySignal(
+        val createdAt: LocalDateTime,
+        val writer: String,
+        val signal: DelayProofDto.CommunityDelaySignal,
+    )
+
+    private data class SlotMetric(
+        val signalCount: Int,
+        val distinctAuthors: Int,
+    ) {
+        companion object {
+            val EMPTY = SlotMetric(signalCount = 0, distinctAuthors = 0)
+        }
     }
 
     private fun deriveExpectedArrivalAt(now: OffsetDateTime, realtime: backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesV2Dto.Response): String {
