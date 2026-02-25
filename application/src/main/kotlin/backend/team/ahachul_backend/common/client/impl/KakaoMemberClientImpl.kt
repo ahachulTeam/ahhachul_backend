@@ -11,11 +11,13 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 import java.util.*
 
@@ -46,8 +48,16 @@ class KakaoMemberClientImpl(
         val request = HttpEntity(params, headers)
         val url = provider.tokenUri
 
-        val response = restTemplate.exchange(url, HttpMethod.POST, request, String::class.java)
-        return objectMapper.readValue(response.body, KakaoAccessTokenDto::class.java).accessToken
+        val response = try {
+            restTemplate.exchange(url, HttpMethod.POST, request, String::class.java)
+        } catch (e: HttpClientErrorException) {
+            throw CommonException(ResponseCode.INVALID_OAUTH_AUTHORIZATION_CODE, e)
+        }
+
+        if (response.statusCode == HttpStatus.OK) {
+            return objectMapper.readValue(response.body, KakaoAccessTokenDto::class.java).accessToken
+        }
+        throw CommonException(ResponseCode.INVALID_OAUTH_AUTHORIZATION_CODE)
     }
 
     override fun getMemberInfoByAccessToken(accessToken: String): KakaoMemberInfoDto {
@@ -58,12 +68,20 @@ class KakaoMemberClientImpl(
 
         val request = HttpEntity<MultiValueMap<String, String>>(params, headers)
 
-        val response = restTemplate.exchange(
-                provider.userInfoUri!!,
-                HttpMethod.GET,
-                request,
-                String::class.java
-        )
+        val response = try {
+            restTemplate.exchange(
+                    provider.userInfoUri!!,
+                    HttpMethod.GET,
+                    request,
+                    String::class.java
+            )
+        } catch (e: HttpClientErrorException) {
+            throw CommonException(ResponseCode.INVALID_OAUTH_ACCESS_TOKEN, e)
+        }
+
+        if (response.statusCode != HttpStatus.OK) {
+            throw CommonException(ResponseCode.INVALID_OAUTH_ACCESS_TOKEN)
+        }
 
         try {
             return objectMapper.readValue(response.body, KakaoMemberInfoDto::class.java)

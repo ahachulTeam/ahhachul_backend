@@ -2,6 +2,7 @@ package backend.team.ahachul_backend.api.station.adapter.`in`.dto
 
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationLastTrainRiskCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationQuickExitCommand
+import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesFullCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesCommand
 import backend.team.ahachul_backend.api.station.application.port.`in`.dto.GetStationTimesSummaryCommand
 import backend.team.ahachul_backend.api.train.domain.model.TrainType
@@ -27,6 +28,35 @@ class GetStationTimesDto {
 
     data class Response(
         val stationTimes: List<StationTimes>
+    )
+
+    data class FullRequest(
+        val stationId: Long,
+        val subwayLineId: Long,
+    ) {
+        fun toCommand(): GetStationTimesFullCommand {
+            return GetStationTimesFullCommand(
+                stationId = stationId,
+                subwayLineId = subwayLineId,
+            )
+        }
+    }
+
+    data class FullResponse(
+        val generatedAt: String,
+        val stationId: Long,
+        val subwayLineId: Long,
+        val weeks: List<WeekTimetable>,
+    )
+
+    data class WeekTimetable(
+        val stationTimeWeekType: StationTimeWeekType,
+        val upDownTimetables: List<UpDownTimetable>,
+    )
+
+    data class UpDownTimetable(
+        val upDownType: UpDownType,
+        val stationTimes: List<StationTimes>,
     )
 
     data class StationTimes(
