@@ -32,6 +32,7 @@ class ForeignerModeDto {
         val station: StationDescriptor,
         val templates: TemplateBundle,
         val cultureGuide: CultureGuide,
+        val oneClickActions: List<OneClickAction>,
         val supportedLocales: List<String>,
     )
 
@@ -60,6 +61,21 @@ class ForeignerModeDto {
         val safetyTip: String,
         val emergencyPhrase: String,
     )
+
+    data class OneClickAction(
+        val actionType: OneClickActionType,
+        val title: String,
+        val description: String,
+        val deepLink: String,
+        val payloadTemplate: String?,
+    )
+
+    enum class OneClickActionType {
+        CALL_EMERGENCY_112,
+        OPEN_LOST_REPORT,
+        OPEN_COMPLAINT_REPORT,
+        COPY_EMERGENCY_PHRASE,
+    }
 
     data class CommunityPostTranslationResponse(
         val postId: Long,

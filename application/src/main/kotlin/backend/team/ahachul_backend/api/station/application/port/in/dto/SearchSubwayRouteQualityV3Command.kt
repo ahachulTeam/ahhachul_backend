@@ -11,4 +11,9 @@ data class SearchSubwayRouteQualityV3Command(
     val alternatives: Int,
     val walkingPreference: SearchSubwayRouteQualityV3Dto.RouteWalkingPreference,
     val stationTimeWeekType: StationTimeWeekType,
+    val accessibilityMode: SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode,
+    val crowdingPreference: SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference,
+    val luggageMode: SearchSubwayRouteQualityV3Dto.RouteLuggageMode,
+    val travelerContext: SearchSubwayRouteQualityV3Dto.RouteTravelerContext,
+    val locale: String,
 )

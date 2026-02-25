@@ -371,6 +371,20 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
             strategy = SearchSubwayRouteDto.RouteSearchStrategy.BALANCED,
             walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.LESS_STAIRS,
             stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+            accessibilityMode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR,
+            crowdingPreference = SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.LESS_CROWDED,
+            luggageMode = SearchSubwayRouteQualityV3Dto.RouteLuggageMode.AIRPORT_TRAVEL,
+            travelerContext = SearchSubwayRouteQualityV3Dto.RouteTravelerContext.TRAVEL,
+            locale = "en",
+            oneClickActions = listOf(
+                SearchSubwayRouteQualityV3Dto.OneClickAction(
+                    actionType = SearchSubwayRouteQualityV3Dto.OneClickActionType.CALL_EMERGENCY_112,
+                    title = "Call 112",
+                    description = "Emergency call to police and station support.",
+                    deepLink = "tel:112",
+                    payloadTemplate = null,
+                )
+            ),
             routes = listOf(
                 SearchSubwayRouteQualityV3Dto.Route(
                     rank = 1,
@@ -407,10 +421,54 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         walkingScore = 92,
                         lastTrainSafetyScore = 80,
                         delayResilienceScore = 76,
+                        accessibilityScore = 92,
+                        inStationDifficultyScore = 88,
+                        crowdingComfortScore = 70,
                         delayProbabilityPercent = 24,
                         confidenceLevel = SearchSubwayRouteQualityV3Dto.RouteQualityConfidenceLevel.HIGH,
-                        badges = listOf(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.BEST_RECOMMENDED),
+                        badges = listOf(
+                            SearchSubwayRouteQualityV3Dto.RouteQualityBadge.BEST_RECOMMENDED,
+                            SearchSubwayRouteQualityV3Dto.RouteQualityBadge.ACCESSIBILITY_RECOMMENDED,
+                        ),
                         reasons = listOf("환승 0회로 비교적 안정적인 환승 동선입니다."),
+                    ),
+                    accessibilityProfile = SearchSubwayRouteQualityV3Dto.AccessibilityProfile(
+                        mode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR,
+                        elevatorFriendlyTransferCount = 1,
+                        estimatedStairSections = 0,
+                        inStationDifficultyLevel = SearchSubwayRouteQualityV3Dto.InStationDifficultyLevel.EASY,
+                        mobilityNote = "휠체어 이동 가능성을 고려해 역사 내 난이도를 낮춘 경로입니다.",
+                    ),
+                    boardingGuide = SearchSubwayRouteQualityV3Dto.BoardingGuide(
+                        primaryCarNo = "5-2",
+                        transferOptimizedCarNo = "4-2",
+                        recommendedDoorPosition = "환승 통로 우측",
+                        reason = "빠른하차 추천 기준으로 약 2분 단축 가능한 위치입니다.",
+                        confidenceLevel = SearchSubwayRouteQualityV3Dto.BoardingGuideConfidenceLevel.MEDIUM,
+                    ),
+                    crowdingGuide = SearchSubwayRouteQualityV3Dto.CrowdingGuide(
+                        predictedLevel = SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.MEDIUM,
+                        lessCrowdedCars = listOf("3-2", "7-2"),
+                        recommendation = "혼잡 회피 선호를 반영해 상대적으로 여유 있는 칸을 우선 제안합니다.",
+                        basedOn = "historical+line-heuristic",
+                    ),
+                    nearbyEssentials = SearchSubwayRouteQualityV3Dto.NearbyEssentials(
+                        stationId = 101L,
+                        stationName = "강남",
+                        items = listOf(
+                            SearchSubwayRouteQualityV3Dto.NearbyEssentialItem(
+                                essentialType = SearchSubwayRouteQualityV3Dto.NearbyEssentialType.CONVENIENCE_STORE,
+                                name = "강남역 편의점",
+                                walkingMinutes = 3,
+                                openNow = true,
+                                reliabilityScore = 85,
+                                reliabilityReason = "최근 7일 사용자 확인 + 운영시간 일치",
+                            )
+                        ),
+                    ),
+                    travelModeTags = listOf(
+                        SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.AIRPORT_FRIENDLY,
+                        SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.ACCESSIBILITY_PRIORITY,
                     ),
                 )
             ),
@@ -427,6 +485,11 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                 .queryParam("alternatives", "3")
                 .queryParam("walkingPreference", SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.LESS_STAIRS.name)
                 .queryParam("stationTimeWeekType", StationTimeWeekType.WEEKDAY.name)
+                .queryParam("accessibilityMode", SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR.name)
+                .queryParam("crowdingPreference", SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.LESS_CROWDED.name)
+                .queryParam("luggageMode", SearchSubwayRouteQualityV3Dto.RouteLuggageMode.AIRPORT_TRAVEL.name)
+                .queryParam("travelerContext", SearchSubwayRouteQualityV3Dto.RouteTravelerContext.TRAVEL.name)
+                .queryParam("locale", "en")
                 .accept(MediaType.APPLICATION_JSON)
         )
 
@@ -443,6 +506,11 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         parameterWithName("alternatives").optional().description("대체 경로 수(1~4)"),
                         parameterWithName("walkingPreference").optional().description("보행 선호(FAST/LESS_STAIRS)"),
                         parameterWithName("stationTimeWeekType").optional().description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)"),
+                        parameterWithName("accessibilityMode").optional().description("접근성 모드(BALANCED/ELEVATOR_PRIORITY/STAIRS_MINIMIZED/WHEELCHAIR/STROLLER)"),
+                        parameterWithName("crowdingPreference").optional().description("혼잡 선호(BALANCED/LESS_CROWDED)"),
+                        parameterWithName("luggageMode").optional().description("짐 모드(NORMAL/HEAVY_LUGGAGE/AIRPORT_TRAVEL)"),
+                        parameterWithName("travelerContext").optional().description("이동 맥락(COMMUTE/SCHOOL/TRAVEL)"),
+                        parameterWithName("locale").optional().description("다국어 코드(ko/en/th/cn)"),
                     ),
                     PayloadDocumentation.responseFields(
                         *commonResponseFields(),
@@ -453,6 +521,17 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.strategy").type(JsonFieldType.STRING).description("경로 탐색 전략"),
                         fieldWithPath("result.walkingPreference").type(JsonFieldType.STRING).description("보행 선호"),
                         fieldWithPath("result.stationTimeWeekType").type(JsonFieldType.STRING).description("요일 구분"),
+                        fieldWithPath("result.accessibilityMode").type(JsonFieldType.STRING).description("접근성 모드"),
+                        fieldWithPath("result.crowdingPreference").type(JsonFieldType.STRING).description("혼잡 선호"),
+                        fieldWithPath("result.luggageMode").type(JsonFieldType.STRING).description("짐 모드"),
+                        fieldWithPath("result.travelerContext").type(JsonFieldType.STRING).description("이동 맥락"),
+                        fieldWithPath("result.locale").type(JsonFieldType.STRING).description("응답 언어 코드"),
+                        fieldWithPath("result.oneClickActions").type(JsonFieldType.ARRAY).description("원클릭 긴급/신고 액션"),
+                        fieldWithPath("result.oneClickActions[].actionType").type(JsonFieldType.STRING).description("액션 타입"),
+                        fieldWithPath("result.oneClickActions[].title").type(JsonFieldType.STRING).description("액션 제목"),
+                        fieldWithPath("result.oneClickActions[].description").type(JsonFieldType.STRING).description("액션 설명"),
+                        fieldWithPath("result.oneClickActions[].deepLink").type(JsonFieldType.STRING).description("실행 링크"),
+                        fieldWithPath("result.oneClickActions[].payloadTemplate").type(JsonFieldType.STRING).optional().description("복사용 템플릿(옵션)"),
                         fieldWithPath("result.routes[].rank").type(JsonFieldType.NUMBER).description("추천 순위"),
                         fieldWithPath("result.routes[].nodes[].stationId").type(JsonFieldType.NUMBER).description("역 ID"),
                         fieldWithPath("result.routes[].nodes[].stationName").type(JsonFieldType.STRING).description("역 이름"),
@@ -470,10 +549,37 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.routes[].quality.walkingScore").type(JsonFieldType.NUMBER).description("보행 부담 점수"),
                         fieldWithPath("result.routes[].quality.lastTrainSafetyScore").type(JsonFieldType.NUMBER).description("막차 안전도 점수"),
                         fieldWithPath("result.routes[].quality.delayResilienceScore").type(JsonFieldType.NUMBER).description("지연 복원력 점수"),
+                        fieldWithPath("result.routes[].quality.accessibilityScore").type(JsonFieldType.NUMBER).description("접근성 점수"),
+                        fieldWithPath("result.routes[].quality.inStationDifficultyScore").type(JsonFieldType.NUMBER).description("역사 내 이동 난이도 점수"),
+                        fieldWithPath("result.routes[].quality.crowdingComfortScore").type(JsonFieldType.NUMBER).description("혼잡 쾌적도 점수"),
                         fieldWithPath("result.routes[].quality.delayProbabilityPercent").type(JsonFieldType.NUMBER).description("지연 확률(%)"),
                         fieldWithPath("result.routes[].quality.confidenceLevel").type(JsonFieldType.STRING).description("품질 점수 신뢰도(HIGH/MEDIUM/LOW)"),
                         fieldWithPath("result.routes[].quality.badges").type(JsonFieldType.ARRAY).description("리스크/추천 배지"),
                         fieldWithPath("result.routes[].quality.reasons").type(JsonFieldType.ARRAY).description("추천 사유"),
+                        fieldWithPath("result.routes[].accessibilityProfile.mode").type(JsonFieldType.STRING).description("접근성 모드"),
+                        fieldWithPath("result.routes[].accessibilityProfile.elevatorFriendlyTransferCount").type(JsonFieldType.NUMBER).description("엘리베이터 친화 환승 수"),
+                        fieldWithPath("result.routes[].accessibilityProfile.estimatedStairSections").type(JsonFieldType.NUMBER).description("예상 계단 구간 수"),
+                        fieldWithPath("result.routes[].accessibilityProfile.inStationDifficultyLevel").type(JsonFieldType.STRING).description("역사 내 이동 난이도 레벨"),
+                        fieldWithPath("result.routes[].accessibilityProfile.mobilityNote").type(JsonFieldType.STRING).description("접근성 안내 문구"),
+                        fieldWithPath("result.routes[].boardingGuide.primaryCarNo").type(JsonFieldType.STRING).description("우선 탑승 칸"),
+                        fieldWithPath("result.routes[].boardingGuide.transferOptimizedCarNo").type(JsonFieldType.STRING).optional().description("환승 최적 칸"),
+                        fieldWithPath("result.routes[].boardingGuide.recommendedDoorPosition").type(JsonFieldType.STRING).description("추천 문 위치/동선"),
+                        fieldWithPath("result.routes[].boardingGuide.reason").type(JsonFieldType.STRING).description("추천 근거"),
+                        fieldWithPath("result.routes[].boardingGuide.confidenceLevel").type(JsonFieldType.STRING).description("탑승칸 추천 신뢰도"),
+                        fieldWithPath("result.routes[].crowdingGuide.predictedLevel").type(JsonFieldType.STRING).description("예상 혼잡도 레벨"),
+                        fieldWithPath("result.routes[].crowdingGuide.lessCrowdedCars").type(JsonFieldType.ARRAY).description("덜 붐비는 추천 칸"),
+                        fieldWithPath("result.routes[].crowdingGuide.recommendation").type(JsonFieldType.STRING).description("혼잡도 안내 문구"),
+                        fieldWithPath("result.routes[].crowdingGuide.basedOn").type(JsonFieldType.STRING).description("혼잡도 산정 근거"),
+                        fieldWithPath("result.routes[].nearbyEssentials.stationId").type(JsonFieldType.NUMBER).description("주변정보 기준 역 ID"),
+                        fieldWithPath("result.routes[].nearbyEssentials.stationName").type(JsonFieldType.STRING).description("주변정보 기준 역명"),
+                        fieldWithPath("result.routes[].nearbyEssentials.items").type(JsonFieldType.ARRAY).description("필수 주변정보 목록"),
+                        fieldWithPath("result.routes[].nearbyEssentials.items[].essentialType").type(JsonFieldType.STRING).description("필수 카테고리 타입"),
+                        fieldWithPath("result.routes[].nearbyEssentials.items[].name").type(JsonFieldType.STRING).description("장소명"),
+                        fieldWithPath("result.routes[].nearbyEssentials.items[].walkingMinutes").type(JsonFieldType.NUMBER).description("도보 이동 시간(분)"),
+                        fieldWithPath("result.routes[].nearbyEssentials.items[].openNow").type(JsonFieldType.BOOLEAN).description("현재 영업 여부"),
+                        fieldWithPath("result.routes[].nearbyEssentials.items[].reliabilityScore").type(JsonFieldType.NUMBER).description("신뢰도 점수"),
+                        fieldWithPath("result.routes[].nearbyEssentials.items[].reliabilityReason").type(JsonFieldType.STRING).description("신뢰도 근거"),
+                        fieldWithPath("result.routes[].travelModeTags").type(JsonFieldType.ARRAY).description("관광/공항/접근성 태그"),
                     )
                 )
             )

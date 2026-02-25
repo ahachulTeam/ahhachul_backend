@@ -167,6 +167,11 @@ class StationServiceRouteSearchUnitTest {
                 alternatives = 3,
                 walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.FAST,
                 stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+                accessibilityMode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED,
+                crowdingPreference = SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.BALANCED,
+                luggageMode = SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL,
+                travelerContext = SearchSubwayRouteQualityV3Dto.RouteTravelerContext.COMMUTE,
+                locale = "ko",
             )
         )
 
@@ -206,6 +211,11 @@ class StationServiceRouteSearchUnitTest {
                 alternatives = 2,
                 walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.FAST,
                 stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+                accessibilityMode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED,
+                crowdingPreference = SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.BALANCED,
+                luggageMode = SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL,
+                travelerContext = SearchSubwayRouteQualityV3Dto.RouteTravelerContext.COMMUTE,
+                locale = "ko",
             )
         )
 
@@ -217,11 +227,103 @@ class StationServiceRouteSearchUnitTest {
                 alternatives = 2,
                 walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.LESS_STAIRS,
                 stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+                accessibilityMode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED,
+                crowdingPreference = SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.BALANCED,
+                luggageMode = SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL,
+                travelerContext = SearchSubwayRouteQualityV3Dto.RouteTravelerContext.COMMUTE,
+                locale = "ko",
             )
         )
 
         val fastWalkingScore = fast.routes.first().quality.walkingScore
         val lessStairsWalkingScore = lessStairs.routes.first().quality.walkingScore
         assertThat(fastWalkingScore).isGreaterThan(lessStairsWalkingScore)
+    }
+
+    @Test
+    @DisplayName("길찾기 V3의 접근성 점수는 accessibilityMode에 따라 달라진다.")
+    fun searchSubwayRoutesV3AccessibilityModeAffectsScore() {
+        val line2 = SubwayLineEntity(id = 2L, name = "2호선", regionType = RegionType.METROPOLITAN)
+        val stationA = StationEntity(id = 601L, name = "A역")
+        val stationB = StationEntity(id = 602L, name = "B역")
+        val stationC = StationEntity(id = 603L, name = "C역")
+
+        given(subwayLineStationReader.findAllOrderedForGraph()).willReturn(
+            listOf(
+                SubwayLineStationEntity(id = 1L, stationCode = "2001", station = stationA, subwayLine = line2),
+                SubwayLineStationEntity(id = 2L, stationCode = "2002", station = stationB, subwayLine = line2),
+                SubwayLineStationEntity(id = 3L, stationCode = "2003", station = stationC, subwayLine = line2),
+            )
+        )
+
+        val balanced = stationService.searchSubwayRoutesV3(
+            SearchSubwayRouteQualityV3Command(
+                sourceStationId = 601L,
+                destinationStationId = 603L,
+                strategy = SearchSubwayRouteDto.RouteSearchStrategy.BALANCED,
+                alternatives = 1,
+                walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.FAST,
+                stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+                accessibilityMode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED,
+                crowdingPreference = SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.BALANCED,
+                luggageMode = SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL,
+                travelerContext = SearchSubwayRouteQualityV3Dto.RouteTravelerContext.COMMUTE,
+                locale = "ko",
+            )
+        )
+
+        val wheelchair = stationService.searchSubwayRoutesV3(
+            SearchSubwayRouteQualityV3Command(
+                sourceStationId = 601L,
+                destinationStationId = 603L,
+                strategy = SearchSubwayRouteDto.RouteSearchStrategy.BALANCED,
+                alternatives = 1,
+                walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.FAST,
+                stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+                accessibilityMode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR,
+                crowdingPreference = SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.BALANCED,
+                luggageMode = SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL,
+                travelerContext = SearchSubwayRouteQualityV3Dto.RouteTravelerContext.COMMUTE,
+                locale = "ko",
+            )
+        )
+
+        assertThat(wheelchair.routes.first().quality.accessibilityScore)
+            .isGreaterThanOrEqualTo(balanced.routes.first().quality.accessibilityScore)
+    }
+
+    @Test
+    @DisplayName("길찾기 V3는 다국어 원클릭 액션을 포함한다.")
+    fun searchSubwayRoutesV3IncludesOneClickActions() {
+        val line2 = SubwayLineEntity(id = 2L, name = "2호선", regionType = RegionType.METROPOLITAN)
+        val stationA = StationEntity(id = 701L, name = "A역")
+        val stationB = StationEntity(id = 702L, name = "B역")
+
+        given(subwayLineStationReader.findAllOrderedForGraph()).willReturn(
+            listOf(
+                SubwayLineStationEntity(id = 1L, stationCode = "2001", station = stationA, subwayLine = line2),
+                SubwayLineStationEntity(id = 2L, stationCode = "2002", station = stationB, subwayLine = line2),
+            )
+        )
+
+        val result = stationService.searchSubwayRoutesV3(
+            SearchSubwayRouteQualityV3Command(
+                sourceStationId = 701L,
+                destinationStationId = 702L,
+                strategy = SearchSubwayRouteDto.RouteSearchStrategy.BALANCED,
+                alternatives = 1,
+                walkingPreference = SearchSubwayRouteQualityV3Dto.RouteWalkingPreference.FAST,
+                stationTimeWeekType = StationTimeWeekType.WEEKDAY,
+                accessibilityMode = SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED,
+                crowdingPreference = SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.BALANCED,
+                luggageMode = SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL,
+                travelerContext = SearchSubwayRouteQualityV3Dto.RouteTravelerContext.TRAVEL,
+                locale = "en",
+            )
+        )
+
+        assertThat(result.oneClickActions).isNotEmpty
+        assertThat(result.oneClickActions.map { it.actionType.name }).contains("CALL_EMERGENCY_112")
+        assertThat(result.oneClickActions.first().title).isNotBlank
     }
 }

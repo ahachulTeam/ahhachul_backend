@@ -15,7 +15,8 @@ class StationNearbyPlacesRecommendationGeneratorTest {
         )
 
         assertThat(result).hasSize(3)
-        assertThat(result.first().category).isEqualTo("분식")
+        assertThat(result.first().category).isEqualTo("편의점")
+        assertThat(result.first().reliabilityScore).isGreaterThan(70)
     }
 
     @Test
@@ -29,5 +30,6 @@ class StationNearbyPlacesRecommendationGeneratorTest {
 
         assertThat(result).isNotEmpty()
         assertThat(result.first().name).contains("출구")
+        assertThat(result.map { it.essentialType.name }).contains("CONVENIENCE_STORE", "RESTROOM", "ATM")
     }
 }

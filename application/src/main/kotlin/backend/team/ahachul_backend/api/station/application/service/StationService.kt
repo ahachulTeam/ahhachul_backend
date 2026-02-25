@@ -814,7 +814,19 @@ class StationService(
 
         val scoredRoutes = base.routes
             .map { route ->
-                val quality = evaluateRouteQuality(route, command, nowAt)
+                val accessibilityProfile = buildAccessibilityProfile(route, command)
+                val boardingGuide = buildBoardingGuide(route, command)
+                val crowdingGuide = buildCrowdingGuide(route, command, nowAt)
+                val nearbyEssentials = buildNearbyEssentials(route)
+                val travelModeTags = buildTravelModeTags(route, command)
+                val quality = evaluateRouteQuality(
+                    route = route,
+                    command = command,
+                    nowAt = nowAt,
+                    accessibilityProfile = accessibilityProfile,
+                    crowdingGuide = crowdingGuide,
+                    travelModeTags = travelModeTags,
+                )
                 SearchSubwayRouteQualityV3Dto.Route(
                     rank = route.rank,
                     nodes = route.nodes.map {
@@ -839,6 +851,11 @@ class StationService(
                         estimatedMinutes = route.summary.estimatedMinutes,
                     ),
                     quality = quality,
+                    accessibilityProfile = accessibilityProfile,
+                    boardingGuide = boardingGuide,
+                    crowdingGuide = crowdingGuide,
+                    nearbyEssentials = nearbyEssentials,
+                    travelModeTags = travelModeTags,
                 )
             }
             .sortedWith(
@@ -859,6 +876,8 @@ class StationService(
                 )
             }
 
+        val primaryLineId = scoredRoutes.firstOrNull()?.edges?.firstOrNull()?.subwayLineId
+
         return SearchSubwayRouteQualityV3Dto.Response(
             modelVersion = "ROUTE_QUALITY_V3",
             generatedAt = nowAt.toString(),
@@ -867,6 +886,12 @@ class StationService(
             strategy = command.strategy,
             walkingPreference = command.walkingPreference,
             stationTimeWeekType = command.stationTimeWeekType,
+            accessibilityMode = command.accessibilityMode,
+            crowdingPreference = command.crowdingPreference,
+            luggageMode = command.luggageMode,
+            travelerContext = command.travelerContext,
+            locale = command.locale,
+            oneClickActions = buildOneClickActions(command, primaryLineId),
             routes = scoredRoutes,
         )
     }
@@ -875,6 +900,9 @@ class StationService(
         route: SearchSubwayRouteDto.Route,
         command: SearchSubwayRouteQualityV3Command,
         nowAt: OffsetDateTime,
+        accessibilityProfile: SearchSubwayRouteQualityV3Dto.AccessibilityProfile,
+        crowdingGuide: SearchSubwayRouteQualityV3Dto.CrowdingGuide,
+        travelModeTags: List<SearchSubwayRouteQualityV3Dto.RouteTravelModeTag>,
     ): SearchSubwayRouteQualityV3Dto.Quality {
         val transferRiskScore = (100 - route.summary.transferCount * 25).coerceIn(0, 100)
         val walkingTransferPenalty = when (command.walkingPreference) {
@@ -890,13 +918,19 @@ class StationService(
             ).coerceIn(0, 100)
 
         val lastTrainSafety = evaluateLastTrainSafety(route, command, nowAt)
-        val delayProbabilityPercent = estimateDelayProbabilityPercent(route, nowAt)
+        val delayProbabilityPercent = estimateDelayProbabilityPercent(route, nowAt, crowdingGuide)
         val delayResilienceScore = (100 - delayProbabilityPercent).coerceIn(0, 100)
+        val accessibilityScore = estimateAccessibilityScore(route, command, accessibilityProfile)
+        val inStationDifficultyScore = estimateInStationDifficultyScore(accessibilityProfile)
+        val crowdingComfortScore = estimateCrowdingComfortScore(crowdingGuide, command)
         val totalScore = (
-            transferRiskScore * 30 +
-                walkingScore * 20 +
-                lastTrainSafety.score * 25 +
-                delayResilienceScore * 25
+            transferRiskScore * 20 +
+                walkingScore * 15 +
+                lastTrainSafety.score * 20 +
+                delayResilienceScore * 15 +
+                accessibilityScore * 15 +
+                inStationDifficultyScore * 5 +
+                crowdingComfortScore * 10
             ) / 100
 
         val badges = mutableListOf<SearchSubwayRouteQualityV3Dto.RouteQualityBadge>()
@@ -914,6 +948,11 @@ class StationService(
             reasons.add("보행/계단 부담이 큰 경로입니다.")
         }
 
+        if (command.accessibilityMode != SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.ACCESSIBILITY_RECOMMENDED)
+            reasons.add(accessibilityProfile.mobilityNote)
+        }
+
         if (lastTrainSafety.isRisk) {
             badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.LAST_TRAIN_RISK)
         }
@@ -926,6 +965,23 @@ class StationService(
             reasons.add("지연 가능성 ${delayProbabilityPercent}%로 상대적으로 안정적인 구간입니다.")
         }
 
+        if (crowdingGuide.predictedLevel == SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.HIGH ||
+            crowdingGuide.predictedLevel == SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.VERY_HIGH ||
+            command.crowdingPreference == SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.LESS_CROWDED
+        ) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.CROWDING_AVOIDANCE)
+            reasons.add(crowdingGuide.recommendation)
+        }
+
+        if (travelModeTags.contains(SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.AIRPORT_FRIENDLY)) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.AIRPORT_FRIENDLY)
+            reasons.add("짐 이동을 고려한 공항 친화 경로입니다.")
+        }
+        if (travelModeTags.contains(SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.TOURIST_FRIENDLY)) {
+            badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.TOURIST_FRIENDLY)
+            reasons.add("관광 이동을 고려해 환승/도보 부담을 낮춘 경로입니다.")
+        }
+
         if (!lastTrainSafety.hasData) {
             badges.add(SearchSubwayRouteQualityV3Dto.RouteQualityBadge.DATA_LIMITED)
         }
@@ -936,11 +992,407 @@ class StationService(
             walkingScore = walkingScore,
             lastTrainSafetyScore = lastTrainSafety.score,
             delayResilienceScore = delayResilienceScore,
+            accessibilityScore = accessibilityScore,
+            inStationDifficultyScore = inStationDifficultyScore,
+            crowdingComfortScore = crowdingComfortScore,
             delayProbabilityPercent = delayProbabilityPercent,
             confidenceLevel = resolveConfidenceLevel(lastTrainSafety),
             badges = badges.distinct(),
             reasons = reasons,
         )
+    }
+
+    private fun estimateAccessibilityScore(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+        profile: SearchSubwayRouteQualityV3Dto.AccessibilityProfile,
+    ): Int {
+        var score = 100
+        score -= profile.estimatedStairSections * 10
+        score -= route.summary.transferCount * 6
+
+        score += when (command.accessibilityMode) {
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED -> 0
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.ELEVATOR_PRIORITY -> 8
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STAIRS_MINIMIZED -> 10
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR -> 14
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STROLLER -> 12
+        }
+
+        score += when (command.luggageMode) {
+            SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL -> 0
+            SearchSubwayRouteQualityV3Dto.RouteLuggageMode.HEAVY_LUGGAGE -> 6
+            SearchSubwayRouteQualityV3Dto.RouteLuggageMode.AIRPORT_TRAVEL -> 8
+        }
+
+        return score.coerceIn(0, 100)
+    }
+
+    private fun estimateInStationDifficultyScore(
+        profile: SearchSubwayRouteQualityV3Dto.AccessibilityProfile,
+    ): Int {
+        return when (profile.inStationDifficultyLevel) {
+            SearchSubwayRouteQualityV3Dto.InStationDifficultyLevel.EASY -> 90
+            SearchSubwayRouteQualityV3Dto.InStationDifficultyLevel.MODERATE -> 65
+            SearchSubwayRouteQualityV3Dto.InStationDifficultyLevel.HARD -> 40
+        }
+    }
+
+    private fun estimateCrowdingComfortScore(
+        crowdingGuide: SearchSubwayRouteQualityV3Dto.CrowdingGuide,
+        command: SearchSubwayRouteQualityV3Command,
+    ): Int {
+        var score = when (crowdingGuide.predictedLevel) {
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.LOW -> 90
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.MEDIUM -> 72
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.HIGH -> 52
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.VERY_HIGH -> 34
+        }
+
+        if (command.crowdingPreference == SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.LESS_CROWDED) {
+            score += 8
+        }
+
+        return score.coerceIn(0, 100)
+    }
+
+    private fun buildAccessibilityProfile(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+    ): SearchSubwayRouteQualityV3Dto.AccessibilityProfile {
+        val baseStairSections = route.summary.transferCount * 2 + (route.summary.totalStops / 8)
+        val adjustedStairSections = (baseStairSections + when (command.accessibilityMode) {
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED -> 0
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.ELEVATOR_PRIORITY -> -1
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STAIRS_MINIMIZED -> -2
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR -> -3
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STROLLER -> -2
+        }).coerceAtLeast(0)
+
+        val elevatorFriendlyTransferCount = when (command.accessibilityMode) {
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED -> route.summary.transferCount / 2
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.ELEVATOR_PRIORITY,
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STAIRS_MINIMIZED,
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR,
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STROLLER -> route.summary.transferCount
+        }
+
+        val inStationDifficultyLevel = when {
+            adjustedStairSections <= 1 && route.summary.transferCount <= 1 ->
+                SearchSubwayRouteQualityV3Dto.InStationDifficultyLevel.EASY
+            adjustedStairSections <= 3 && route.summary.transferCount <= 2 ->
+                SearchSubwayRouteQualityV3Dto.InStationDifficultyLevel.MODERATE
+            else -> SearchSubwayRouteQualityV3Dto.InStationDifficultyLevel.HARD
+        }
+
+        val mobilityNote = when (command.accessibilityMode) {
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED ->
+                "기본 이동 기준으로 계산된 경로입니다."
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.ELEVATOR_PRIORITY ->
+                "엘리베이터 접근성이 높은 환승 동선을 우선 반영했습니다."
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STAIRS_MINIMIZED ->
+                "계단 이동이 적은 동선을 우선 반영했습니다."
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.WHEELCHAIR ->
+                "휠체어 이동 가능성을 고려해 역사 내 난이도를 낮춘 경로입니다."
+            SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.STROLLER ->
+                "유모차 이동에 유리한 동선을 우선 반영했습니다."
+        }
+
+        return SearchSubwayRouteQualityV3Dto.AccessibilityProfile(
+            mode = command.accessibilityMode,
+            elevatorFriendlyTransferCount = elevatorFriendlyTransferCount,
+            estimatedStairSections = adjustedStairSections,
+            inStationDifficultyLevel = inStationDifficultyLevel,
+            mobilityNote = mobilityNote,
+        )
+    }
+
+    private fun buildBoardingGuide(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+    ): SearchSubwayRouteQualityV3Dto.BoardingGuide {
+        val firstNode = route.nodes.firstOrNull()
+        val firstEdge = route.edges.firstOrNull()
+        if (firstNode == null || firstEdge == null) {
+            return SearchSubwayRouteQualityV3Dto.BoardingGuide(
+                primaryCarNo = "중앙",
+                transferOptimizedCarNo = null,
+                recommendedDoorPosition = "플랫폼 중앙",
+                reason = "경로 데이터가 제한되어 일반 탑승 위치를 권장합니다.",
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.BoardingGuideConfidenceLevel.LOW,
+            )
+        }
+
+        val recommendations = StationQuickExitRecommendationCalculator.recommend(
+            stationId = firstNode.stationId,
+            subwayLineId = firstEdge.subwayLineId,
+            upDownType = resolveRouteUpDownType(route, command),
+        )
+
+        val primary = recommendations.firstOrNull()
+        val secondary = recommendations.getOrNull(1)
+        if (primary == null) {
+            return SearchSubwayRouteQualityV3Dto.BoardingGuide(
+                primaryCarNo = "중앙",
+                transferOptimizedCarNo = null,
+                recommendedDoorPosition = "플랫폼 중앙",
+                reason = "추천 규칙이 없어 일반 탑승 위치를 권장합니다.",
+                confidenceLevel = SearchSubwayRouteQualityV3Dto.BoardingGuideConfidenceLevel.LOW,
+            )
+        }
+
+        val confidenceLevel = when (primary.confidenceLevel) {
+            GetStationTimesDto.QuickExitConfidenceLevel.HIGH ->
+                SearchSubwayRouteQualityV3Dto.BoardingGuideConfidenceLevel.HIGH
+            GetStationTimesDto.QuickExitConfidenceLevel.MEDIUM ->
+                SearchSubwayRouteQualityV3Dto.BoardingGuideConfidenceLevel.MEDIUM
+            GetStationTimesDto.QuickExitConfidenceLevel.LOW ->
+                SearchSubwayRouteQualityV3Dto.BoardingGuideConfidenceLevel.LOW
+        }
+
+        return SearchSubwayRouteQualityV3Dto.BoardingGuide(
+            primaryCarNo = primary.carNo,
+            transferOptimizedCarNo = secondary?.carNo,
+            recommendedDoorPosition = primary.directionHint,
+            reason = "빠른하차 추천 기준으로 약 ${primary.walkingBenefitMinutes}분 단축 가능한 위치입니다.",
+            confidenceLevel = confidenceLevel,
+        )
+    }
+
+    private fun resolveRouteUpDownType(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+    ): UpDownType {
+        val firstStationId = route.nodes.firstOrNull()?.stationId ?: command.sourceStationId
+        val lastStationId = route.nodes.lastOrNull()?.stationId ?: command.destinationStationId
+        return if (lastStationId >= firstStationId) {
+            UpDownType.UP
+        } else {
+            UpDownType.DOWN
+        }
+    }
+
+    private fun buildCrowdingGuide(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+        nowAt: OffsetDateTime,
+    ): SearchSubwayRouteQualityV3Dto.CrowdingGuide {
+        var congestionIndex = if (isPeakHour(nowAt)) 55 else 34
+        congestionIndex += route.summary.transferCount * 10
+        congestionIndex += route.summary.totalStops / 2
+
+        if (route.edges.any { it.subwayLineName == "2호선" || it.subwayLineName == "9호선" }) {
+            congestionIndex += 13
+        }
+        if (command.travelerContext == SearchSubwayRouteQualityV3Dto.RouteTravelerContext.COMMUTE) {
+            congestionIndex += 5
+        }
+        if (command.luggageMode != SearchSubwayRouteQualityV3Dto.RouteLuggageMode.NORMAL) {
+            congestionIndex += 5
+        }
+        if (command.crowdingPreference == SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.LESS_CROWDED) {
+            congestionIndex -= 8
+        }
+
+        val predictedLevel = when {
+            congestionIndex >= 85 -> SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.VERY_HIGH
+            congestionIndex >= 65 -> SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.HIGH
+            congestionIndex >= 45 -> SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.MEDIUM
+            else -> SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.LOW
+        }
+
+        val lessCrowdedCars = when (predictedLevel) {
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.LOW -> listOf("5-2", "6-2")
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.MEDIUM -> listOf("3-2", "7-2")
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.HIGH -> listOf("2-1", "8-1")
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.VERY_HIGH -> listOf("1-1", "10-1")
+        }
+
+        val recommendation = when {
+            predictedLevel == SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.VERY_HIGH ->
+                "혼잡이 매우 높아 후미 칸 또는 앞칸으로 분산 탑승을 권장합니다."
+            predictedLevel == SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.HIGH ->
+                "혼잡이 높아 추천 칸 우선 탑승을 권장합니다."
+            command.crowdingPreference == SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.LESS_CROWDED ->
+                "혼잡 회피 선호를 반영해 상대적으로 여유 있는 칸을 우선 제안합니다."
+            else -> "현재 시간대 기준으로 무난한 혼잡 수준입니다."
+        }
+
+        return SearchSubwayRouteQualityV3Dto.CrowdingGuide(
+            predictedLevel = predictedLevel,
+            lessCrowdedCars = lessCrowdedCars,
+            recommendation = recommendation,
+            basedOn = "historical+line-heuristic",
+        )
+    }
+
+    private fun buildNearbyEssentials(
+        route: SearchSubwayRouteDto.Route,
+    ): SearchSubwayRouteQualityV3Dto.NearbyEssentials {
+        val targetNode = route.nodes.lastOrNull() ?: route.nodes.firstOrNull()
+        if (targetNode == null) {
+            return SearchSubwayRouteQualityV3Dto.NearbyEssentials(
+                stationId = -1,
+                stationName = "정보 없음",
+                items = emptyList(),
+            )
+        }
+
+        val lineId = route.edges.lastOrNull()?.subwayLineId
+            ?: route.edges.firstOrNull()?.subwayLineId
+            ?: 1L
+
+        val places = StationNearbyPlacesRecommendationGenerator.generate(
+            stationId = targetNode.stationId,
+            subwayLineId = lineId,
+            exitNo = null,
+            limit = 4,
+        )
+
+        return SearchSubwayRouteQualityV3Dto.NearbyEssentials(
+            stationId = targetNode.stationId,
+            stationName = targetNode.stationName,
+            items = places.map { place ->
+                SearchSubwayRouteQualityV3Dto.NearbyEssentialItem(
+                    essentialType = SearchSubwayRouteQualityV3Dto.NearbyEssentialType.valueOf(
+                        place.essentialType.name
+                    ),
+                    name = place.name,
+                    walkingMinutes = place.walkingMinutes,
+                    openNow = place.openNow,
+                    reliabilityScore = place.reliabilityScore,
+                    reliabilityReason = place.reliabilityReason,
+                )
+            },
+        )
+    }
+
+    private fun buildTravelModeTags(
+        route: SearchSubwayRouteDto.Route,
+        command: SearchSubwayRouteQualityV3Command,
+    ): List<SearchSubwayRouteQualityV3Dto.RouteTravelModeTag> {
+        val tags = linkedSetOf<SearchSubwayRouteQualityV3Dto.RouteTravelModeTag>()
+
+        if (command.luggageMode == SearchSubwayRouteQualityV3Dto.RouteLuggageMode.AIRPORT_TRAVEL ||
+            route.edges.any { it.subwayLineName.contains("공항") }
+        ) {
+            tags.add(SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.AIRPORT_FRIENDLY)
+        }
+
+        if (command.travelerContext == SearchSubwayRouteQualityV3Dto.RouteTravelerContext.TRAVEL) {
+            tags.add(SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.TOURIST_FRIENDLY)
+        }
+
+        if (command.accessibilityMode != SearchSubwayRouteQualityV3Dto.RouteAccessibilityMode.BALANCED) {
+            tags.add(SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.ACCESSIBILITY_PRIORITY)
+        }
+
+        if (command.crowdingPreference == SearchSubwayRouteQualityV3Dto.RouteCrowdingPreference.LESS_CROWDED) {
+            tags.add(SearchSubwayRouteQualityV3Dto.RouteTravelModeTag.LESS_CROWDED_RECOMMENDED)
+        }
+
+        return tags.toList()
+    }
+
+    private data class OneClickActionText(
+        val emergencyTitle: String,
+        val emergencyDescription: String,
+        val lostTitle: String,
+        val lostDescription: String,
+        val complaintTitle: String,
+        val complaintDescription: String,
+        val copyTitle: String,
+        val copyDescription: String,
+        val emergencyPhrase: String,
+    )
+
+    private fun buildOneClickActions(
+        command: SearchSubwayRouteQualityV3Command,
+        primaryLineId: Long?,
+    ): List<SearchSubwayRouteQualityV3Dto.OneClickAction> {
+        val text = resolveOneClickActionText(command.locale)
+        val lineQuery = primaryLineId?.let { "&subwayLineId=$it" } ?: ""
+        val prefillQuery = "prefill=1&templateLocale=${command.locale}&stationId=${command.sourceStationId}$lineQuery"
+
+        return listOf(
+            SearchSubwayRouteQualityV3Dto.OneClickAction(
+                actionType = SearchSubwayRouteQualityV3Dto.OneClickActionType.CALL_EMERGENCY_112,
+                title = text.emergencyTitle,
+                description = text.emergencyDescription,
+                deepLink = "tel:112",
+                payloadTemplate = null,
+            ),
+            SearchSubwayRouteQualityV3Dto.OneClickAction(
+                actionType = SearchSubwayRouteQualityV3Dto.OneClickActionType.OPEN_LOST_REPORT,
+                title = text.lostTitle,
+                description = text.lostDescription,
+                deepLink = "/lost-found/new?$prefillQuery",
+                payloadTemplate = null,
+            ),
+            SearchSubwayRouteQualityV3Dto.OneClickAction(
+                actionType = SearchSubwayRouteQualityV3Dto.OneClickActionType.OPEN_COMPLAINT_REPORT,
+                title = text.complaintTitle,
+                description = text.complaintDescription,
+                deepLink = "/complaint/new?$prefillQuery",
+                payloadTemplate = null,
+            ),
+            SearchSubwayRouteQualityV3Dto.OneClickAction(
+                actionType = SearchSubwayRouteQualityV3Dto.OneClickActionType.COPY_EMERGENCY_PHRASE,
+                title = text.copyTitle,
+                description = text.copyDescription,
+                deepLink = "copy://emergency-phrase",
+                payloadTemplate = text.emergencyPhrase,
+            ),
+        )
+    }
+
+    private fun resolveOneClickActionText(locale: String): OneClickActionText {
+        return when (locale) {
+            "en" -> OneClickActionText(
+                emergencyTitle = "Call 112",
+                emergencyDescription = "Emergency call to police and station support.",
+                lostTitle = "Lost item report",
+                lostDescription = "Open lost-item report with station prefilled.",
+                complaintTitle = "Service complaint",
+                complaintDescription = "Open complaint form with station prefilled.",
+                copyTitle = "Copy emergency phrase",
+                copyDescription = "Copy a ready-to-use emergency sentence.",
+                emergencyPhrase = "There is an urgent incident in the subway. Please send help immediately.",
+            )
+            "th" -> OneClickActionText(
+                emergencyTitle = "โทร 112",
+                emergencyDescription = "โทรฉุกเฉินถึงตำรวจ/เจ้าหน้าที่ทันที",
+                lostTitle = "แจ้งของหาย",
+                lostDescription = "เปิดฟอร์มแจ้งของหายพร้อมข้อมูลสถานี",
+                complaintTitle = "แจ้งปัญหาการใช้งาน",
+                complaintDescription = "เปิดฟอร์มร้องเรียนพร้อมข้อมูลสถานี",
+                copyTitle = "คัดลอกประโยคฉุกเฉิน",
+                copyDescription = "คัดลอกข้อความพร้อมใช้สำหรับเหตุฉุกเฉิน",
+                emergencyPhrase = "เกิดเหตุฉุกเฉินในรถไฟใต้ดิน กรุณาส่งเจ้าหน้าที่ด่วน",
+            )
+            "cn" -> OneClickActionText(
+                emergencyTitle = "拨打112",
+                emergencyDescription = "一键拨打紧急电话并联系车站工作人员",
+                lostTitle = "失物申报",
+                lostDescription = "打开已预填车站信息的失物表单",
+                complaintTitle = "服务投诉",
+                complaintDescription = "打开已预填车站信息的投诉表单",
+                copyTitle = "复制紧急短语",
+                copyDescription = "复制可直接使用的紧急求助语句",
+                emergencyPhrase = "地铁发生紧急情况，请立即派人支援。",
+            )
+            else -> OneClickActionText(
+                emergencyTitle = "112 긴급전화",
+                emergencyDescription = "긴급 상황 발생 시 즉시 112로 연결합니다.",
+                lostTitle = "분실 신고 바로가기",
+                lostDescription = "역/노선 정보가 포함된 분실물 신고 화면으로 이동합니다.",
+                complaintTitle = "민원 신고 바로가기",
+                complaintDescription = "역/노선 정보가 포함된 민원 접수 화면으로 이동합니다.",
+                copyTitle = "긴급 문구 복사",
+                copyDescription = "역무원/주변인에게 보여줄 긴급 문구를 복사합니다.",
+                emergencyPhrase = "지하철에서 긴급 상황이 발생했습니다. 즉시 도움을 요청합니다.",
+            )
+        }
     }
 
     private fun resolveConfidenceLevel(
@@ -1072,6 +1524,7 @@ class StationService(
     private fun estimateDelayProbabilityPercent(
         route: SearchSubwayRouteDto.Route,
         nowAt: OffsetDateTime,
+        crowdingGuide: SearchSubwayRouteQualityV3Dto.CrowdingGuide,
     ): Int {
         var probability = 10
         probability += route.summary.transferCount * 14
@@ -1088,6 +1541,12 @@ class StationService(
         }
         if (route.edges.any { it.subwayLineName == "2호선" || it.subwayLineName == "9호선" }) {
             probability += 10
+        }
+        probability += when (crowdingGuide.predictedLevel) {
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.LOW -> -5
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.MEDIUM -> 0
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.HIGH -> 6
+            SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.VERY_HIGH -> 12
         }
 
         return probability.coerceIn(5, 95)

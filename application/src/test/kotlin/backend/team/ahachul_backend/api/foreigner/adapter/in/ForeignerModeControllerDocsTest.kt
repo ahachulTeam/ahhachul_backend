@@ -57,6 +57,22 @@ class ForeignerModeControllerDocsTest : CommonDocsTestConfig() {
                 safetyTip = "During crowding, wait behind the safety line and avoid forcing your way in.",
                 emergencyPhrase = "In emergencies, contact station staff or call 112 immediately.",
             ),
+            oneClickActions = listOf(
+                ForeignerModeDto.OneClickAction(
+                    actionType = ForeignerModeDto.OneClickActionType.CALL_EMERGENCY_112,
+                    title = "Call 112",
+                    description = "Immediately connect to emergency support.",
+                    deepLink = "tel:112",
+                    payloadTemplate = null,
+                ),
+                ForeignerModeDto.OneClickAction(
+                    actionType = ForeignerModeDto.OneClickActionType.OPEN_LOST_REPORT,
+                    title = "Lost item report",
+                    description = "Open lost-item form with station prefilled.",
+                    deepLink = "/lost-found/new?prefill=1&templateLocale=en&stationId=557&subwayLineId=18",
+                    payloadTemplate = "Hello, I am looking for a lost item.",
+                ),
+            ),
             supportedLocales = listOf("ko", "en", "th", "cn"),
         )
 
@@ -101,6 +117,12 @@ class ForeignerModeControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.cultureGuide.transferEtiquetteTip").type(JsonFieldType.STRING).description("환승 예절 안내"),
                         fieldWithPath("result.cultureGuide.safetyTip").type(JsonFieldType.STRING).description("안전 안내"),
                         fieldWithPath("result.cultureGuide.emergencyPhrase").type(JsonFieldType.STRING).description("긴급 문구"),
+                        fieldWithPath("result.oneClickActions").type(JsonFieldType.ARRAY).description("다국어 원클릭 액션"),
+                        fieldWithPath("result.oneClickActions[].actionType").type(JsonFieldType.STRING).description("액션 타입"),
+                        fieldWithPath("result.oneClickActions[].title").type(JsonFieldType.STRING).description("액션 제목"),
+                        fieldWithPath("result.oneClickActions[].description").type(JsonFieldType.STRING).description("액션 설명"),
+                        fieldWithPath("result.oneClickActions[].deepLink").type(JsonFieldType.STRING).description("실행 링크"),
+                        fieldWithPath("result.oneClickActions[].payloadTemplate").type(JsonFieldType.STRING).optional().description("복사/입력 템플릿"),
                         fieldWithPath("result.supportedLocales").type(JsonFieldType.ARRAY).description("지원 locale 목록"),
                     ),
                 ),

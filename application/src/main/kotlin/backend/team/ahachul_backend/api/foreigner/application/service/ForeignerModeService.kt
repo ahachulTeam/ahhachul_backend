@@ -92,6 +92,7 @@ class ForeignerModeService(
         val localizedStationName = localizeStationName(stationNameKo, romanizedName, locale)
         val localizedSubwayLineName = localizeSubwayLineName(subwayLineNameKo, locale)
         val templates = buildTemplates(locale, localizedStationName, localizedSubwayLineName)
+        val cultureGuide = buildCultureGuide(locale)
 
         return ForeignerModeDto.StationGuideResponse(
             generatedAt = OffsetDateTime.now().toString(),
@@ -107,7 +108,14 @@ class ForeignerModeService(
                 locale = locale.code,
             ),
             templates = templates,
-            cultureGuide = buildCultureGuide(locale),
+            cultureGuide = cultureGuide,
+            oneClickActions = buildOneClickActions(
+                locale = locale,
+                stationId = subwayLineStation.station.id,
+                subwayLineId = subwayLineStation.subwayLine.id,
+                templates = templates,
+                cultureGuide = cultureGuide,
+            ),
             supportedLocales = ForeignerLocale.values().map { it.code },
         )
     }
@@ -726,6 +734,90 @@ class ForeignerModeService(
                 emergencyPhrase = "紧急情况请立即联系车站工作人员或拨打112。",
             )
         }
+    }
+
+    private fun buildOneClickActions(
+        locale: ForeignerLocale,
+        stationId: Long,
+        subwayLineId: Long,
+        templates: ForeignerModeDto.TemplateBundle,
+        cultureGuide: ForeignerModeDto.CultureGuide,
+    ): List<ForeignerModeDto.OneClickAction> {
+        val actionText = when (locale) {
+            ForeignerLocale.KO -> mapOf(
+                "callTitle" to "112 긴급전화",
+                "callDesc" to "긴급 상황 시 즉시 112로 연결합니다.",
+                "lostTitle" to "분실 신고 바로가기",
+                "lostDesc" to "역/노선이 채워진 분실물 신고 화면으로 이동합니다.",
+                "complaintTitle" to "민원 신고 바로가기",
+                "complaintDesc" to "역/노선이 채워진 민원 접수 화면으로 이동합니다.",
+                "copyTitle" to "긴급 문구 복사",
+                "copyDesc" to "역무원에게 보여줄 긴급 문구를 복사합니다.",
+            )
+            ForeignerLocale.EN -> mapOf(
+                "callTitle" to "Call 112",
+                "callDesc" to "Immediately connect to emergency support.",
+                "lostTitle" to "Lost item report",
+                "lostDesc" to "Open lost-item form with station prefilled.",
+                "complaintTitle" to "Service complaint",
+                "complaintDesc" to "Open complaint form with station prefilled.",
+                "copyTitle" to "Copy emergency phrase",
+                "copyDesc" to "Copy an emergency phrase for station staff.",
+            )
+            ForeignerLocale.TH -> mapOf(
+                "callTitle" to "โทร 112",
+                "callDesc" to "เชื่อมต่อสายฉุกเฉินทันที",
+                "lostTitle" to "แจ้งของหาย",
+                "lostDesc" to "เปิดฟอร์มของหายพร้อมข้อมูลสถานี",
+                "complaintTitle" to "แจ้งปัญหาการใช้งาน",
+                "complaintDesc" to "เปิดฟอร์มร้องเรียนพร้อมข้อมูลสถานี",
+                "copyTitle" to "คัดลอกข้อความฉุกเฉิน",
+                "copyDesc" to "คัดลอกข้อความสำหรับแจ้งเจ้าหน้าที่",
+            )
+            ForeignerLocale.CN -> mapOf(
+                "callTitle" to "拨打112",
+                "callDesc" to "立即连接紧急支援",
+                "lostTitle" to "失物申报",
+                "lostDesc" to "打开已预填车站信息的失物表单",
+                "complaintTitle" to "服务投诉",
+                "complaintDesc" to "打开已预填车站信息的投诉表单",
+                "copyTitle" to "复制紧急短语",
+                "copyDesc" to "复制用于向站务员求助的短语",
+            )
+        }
+
+        val prefillQuery = "prefill=1&templateLocale=${locale.code}&stationId=$stationId&subwayLineId=$subwayLineId"
+
+        return listOf(
+            ForeignerModeDto.OneClickAction(
+                actionType = ForeignerModeDto.OneClickActionType.CALL_EMERGENCY_112,
+                title = actionText.getValue("callTitle"),
+                description = actionText.getValue("callDesc"),
+                deepLink = "tel:112",
+                payloadTemplate = null,
+            ),
+            ForeignerModeDto.OneClickAction(
+                actionType = ForeignerModeDto.OneClickActionType.OPEN_LOST_REPORT,
+                title = actionText.getValue("lostTitle"),
+                description = actionText.getValue("lostDesc"),
+                deepLink = "/lost-found/new?$prefillQuery",
+                payloadTemplate = templates.lostBodyTemplate,
+            ),
+            ForeignerModeDto.OneClickAction(
+                actionType = ForeignerModeDto.OneClickActionType.OPEN_COMPLAINT_REPORT,
+                title = actionText.getValue("complaintTitle"),
+                description = actionText.getValue("complaintDesc"),
+                deepLink = "/complaint/new?$prefillQuery",
+                payloadTemplate = templates.complaintBodyTemplate,
+            ),
+            ForeignerModeDto.OneClickAction(
+                actionType = ForeignerModeDto.OneClickActionType.COPY_EMERGENCY_PHRASE,
+                title = actionText.getValue("copyTitle"),
+                description = actionText.getValue("copyDesc"),
+                deepLink = "copy://emergency-phrase",
+                payloadTemplate = cultureGuide.emergencyPhrase,
+            ),
+        )
     }
 
     private fun buildTranslationNotice(locale: ForeignerLocale): String {
