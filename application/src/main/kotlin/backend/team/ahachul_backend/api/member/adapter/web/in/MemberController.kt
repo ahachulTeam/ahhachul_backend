@@ -68,6 +68,15 @@ class MemberController(
     }
 
     @Authentication
+    @GetMapping("/v2/members/commute-coach/today")
+    fun getTodayCommuteCoach(
+        @RequestParam(required = false) targetArrivalAt: String?,
+        @RequestParam(required = false) timezone: String?,
+    ): CommonResponse<CommuteCoachDto.Response> {
+        return CommonResponse.success(memberUseCase.getTodayCommuteCoach(targetArrivalAt, timezone))
+    }
+
+    @Authentication
     @PostMapping("/v2/members/bookmarks/routes")
     fun createFavoriteRoute(
         @RequestBody request: FavoriteRouteDto.CreateRequest

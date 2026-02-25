@@ -38,7 +38,11 @@ import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.text.Normalizer
+import java.time.Duration
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.PriorityQueue
 
@@ -65,6 +69,8 @@ class MemberService(
         private const val NICKNAME_MIN_LENGTH = 2
         private const val NICKNAME_MAX_LENGTH = 10
         private const val MAX_FAVORITE_ROUTE_COUNT = 10
+        private val DEFAULT_COMMUTE_ARRIVAL_TIME: LocalTime = LocalTime.of(9, 0)
+        private const val DEFAULT_TIMEZONE = "Asia/Seoul"
         private val NICKNAME_REGEX = Regex("^[가-힣a-zA-Z0-9_]+$")
     }
 
@@ -112,6 +118,8 @@ class MemberService(
         val metric: RouteMetric,
         val stationNamesById: Map<Long, String>,
     )
+
+    private val commuteTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     override fun getMember(): GetMemberDto.Response {
         val member = memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
@@ -300,6 +308,54 @@ class MemberService(
         return FavoriteRouteDto.GraphResponse(routes = routes)
     }
 
+    override fun getTodayCommuteCoach(targetArrivalAt: String?, timezone: String?): CommuteCoachDto.Response {
+        val zoneId = parseTimezoneOrDefault(timezone)
+        val now = ZonedDateTime.now(zoneId)
+        val normalizedTargetTime = parseTargetArrivalTimeOrDefault(targetArrivalAt)
+        val targetArrivalDateTime = resolveTargetArrivalDateTime(now, normalizedTargetTime)
+
+        val recommendations = getFavoriteRouteRecommendations(limit = 3).routes
+        if (recommendations.isEmpty()) {
+            return CommuteCoachDto.Response(
+                generatedAt = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                targetArrivalAt = normalizedTargetTime.format(commuteTimeFormatter),
+                safeDepartureAt = null,
+                departureInMinutes = null,
+                riskLevel = CommuteCoachDto.RiskLevel.HIGH,
+                riskReasons = listOf("출근 코치 계산에 필요한 즐겨찾기 경로가 없습니다."),
+                primaryRoute = null,
+                alternativeRoutes = emptyList(),
+                guidanceMessage = "즐겨찾는 역을 2개 이상 등록하면 출근 코치를 제공할 수 있어요.",
+            )
+        }
+
+        val primaryRoute = recommendations.first()
+        val alternativeRoutes = recommendations.drop(1).take(2)
+        val requiredMinutes = calculateRequiredMinutes(primaryRoute.summary)
+        val safeDepartureDateTime = targetArrivalDateTime.minusMinutes(requiredMinutes.toLong())
+        val departureInMinutes = Duration.between(now, safeDepartureDateTime).toMinutes().toInt()
+        val minutesUntilTarget = Duration.between(now, targetArrivalDateTime).toMinutes().toInt()
+        val riskLevel = calculateRiskLevel(minutesUntilTarget, primaryRoute.summary.estimatedMinutes, requiredMinutes)
+        val riskReasons = buildRiskReasons(
+            route = primaryRoute,
+            targetArrivalAt = targetArrivalDateTime,
+            minutesUntilTarget = minutesUntilTarget,
+            requiredMinutes = requiredMinutes,
+        )
+
+        return CommuteCoachDto.Response(
+            generatedAt = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+            targetArrivalAt = normalizedTargetTime.format(commuteTimeFormatter),
+            safeDepartureAt = safeDepartureDateTime.format(commuteTimeFormatter),
+            departureInMinutes = departureInMinutes,
+            riskLevel = riskLevel,
+            riskReasons = riskReasons,
+            primaryRoute = primaryRoute,
+            alternativeRoutes = alternativeRoutes,
+            guidanceMessage = resolveGuidanceMessage(riskLevel),
+        )
+    }
+
     @Transactional
     override fun createFavoriteRoute(command: CreateFavoriteRouteCommand): FavoriteRouteDto.Route {
         if (command.sourceStationId == command.destinationStationId) {
@@ -463,6 +519,87 @@ class MemberService(
 
     private fun estimateRouteMinutes(totalStops: Int, transferCount: Int): Int {
         return totalStops * 2 + transferCount * 4
+    }
+
+    private fun parseTimezoneOrDefault(timezone: String?): ZoneId {
+        val normalized = timezone?.trim().takeUnless { it.isNullOrEmpty() } ?: DEFAULT_TIMEZONE
+        return runCatching { ZoneId.of(normalized) }
+            .getOrDefault(ZoneId.of(DEFAULT_TIMEZONE))
+    }
+
+    private fun parseTargetArrivalTimeOrDefault(targetArrivalAt: String?): LocalTime {
+        val normalized = targetArrivalAt?.trim().takeUnless { it.isNullOrEmpty() } ?: return DEFAULT_COMMUTE_ARRIVAL_TIME
+        return runCatching { LocalTime.parse(normalized, commuteTimeFormatter) }
+            .getOrDefault(DEFAULT_COMMUTE_ARRIVAL_TIME)
+    }
+
+    private fun resolveTargetArrivalDateTime(now: ZonedDateTime, targetArrivalTime: LocalTime): ZonedDateTime {
+        val candidate = now.withHour(targetArrivalTime.hour)
+            .withMinute(targetArrivalTime.minute)
+            .withSecond(0)
+            .withNano(0)
+
+        return if (candidate.isBefore(now)) {
+            candidate.plusDays(1)
+        } else {
+            candidate
+        }
+    }
+
+    private fun calculateRequiredMinutes(summary: FavoriteRouteDto.Summary): Int {
+        val estimatedMinutes = summary.estimatedMinutes
+        val transferBuffer = 4 + summary.transferCount * 3
+        return estimatedMinutes + transferBuffer
+    }
+
+    private fun calculateRiskLevel(
+        minutesUntilTarget: Int,
+        estimatedMinutes: Int,
+        requiredMinutes: Int,
+    ): CommuteCoachDto.RiskLevel {
+        return when {
+            minutesUntilTarget >= requiredMinutes -> CommuteCoachDto.RiskLevel.LOW
+            minutesUntilTarget >= estimatedMinutes -> CommuteCoachDto.RiskLevel.MEDIUM
+            else -> CommuteCoachDto.RiskLevel.HIGH
+        }
+    }
+
+    private fun buildRiskReasons(
+        route: FavoriteRouteDto.Route,
+        targetArrivalAt: ZonedDateTime,
+        minutesUntilTarget: Int,
+        requiredMinutes: Int,
+    ): List<String> {
+        val reasons = mutableListOf<String>()
+
+        if (route.summary.transferCount > 0) {
+            reasons.add("환승 ${route.summary.transferCount}회 경로라 이동 변동 가능성이 있습니다.")
+        }
+
+        val missingMinutes = requiredMinutes - minutesUntilTarget
+        if (missingMinutes > 0) {
+            reasons.add(
+                "목표 도착 시각(${targetArrivalAt.format(commuteTimeFormatter)}) 대비 여유 시간이 ${missingMinutes}분 부족합니다."
+            )
+        }
+
+        if (route.summary.totalStops >= 12) {
+            reasons.add("이동 정거장이 많아 지연 발생 시 영향이 커질 수 있습니다.")
+        }
+
+        if (reasons.isEmpty()) {
+            reasons.add("현재 조건에서 도착 여유 시간이 충분합니다.")
+        }
+
+        return reasons
+    }
+
+    private fun resolveGuidanceMessage(riskLevel: CommuteCoachDto.RiskLevel): String {
+        return when (riskLevel) {
+            CommuteCoachDto.RiskLevel.LOW -> "권장 출발 시각에 맞춰 이동하면 안정적으로 도착할 가능성이 높아요."
+            CommuteCoachDto.RiskLevel.MEDIUM -> "여유 시간이 크지 않아 환승 구간 지연 여부를 함께 확인해 주세요."
+            CommuteCoachDto.RiskLevel.HIGH -> "지금 바로 이동하거나 대체 경로를 우선 확인해 주세요."
+        }
     }
 
     private fun findShortestPath(sourceStationId: Long, destinationStationId: Long): PathResult {

@@ -586,6 +586,120 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
+    fun getTodayCommuteCoachTest() {
+        // given
+        val route = FavoriteRouteDto.Route(
+            routeId = null,
+            routeType = FavoriteRouteDto.RouteType.RECOMMENDED,
+            title = null,
+            sourceStationId = 1L,
+            sourceStationName = "안암",
+            destinationStationId = 2L,
+            destinationStationName = "성수",
+            nodes = listOf(
+                FavoriteRouteDto.Node(1L, "안암", 0, true),
+                FavoriteRouteDto.Node(2L, "성수", 1, true),
+            ),
+            edges = listOf(
+                FavoriteRouteDto.Edge(1L, 2L, 6L, "6호선"),
+            ),
+            summary = FavoriteRouteDto.Summary(
+                totalStops = 1,
+                transferCount = 0,
+                estimatedMinutes = 2,
+            ),
+        )
+
+        val response = CommuteCoachDto.Response(
+            generatedAt = "2026-02-25T09:00:00+09:00",
+            targetArrivalAt = "09:00",
+            safeDepartureAt = "08:52",
+            departureInMinutes = 17,
+            riskLevel = CommuteCoachDto.RiskLevel.LOW,
+            riskReasons = listOf("현재 조건에서 도착 여유 시간이 충분합니다."),
+            primaryRoute = route,
+            alternativeRoutes = listOf(route.copy(destinationStationId = 3L, destinationStationName = "왕십리")),
+            guidanceMessage = "권장 출발 시각에 맞춰 이동하면 안정적으로 도착할 가능성이 높아요.",
+        )
+
+        given(memberUseCase.getTodayCommuteCoach("09:00", "Asia/Seoul")).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v2/members/commute-coach/today")
+                .queryParam("targetArrivalAt", "09:00")
+                .queryParam("timezone", "Asia/Seoul")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-today-commute-coach",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("targetArrivalAt").description("목표 도착 시각(HH:mm)").optional(),
+                        parameterWithName("timezone").description("타임존(예: Asia/Seoul)").optional(),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.generatedAt").type(JsonFieldType.STRING).description("응답 생성 시각"),
+                        fieldWithPath("result.targetArrivalAt").type(JsonFieldType.STRING).description("목표 도착 시각(HH:mm)"),
+                        fieldWithPath("result.safeDepartureAt").type(JsonFieldType.STRING).description("권장 출발 시각(HH:mm)").optional(),
+                        fieldWithPath("result.departureInMinutes").type(JsonFieldType.NUMBER).description("지금 기준 권장 출발까지 남은 분").optional(),
+                        fieldWithPath("result.riskLevel").type(JsonFieldType.STRING).description("출근 위험도(LOW|MEDIUM|HIGH)"),
+                        fieldWithPath("result.riskReasons").type(JsonFieldType.ARRAY).description("위험도 판단 사유"),
+                        fieldWithPath("result.primaryRoute").type(JsonFieldType.OBJECT).description("기본 추천 경로").optional(),
+                        fieldWithPath("result.primaryRoute.routeId").type(JsonFieldType.NULL).description("경로 ID(추천 경로는 null)").optional(),
+                        fieldWithPath("result.primaryRoute.routeType").type(JsonFieldType.STRING).description("경로 타입").optional(),
+                        fieldWithPath("result.primaryRoute.title").type(JsonFieldType.NULL).description("경로 제목").optional(),
+                        fieldWithPath("result.primaryRoute.sourceStationId").type(JsonFieldType.NUMBER).description("출발역 ID").optional(),
+                        fieldWithPath("result.primaryRoute.sourceStationName").type(JsonFieldType.STRING).description("출발역 이름").optional(),
+                        fieldWithPath("result.primaryRoute.destinationStationId").type(JsonFieldType.NUMBER).description("도착역 ID").optional(),
+                        fieldWithPath("result.primaryRoute.destinationStationName").type(JsonFieldType.STRING).description("도착역 이름").optional(),
+                        fieldWithPath("result.primaryRoute.nodes").type(JsonFieldType.ARRAY).description("기본 경로 노드").optional(),
+                        fieldWithPath("result.primaryRoute.nodes[].stationId").type(JsonFieldType.NUMBER).description("노드 역 ID").optional(),
+                        fieldWithPath("result.primaryRoute.nodes[].stationName").type(JsonFieldType.STRING).description("노드 역 이름").optional(),
+                        fieldWithPath("result.primaryRoute.nodes[].order").type(JsonFieldType.NUMBER).description("노드 순서").optional(),
+                        fieldWithPath("result.primaryRoute.nodes[].favorite").type(JsonFieldType.BOOLEAN).description("즐겨찾기 포함 여부").optional(),
+                        fieldWithPath("result.primaryRoute.edges").type(JsonFieldType.ARRAY).description("기본 경로 엣지").optional(),
+                        fieldWithPath("result.primaryRoute.edges[].fromStationId").type(JsonFieldType.NUMBER).description("엣지 출발역 ID").optional(),
+                        fieldWithPath("result.primaryRoute.edges[].toStationId").type(JsonFieldType.NUMBER).description("엣지 도착역 ID").optional(),
+                        fieldWithPath("result.primaryRoute.edges[].subwayLineId").type(JsonFieldType.NUMBER).description("엣지 노선 ID").optional(),
+                        fieldWithPath("result.primaryRoute.edges[].subwayLineName").type(JsonFieldType.STRING).description("엣지 노선 이름").optional(),
+                        fieldWithPath("result.primaryRoute.summary.totalStops").type(JsonFieldType.NUMBER).description("정거장 수").optional(),
+                        fieldWithPath("result.primaryRoute.summary.transferCount").type(JsonFieldType.NUMBER).description("환승 횟수").optional(),
+                        fieldWithPath("result.primaryRoute.summary.estimatedMinutes").type(JsonFieldType.NUMBER).description("예상 소요(분)").optional(),
+                        fieldWithPath("result.alternativeRoutes").type(JsonFieldType.ARRAY).description("대체 경로 리스트"),
+                        fieldWithPath("result.alternativeRoutes[].routeId").type(JsonFieldType.NULL).description("대체 경로 ID").optional(),
+                        fieldWithPath("result.alternativeRoutes[].routeType").type(JsonFieldType.STRING).description("대체 경로 타입"),
+                        fieldWithPath("result.alternativeRoutes[].title").type(JsonFieldType.NULL).description("대체 경로 제목").optional(),
+                        fieldWithPath("result.alternativeRoutes[].sourceStationId").type(JsonFieldType.NUMBER).description("대체 경로 출발역 ID"),
+                        fieldWithPath("result.alternativeRoutes[].sourceStationName").type(JsonFieldType.STRING).description("대체 경로 출발역 이름"),
+                        fieldWithPath("result.alternativeRoutes[].destinationStationId").type(JsonFieldType.NUMBER).description("대체 경로 도착역 ID"),
+                        fieldWithPath("result.alternativeRoutes[].destinationStationName").type(JsonFieldType.STRING).description("대체 경로 도착역 이름"),
+                        fieldWithPath("result.alternativeRoutes[].nodes").type(JsonFieldType.ARRAY).description("대체 경로 노드"),
+                        fieldWithPath("result.alternativeRoutes[].nodes[].stationId").type(JsonFieldType.NUMBER).description("대체 경로 노드 역 ID"),
+                        fieldWithPath("result.alternativeRoutes[].nodes[].stationName").type(JsonFieldType.STRING).description("대체 경로 노드 역 이름"),
+                        fieldWithPath("result.alternativeRoutes[].nodes[].order").type(JsonFieldType.NUMBER).description("대체 경로 노드 순서"),
+                        fieldWithPath("result.alternativeRoutes[].nodes[].favorite").type(JsonFieldType.BOOLEAN).description("대체 경로 즐겨찾기 포함 여부"),
+                        fieldWithPath("result.alternativeRoutes[].edges").type(JsonFieldType.ARRAY).description("대체 경로 엣지"),
+                        fieldWithPath("result.alternativeRoutes[].edges[].fromStationId").type(JsonFieldType.NUMBER).description("대체 경로 엣지 출발역 ID"),
+                        fieldWithPath("result.alternativeRoutes[].edges[].toStationId").type(JsonFieldType.NUMBER).description("대체 경로 엣지 도착역 ID"),
+                        fieldWithPath("result.alternativeRoutes[].edges[].subwayLineId").type(JsonFieldType.NUMBER).description("대체 경로 엣지 노선 ID"),
+                        fieldWithPath("result.alternativeRoutes[].edges[].subwayLineName").type(JsonFieldType.STRING).description("대체 경로 엣지 노선 이름"),
+                        fieldWithPath("result.alternativeRoutes[].summary.totalStops").type(JsonFieldType.NUMBER).description("대체 경로 정거장 수"),
+                        fieldWithPath("result.alternativeRoutes[].summary.transferCount").type(JsonFieldType.NUMBER).description("대체 경로 환승 횟수"),
+                        fieldWithPath("result.alternativeRoutes[].summary.estimatedMinutes").type(JsonFieldType.NUMBER).description("대체 경로 예상 소요(분)"),
+                        fieldWithPath("result.guidanceMessage").type(JsonFieldType.STRING).description("사용자 안내 문구"),
+                    )
+                )
+            )
+    }
+
+    @Test
     fun deleteFavoriteRouteTest() {
         // given
         val response = FavoriteRouteDto.DeleteResponse(routeId = 100L)

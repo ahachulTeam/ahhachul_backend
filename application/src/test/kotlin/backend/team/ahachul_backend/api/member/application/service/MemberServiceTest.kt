@@ -442,6 +442,43 @@ class MemberServiceTest(
     }
 
     @Test
+    @DisplayName("출근 코치 - 즐겨찾기 역이 부족하면 가이드 메시지를 반환한다")
+    fun 출근_코치_즐겨찾기_부족_가이드() {
+        // when
+        val result = memberUseCase.getTodayCommuteCoach("09:00", "Asia/Seoul")
+
+        // then
+        assertThat(result.primaryRoute).isNull()
+        assertThat(result.alternativeRoutes).isEmpty()
+        assertThat(result.guidanceMessage).contains("즐겨찾는 역을 2개 이상 등록")
+    }
+
+    @Test
+    @DisplayName("출근 코치 - 즐겨찾기 역 기반 추천 경로를 반환한다")
+    fun 출근_코치_추천_경로_반환() {
+        // given
+        val stationA = stationRepository.save(StationEntity(name = "안암"))
+        val stationB = stationRepository.save(StationEntity(name = "성수"))
+        val line = subwayLineRepository.save(
+            SubwayLineEntity(name = "6호선", regionType = RegionType.METROPOLITAN)
+        )
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = stationA, subwayLine = line))
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = stationB, subwayLine = line))
+        memberStationRepository.save(MemberStationEntity(member = member!!, station = stationA, label = "집"))
+        memberStationRepository.save(MemberStationEntity(member = member!!, station = stationB, label = "회사"))
+
+        // when
+        val result = memberUseCase.getTodayCommuteCoach("09:00", "Asia/Seoul")
+
+        // then
+        assertThat(result.primaryRoute).isNotNull()
+        assertThat(result.primaryRoute!!.sourceStationName).isEqualTo("안암")
+        assertThat(result.primaryRoute!!.destinationStationName).isEqualTo("성수")
+        assertThat(result.safeDepartureAt).matches("\\d{2}:\\d{2}")
+        assertThat(result.departureInMinutes).isNotNull
+    }
+
+    @Test
     fun fcmTokenInsert() {
         // given
         val token = "TEST"
