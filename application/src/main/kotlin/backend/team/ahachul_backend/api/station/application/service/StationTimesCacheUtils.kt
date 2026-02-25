@@ -16,9 +16,14 @@ class StationTimesCacheUtils(
 
     fun setStationTimesCache(command: GetStationTimesCacheCommand, value: List<GetStationTimesDto.StationTimes>) {
         val key = createKey(command)
+        val ttlSeconds = if (value.isEmpty()) {
+            EMPTY_STATION_TIMES_REDIS_EXPIRE_SEC
+        } else {
+            STATION_TIMES_REDIS_EXPIRE_SEC
+        }
         redisClient.set(
             key, value,
-            TRAIN_REAL_TIME_REDIS_EXPIRE_SEC,
+            ttlSeconds,
             TimeUnit.SECONDS
         )
     }
@@ -42,6 +47,7 @@ class StationTimesCacheUtils(
 
     companion object {
         const val STATION_TIMES_REDIS_PREFIX = "STATION_TIMES:"
-        const val TRAIN_REAL_TIME_REDIS_EXPIRE_SEC = 86400L
+        const val STATION_TIMES_REDIS_EXPIRE_SEC = 86400L
+        const val EMPTY_STATION_TIMES_REDIS_EXPIRE_SEC = 600L
     }
 }
