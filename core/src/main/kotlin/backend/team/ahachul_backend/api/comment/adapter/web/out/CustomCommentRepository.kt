@@ -84,7 +84,7 @@ class CustomCommentRepository(
     }
 
     private fun getOrder(sort: Sort): OrderSpecifier<*>? {
-        if (sort.isUnsorted) return commentEntity.createdAt.asc()
+        if (sort.isUnsorted) return commentEntity.createdAt.desc()
 
         val property = sort.toList()[0].property
         val direction = sort.toList()[0].direction

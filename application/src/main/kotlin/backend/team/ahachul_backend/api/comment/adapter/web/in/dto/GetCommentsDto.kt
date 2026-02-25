@@ -20,12 +20,12 @@ class GetCommentsDto {
         }
 
         private fun toSort(): Sort {
-            val normalizedSort = sort?.trim().takeUnless { it.isNullOrBlank() } ?: "createdAt,asc"
+            val normalizedSort = sort?.trim().takeUnless { it.isNullOrBlank() } ?: "createdAt,desc"
             val parts = normalizedSort.split(",")
             val property = parts.getOrNull(0)?.takeUnless { it.isBlank() } ?: "createdAt"
             val direction = runCatching {
-                Sort.Direction.fromString(parts.getOrNull(1)?.trim() ?: "asc")
-            }.getOrDefault(Sort.Direction.ASC)
+                Sort.Direction.fromString(parts.getOrNull(1)?.trim() ?: "desc")
+            }.getOrDefault(Sort.Direction.DESC)
 
             return Sort.by(direction, property)
         }
@@ -49,6 +49,7 @@ class GetCommentsDto {
         val createdBy: String,
         val writer: String,
         val isPrivate: Boolean,
-        val likeCnt: Long
+        val likeCnt: Long,
+        val likedByMe: Boolean = false,
     )
 }

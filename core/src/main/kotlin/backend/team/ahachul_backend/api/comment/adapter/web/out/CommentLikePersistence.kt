@@ -21,4 +21,14 @@ class CommentLikePersistence(
     override fun find(commentId: Long, memberId: Long): CommentLikeEntity? {
         return repository.findByCommentIdAndMemberId(commentId, memberId)
     }
+
+    override fun findLikedCommentIds(commentIds: List<Long>, memberId: Long): Set<Long> {
+        if (commentIds.isEmpty()) {
+            return emptySet()
+        }
+
+        return repository.findAllByCommentIdInAndMemberId(commentIds, memberId)
+            .map { it.comment.id }
+            .toSet()
+    }
 }

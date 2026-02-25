@@ -9,6 +9,7 @@ import backend.team.ahachul_backend.api.comment.application.command.DeleteCommen
 import backend.team.ahachul_backend.api.comment.application.command.GetCommentsCommand
 import backend.team.ahachul_backend.api.comment.application.command.UpdateCommentCommand
 import backend.team.ahachul_backend.api.comment.application.port.`in`.CommentUseCase
+import backend.team.ahachul_backend.api.comment.application.port.out.CommentLikeReader
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentReader
 import backend.team.ahachul_backend.api.comment.application.port.out.CommentWriter
 import backend.team.ahachul_backend.api.comment.domain.entity.CommentEntity
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional
 class CommentService(
     private val commentWriter: CommentWriter,
     private val commentReader: CommentReader,
+    private val commentLikeReader: CommentLikeReader,
     private val communityPostReader: CommunityPostReader,
     private val lostPostReader: LostPostReader,
     private val complaintPostReader: ComplaintPostReader,
@@ -42,7 +44,17 @@ class CommentService(
         val loginMemberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)?.toLong()
         val isPostWriterEqualToLoginMember = postWriterId != null && loginMemberId == postWriterId
 
-        val comments = commentReader.searchComments(command).map {
+        val searchedComments = commentReader.searchComments(command)
+        val likedCommentIds = if (loginMemberId != null) {
+            commentLikeReader.findLikedCommentIds(
+                commentIds = searchedComments.map { it.id },
+                memberId = loginMemberId,
+            )
+        } else {
+            emptySet()
+        }
+
+        val comments = searchedComments.map {
                 GetCommentsDto.Comment(
                     it.id,
                     it.upperComment?.id,
@@ -53,7 +65,8 @@ class CommentService(
                     it.createdBy,
                     it.member.nickname!!,
                     it.visibility.isPrivate,
-                    it.likeCnt
+                    it.likeCnt,
+                    likedByMe = likedCommentIds.contains(it.id),
                 )
             }
 
@@ -61,19 +74,22 @@ class CommentService(
         val childCommentMap = HashMap<Long, MutableList<GetCommentsDto.Comment>>()
 
         comments.forEach { comment ->
-            val parentId = comment.upperCommentId ?: run {
+            val parentId = comment.upperCommentId
+            if (parentId == null) {
                 parentComments.add(comment)
-                childCommentMap[comment.id] = mutableListOf()
                 return@forEach
             }
-            childCommentMap[parentId]?.add(comment)
+            childCommentMap.getOrPut(parentId) { mutableListOf() }.add(comment)
         }
 
         return GetCommentsDto.Response(
             parentComments.map {
                 GetCommentsDto.CommentList(
                     it,
-                    childCommentMap[it.id]?.toList() ?: listOf()
+                    childCommentMap[it.id]
+                        ?.sortedBy { child -> child.createdAt }
+                        ?.toList()
+                        ?: listOf()
                 )
             }
         )

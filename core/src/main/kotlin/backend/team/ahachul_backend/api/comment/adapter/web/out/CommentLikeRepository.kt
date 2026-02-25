@@ -8,4 +8,6 @@ interface CommentLikeRepository: JpaRepository<CommentLikeEntity, Long> {
     fun findByCommentIdAndMemberId(commentId: Long, memberId: Long): CommentLikeEntity?
 
     fun deleteByCommentIdAndMemberId(commentId: Long, memberId: Long)
+
+    fun findAllByCommentIdInAndMemberId(commentIds: List<Long>, memberId: Long): List<CommentLikeEntity>
 }

@@ -100,6 +100,7 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].parentComment.writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
                         fieldWithPath("result.comments[].parentComment.isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional(),
                         fieldWithPath("result.comments[].parentComment.likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
+                        fieldWithPath("result.comments[].parentComment.likedByMe").type(JsonFieldType.BOOLEAN).description("로그인 사용자 좋아요 여부"),
                         fieldWithPath("result.comments[].childComments[].id").type(JsonFieldType.NUMBER).description("코멘트 아이디"),
                         fieldWithPath("result.comments[].childComments[].upperCommentId").type(JsonFieldType.NUMBER).description("상위 코멘트 아이디").optional(),
                         fieldWithPath("result.comments[].childComments[].content").type(JsonFieldType.STRING).description("코멘트 내용"),
@@ -109,6 +110,7 @@ class LostPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].childComments[].writer").type(JsonFieldType.STRING).description("작성자 닉네임"),
                         fieldWithPath("result.comments[].childComments[].isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional(),
                         fieldWithPath("result.comments[].childComments[].likeCnt").type(JsonFieldType.NUMBER).description("좋아요 수"),
+                        fieldWithPath("result.comments[].childComments[].likedByMe").type(JsonFieldType.BOOLEAN).description("로그인 사용자 좋아요 여부"),
                         )
                 )
             )

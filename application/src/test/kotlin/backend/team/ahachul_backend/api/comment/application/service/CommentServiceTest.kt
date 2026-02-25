@@ -590,4 +590,78 @@ class CommentServiceTest(
         }
     }
 
+    @Test
+    @DisplayName("코멘트 좋아요 여부 조회")
+    fun 코멘트_좋아요_여부_조회() {
+        // given
+        val createComment = commentUseCase.createComment(
+            CreateCommentCommand(
+                postId = communityPost.id,
+                postType = PostType.COMMUNITY,
+                upperCommentId = null,
+                content = "내용",
+                visibility = CommentVisibility.PUBLIC,
+            )
+        )
+        commentLikeUseCase.like(createComment.id)
+
+        val getCommentsCommand = GetCommentsCommand(
+            postId = communityPost.id,
+            PostType.COMMUNITY,
+            Sort.unsorted()
+        )
+
+        // when
+        loginWithMemberId(memberIds[0])
+        val likedByMeResult = commentUseCase.getComments(getCommentsCommand)
+        loginWithMemberId(memberIds[1])
+        val notLikedByMeResult = commentUseCase.getComments(getCommentsCommand)
+
+        // then
+        assertThat(likedByMeResult.comments).hasSize(1)
+        assertThat(likedByMeResult.comments[0].parentComment.likedByMe).isTrue()
+        assertThat(notLikedByMeResult.comments).hasSize(1)
+        assertThat(notLikedByMeResult.comments[0].parentComment.likedByMe).isFalse()
+    }
+
+    @Test
+    @DisplayName("인기순 정렬에서도 대댓글이 유실되지 않는다")
+    fun 인기순_정렬_대댓글_유실_없음() {
+        // given
+        val parentComment = commentUseCase.createComment(
+            CreateCommentCommand(
+                postId = communityPost.id,
+                postType = PostType.COMMUNITY,
+                upperCommentId = null,
+                content = "부모 댓글",
+                visibility = CommentVisibility.PUBLIC
+            )
+        )
+        val childComment = commentUseCase.createComment(
+            CreateCommentCommand(
+                postId = communityPost.id,
+                postType = PostType.COMMUNITY,
+                upperCommentId = parentComment.id,
+                content = "대댓글",
+                visibility = CommentVisibility.PUBLIC
+            )
+        )
+        commentLikeUseCase.like(childComment.id)
+
+        val getCommentsCommand = GetCommentsCommand(
+            postId = communityPost.id,
+            PostType.COMMUNITY,
+            Sort.by("likes").descending()
+        )
+
+        // when
+        val result = commentUseCase.getComments(getCommentsCommand)
+
+        // then
+        assertThat(result.comments).hasSize(1)
+        assertThat(result.comments[0].parentComment.id).isEqualTo(parentComment.id)
+        assertThat(result.comments[0].childComments).hasSize(1)
+        assertThat(result.comments[0].childComments[0].id).isEqualTo(childComment.id)
+    }
+
 }
