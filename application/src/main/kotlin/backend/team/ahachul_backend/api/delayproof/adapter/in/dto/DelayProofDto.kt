@@ -1,6 +1,7 @@
 package backend.team.ahachul_backend.api.delayproof.adapter.`in`.dto
 
 import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.CreateDelayProofCommand
+import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.GetDelayCenterOverviewCommand
 import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.GetCommunityDelaySignalsCommand
 import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.GetSubwayIncidentsCommand
 import backend.team.ahachul_backend.api.train.domain.model.UpDownType
@@ -53,6 +54,26 @@ class DelayProofDto {
         }
     }
 
+    data class GetDelayCenterOverviewRequest(
+        val stationId: Long,
+        val subwayLineId: Long,
+        val upDownType: UpDownType?,
+        val windowMinutes: Int?,
+        val incidentLimit: Int?,
+        val signalLimit: Int?,
+    ) {
+        fun toCommand(): GetDelayCenterOverviewCommand {
+            return GetDelayCenterOverviewCommand(
+                stationId = stationId,
+                subwayLineId = subwayLineId,
+                upDownType = upDownType,
+                windowMinutes = windowMinutes,
+                incidentLimit = incidentLimit,
+                signalLimit = signalLimit,
+            )
+        }
+    }
+
     data class GetSubwayIncidentsResponse(
         val generatedAt: String,
         val dataSource: String,
@@ -68,6 +89,17 @@ class DelayProofDto {
         val medianReportedDelayMin: Int?,
         val confidenceLevel: String,
         val signals: List<CommunityDelaySignal>,
+    )
+
+    data class GetDelayCenterOverviewResponse(
+        val generatedAt: String,
+        val stationId: Long,
+        val subwayLineId: Long,
+        val upDownType: UpDownType?,
+        val realtime: DelayCenterRealtime,
+        val official: DelayCenterOfficial,
+        val community: CommunityEvidence,
+        val recommendation: DelayCenterRecommendation,
     )
 
     data class CreateResponse(
@@ -120,6 +152,33 @@ class DelayProofDto {
         val freshnessSec: Int,
         val confidenceLevel: String,
         val generatedAt: String,
+    )
+
+    data class DelayCenterRealtime(
+        val generatedAt: String,
+        val dataSource: String,
+        val isStale: Boolean,
+        val freshnessSec: Int,
+        val confidenceLevel: String,
+        val etaSec: Int?,
+        val etaMinDisplay: Int?,
+        val destinationStationDirection: String?,
+        val nextStationDirection: String?,
+    )
+
+    data class DelayCenterOfficial(
+        val dataSource: String,
+        val eventCount: Int,
+        val activeEventCount: Int,
+        val incidents: List<OfficialIncident>,
+    )
+
+    data class DelayCenterRecommendation(
+        val gradePreview: String,
+        val confidenceLevel: String,
+        val estimatedDelayMin: Int,
+        val recommendedExpectedArrivalAt: String,
+        val recommendedMessage: String,
     )
 
     data class OfficialIncident(

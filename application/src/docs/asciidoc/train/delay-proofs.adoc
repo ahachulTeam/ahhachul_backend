@@ -45,3 +45,14 @@ include::{snippets}/get-community-delay-signals-v2/query-parameters.adoc[]
 include::{snippets}/get-community-delay-signals-v2/http-response.adoc[]
 .Response Fields
 include::{snippets}/get-community-delay-signals-v2/response-fields.adoc[]
+
+==== 지연/사고 통합 센터 개요 조회
+
+.Request
+include::{snippets}/get-delay-center-overview-v2/http-request.adoc[]
+.Query Parameters
+include::{snippets}/get-delay-center-overview-v2/query-parameters.adoc[]
+.Response
+include::{snippets}/get-delay-center-overview-v2/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-delay-center-overview-v2/response-fields.adoc[]

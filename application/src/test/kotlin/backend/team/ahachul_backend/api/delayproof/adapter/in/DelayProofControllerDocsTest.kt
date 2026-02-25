@@ -306,6 +306,114 @@ class DelayProofControllerDocsTest : CommonDocsTestConfig() {
             )
     }
 
+    @Test
+    fun getDelayCenterOverview() {
+        val response = DelayProofDto.GetDelayCenterOverviewResponse(
+            generatedAt = "2026-02-24T01:20:00Z",
+            stationId = 201,
+            subwayLineId = 2,
+            upDownType = UpDownType.UP,
+            realtime = DelayProofDto.DelayCenterRealtime(
+                generatedAt = "2026-02-24T01:19:36Z",
+                dataSource = "API",
+                isStale = false,
+                freshnessSec = 24,
+                confidenceLevel = "HIGH",
+                etaSec = 180,
+                etaMinDisplay = 3,
+                destinationStationDirection = "성수행",
+                nextStationDirection = "잠실방면",
+            ),
+            official = DelayProofDto.DelayCenterOfficial(
+                dataSource = "OFFICIAL_FEED",
+                eventCount = 2,
+                activeEventCount = 1,
+                incidents = buildEvidenceSummary().official.incidents,
+            ),
+            community = buildEvidenceSummary().community,
+            recommendation = DelayProofDto.DelayCenterRecommendation(
+                gradePreview = "A",
+                confidenceLevel = "HIGH",
+                estimatedDelayMin = 12,
+                recommendedExpectedArrivalAt = "2026-02-24T01:32:00Z",
+                recommendedMessage = "지하철 지연으로 10:35 도착예정입니다. 공식공지 2건/동일 호선 커뮤니티 18건 확인(10:21 생성). 최대한 빨리 가겠습니다.",
+            ),
+        )
+
+        given(delayProofUseCase.getDelayCenterOverview(any()))
+            .willReturn(response)
+
+        mockMvc.perform(
+            get("/v2/delay-centers/overview")
+                .queryParam("stationId", "201")
+                .queryParam("subwayLineId", "2")
+                .queryParam("upDownType", "UP")
+                .queryParam("windowMinutes", "30")
+                .queryParam("incidentLimit", "10")
+                .queryParam("signalLimit", "50"),
+        )
+            .andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-delay-center-overview-v2",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("stationId").description("정류장 ID"),
+                        parameterWithName("subwayLineId").description("지하철 노선 ID"),
+                        parameterWithName("upDownType").optional().description("상하행(UP/DOWN)"),
+                        parameterWithName("windowMinutes").optional().description("커뮤니티 집계 윈도우(분)"),
+                        parameterWithName("incidentLimit").optional().description("공식 공지 최대 조회 건수"),
+                        parameterWithName("signalLimit").optional().description("커뮤니티 시그널 최대 조회 건수"),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.generatedAt").type(JsonFieldType.STRING).description("응답 생성 시각"),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("정류장 ID"),
+                        fieldWithPath("result.subwayLineId").type(JsonFieldType.NUMBER).description("지하철 노선 ID"),
+                        fieldWithPath("result.upDownType").type(JsonFieldType.STRING).optional().description("상하행"),
+                        fieldWithPath("result.realtime.generatedAt").type(JsonFieldType.STRING).description("실시간 생성 시각"),
+                        fieldWithPath("result.realtime.dataSource").type(JsonFieldType.STRING).description("실시간 데이터 소스"),
+                        fieldWithPath("result.realtime.isStale").type(JsonFieldType.BOOLEAN).description("실시간 stale 여부"),
+                        fieldWithPath("result.realtime.freshnessSec").type(JsonFieldType.NUMBER).description("실시간 신선도(초)"),
+                        fieldWithPath("result.realtime.confidenceLevel").type(JsonFieldType.STRING).description("실시간 신뢰도"),
+                        fieldWithPath("result.realtime.etaSec").type(JsonFieldType.NUMBER).optional().description("대표 열차 ETA(초)"),
+                        fieldWithPath("result.realtime.etaMinDisplay").type(JsonFieldType.NUMBER).optional().description("대표 열차 ETA(분 표기)"),
+                        fieldWithPath("result.realtime.destinationStationDirection").type(JsonFieldType.STRING).optional().description("대표 열차 종착 방향"),
+                        fieldWithPath("result.realtime.nextStationDirection").type(JsonFieldType.STRING).optional().description("대표 열차 다음역 방향"),
+                        fieldWithPath("result.official.dataSource").type(JsonFieldType.STRING).description("공식 데이터 소스"),
+                        fieldWithPath("result.official.eventCount").type(JsonFieldType.NUMBER).description("공식 공지 총 건수"),
+                        fieldWithPath("result.official.activeEventCount").type(JsonFieldType.NUMBER).description("해제되지 않은 활성 공지 건수"),
+                        fieldWithPath("result.official.incidents[]").type(JsonFieldType.ARRAY).description("공식 공지 목록"),
+                        fieldWithPath("result.official.incidents[].eventId").type(JsonFieldType.STRING).description("이벤트 ID"),
+                        fieldWithPath("result.official.incidents[].occurredAt").type(JsonFieldType.STRING).description("발생 시각"),
+                        fieldWithPath("result.official.incidents[].resolvedAt").type(JsonFieldType.STRING).optional().description("해제 시각"),
+                        fieldWithPath("result.official.incidents[].severity").type(JsonFieldType.STRING).description("심각도"),
+                        fieldWithPath("result.official.incidents[].title").type(JsonFieldType.STRING).description("제목"),
+                        fieldWithPath("result.official.incidents[].description").type(JsonFieldType.STRING).description("설명"),
+                        fieldWithPath("result.official.incidents[].source").type(JsonFieldType.STRING).description("출처"),
+                        fieldWithPath("result.official.incidents[].sourceUrl").type(JsonFieldType.STRING).optional().description("출처 URL"),
+                        fieldWithPath("result.community.signalCount").type(JsonFieldType.NUMBER).description("커뮤니티 시그널 수"),
+                        fieldWithPath("result.community.distinctAuthors").type(JsonFieldType.NUMBER).description("작성자 수"),
+                        fieldWithPath("result.community.medianReportedDelayMin").type(JsonFieldType.NUMBER).optional().description("지연 분 중앙값"),
+                        fieldWithPath("result.community.confidenceLevel").type(JsonFieldType.STRING).description("커뮤니티 신뢰도"),
+                        fieldWithPath("result.community.signals[]").type(JsonFieldType.ARRAY).description("커뮤니티 시그널 샘플"),
+                        fieldWithPath("result.community.signals[].postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
+                        fieldWithPath("result.community.signals[].createdAt").type(JsonFieldType.STRING).description("작성 시각"),
+                        fieldWithPath("result.community.signals[].writer").type(JsonFieldType.STRING).description("작성자"),
+                        fieldWithPath("result.community.signals[].matchedKeyword").type(JsonFieldType.STRING).description("매칭 키워드"),
+                        fieldWithPath("result.community.signals[].reportedDelayMin").type(JsonFieldType.NUMBER).optional().description("추정 지연 분"),
+                        fieldWithPath("result.community.signals[].snippet").type(JsonFieldType.STRING).description("본문 요약"),
+                        fieldWithPath("result.recommendation.gradePreview").type(JsonFieldType.STRING).description("증빙 등급 preview"),
+                        fieldWithPath("result.recommendation.confidenceLevel").type(JsonFieldType.STRING).description("추천 신뢰도"),
+                        fieldWithPath("result.recommendation.estimatedDelayMin").type(JsonFieldType.NUMBER).description("예상 지연 분"),
+                        fieldWithPath("result.recommendation.recommendedExpectedArrivalAt").type(JsonFieldType.STRING).description("추천 도착 예정 시각"),
+                        fieldWithPath("result.recommendation.recommendedMessage").type(JsonFieldType.STRING).description("추천 증빙 문구"),
+                    ),
+                ),
+            )
+    }
+
     private fun buildCreateResponse(): DelayProofDto.CreateResponse {
         return DelayProofDto.CreateResponse(
             proofId = "dpv2_01abc",

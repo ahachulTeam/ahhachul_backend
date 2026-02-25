@@ -6,6 +6,7 @@ import backend.team.ahachul_backend.api.community.domain.SearchCommunityPost
 import backend.team.ahachul_backend.api.delayproof.adapter.`in`.dto.DelayProofDto
 import backend.team.ahachul_backend.api.delayproof.application.port.`in`.DelayProofUseCase
 import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.CreateDelayProofCommand
+import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.GetDelayCenterOverviewCommand
 import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.GetCommunityDelaySignalsCommand
 import backend.team.ahachul_backend.api.delayproof.application.port.`in`.command.GetSubwayIncidentsCommand
 import backend.team.ahachul_backend.api.train.application.port.`in`.TrainUseCase
@@ -190,6 +191,92 @@ class DelayProofService(
         )
     }
 
+    override fun getDelayCenterOverview(command: GetDelayCenterOverviewCommand): DelayProofDto.GetDelayCenterOverviewResponse {
+        val now = OffsetDateTime.now(ZoneOffset.UTC)
+        val generatedAt = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+        val realtime = trainUseCase.getTrainRealTimesV2(
+            stationId = command.stationId,
+            subwayLineId = command.subwayLineId,
+            upDownType = command.upDownType,
+            limit = 2,
+        )
+
+        val communitySummary = summarizeCommunitySignals(
+            subwayLineId = command.subwayLineId,
+            windowMinutes = command.windowMinutes ?: delayProofProperties.communityWindowMinutes.toInt(),
+            limit = command.signalLimit ?: delayProofProperties.signalPageSize,
+        )
+
+        val (officialDataSource, incidents) = incidentClient.fetchIncidents(
+            subwayLineId = command.subwayLineId,
+            stationId = command.stationId,
+            limit = command.incidentLimit ?: 10,
+        )
+
+        val gradePreview = DelayProofGradePolicy.resolve(
+            hasOfficialIncident = incidents.isNotEmpty(),
+            communitySignalCount = communitySummary.signalCount,
+            realtimeConfidenceLevel = realtime.confidenceLevel,
+            realtimeStale = realtime.isStale,
+        )
+
+        val realtimeTop = realtime.trainRealTimes.firstOrNull()
+        val activeEventCount = incidents.count { it.resolvedAt.isNullOrBlank() }
+        val estimatedDelayMin = estimateDelayMinutes(
+            realtimeEtaMin = realtimeTop?.etaMinDisplay,
+            communityMedianDelayMin = communitySummary.medianReportedDelayMin,
+            incidents = incidents,
+        )
+        val recommendedExpectedArrivalAt = now.plusMinutes(estimatedDelayMin.toLong())
+            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        val recommendedMessage = buildShareText(
+            expectedArrivalAt = recommendedExpectedArrivalAt,
+            officialEventCount = incidents.size,
+            communitySignalCount = communitySummary.signalCount,
+            generatedAt = generatedAt,
+            customMessage = null,
+        )
+
+        return DelayProofDto.GetDelayCenterOverviewResponse(
+            generatedAt = generatedAt,
+            stationId = command.stationId,
+            subwayLineId = command.subwayLineId,
+            upDownType = command.upDownType,
+            realtime = DelayProofDto.DelayCenterRealtime(
+                generatedAt = realtime.generatedAt,
+                dataSource = realtime.dataSource,
+                isStale = realtime.isStale,
+                freshnessSec = realtime.freshnessSec,
+                confidenceLevel = realtime.confidenceLevel,
+                etaSec = realtimeTop?.etaSec,
+                etaMinDisplay = realtimeTop?.etaMinDisplay,
+                destinationStationDirection = realtimeTop?.destinationStationDirection,
+                nextStationDirection = realtimeTop?.nextStationDirection,
+            ),
+            official = DelayProofDto.DelayCenterOfficial(
+                dataSource = officialDataSource,
+                eventCount = incidents.size,
+                activeEventCount = activeEventCount,
+                incidents = incidents,
+            ),
+            community = DelayProofDto.CommunityEvidence(
+                signalCount = communitySummary.signalCount,
+                distinctAuthors = communitySummary.distinctAuthors,
+                medianReportedDelayMin = communitySummary.medianReportedDelayMin,
+                confidenceLevel = communitySummary.confidenceLevel,
+                signals = communitySummary.signals,
+            ),
+            recommendation = DelayProofDto.DelayCenterRecommendation(
+                gradePreview = gradePreview,
+                confidenceLevel = realtime.confidenceLevel,
+                estimatedDelayMin = estimatedDelayMin,
+                recommendedExpectedArrivalAt = recommendedExpectedArrivalAt,
+                recommendedMessage = recommendedMessage,
+            ),
+        )
+    }
+
     private fun summarizeCommunitySignals(
         subwayLineId: Long,
         windowMinutes: Int,
@@ -274,6 +361,27 @@ class DelayProofService(
         val evidence = "공식공지 ${officialEventCount}건/동일 호선 커뮤니티 ${communitySignalCount}건 확인(${generatedAt.take(16).replace('T', ' ')} 생성)."
         val suffix = customMessage?.trim().takeUnless { it.isNullOrBlank() } ?: "최대한 빨리 가겠습니다."
         return "$base $evidence $suffix"
+    }
+
+    private fun estimateDelayMinutes(
+        realtimeEtaMin: Int?,
+        communityMedianDelayMin: Int?,
+        incidents: List<DelayProofDto.OfficialIncident>,
+    ): Int {
+        val base = maxOf(realtimeEtaMin ?: 0, communityMedianDelayMin ?: 0, 1)
+        if (incidents.isEmpty()) {
+            return base
+        }
+
+        val incidentPenalty = incidents.maxOfOrNull { incident ->
+            when (incident.severity.uppercase()) {
+                "SUSPENDED", "STOP", "MAJOR" -> 15
+                "DELAY", "MINOR" -> 7
+                else -> 5
+            }
+        } ?: 5
+
+        return base + incidentPenalty
     }
 
     data class DelayProofPayload(

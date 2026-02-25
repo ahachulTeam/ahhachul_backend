@@ -35,4 +35,9 @@ class DelayProofController(
     fun getCommunityDelaySignals(request: DelayProofDto.GetCommunityDelaySignalsRequest): CommonResponse<DelayProofDto.GetCommunityDelaySignalsResponse> {
         return CommonResponse.success(delayProofUseCase.getCommunityDelaySignals(request.toCommand()))
     }
+
+    @GetMapping("/v2/delay-centers/overview")
+    fun getDelayCenterOverview(request: DelayProofDto.GetDelayCenterOverviewRequest): CommonResponse<DelayProofDto.GetDelayCenterOverviewResponse> {
+        return CommonResponse.success(delayProofUseCase.getDelayCenterOverview(request.toCommand()))
+    }
 }
