@@ -1,0 +1,876 @@
+{
+  "generatedAt": "2026-02-25T04:43:53.289Z",
+  "baselinePath": "/Users/createahb21/Documents/Programming/repositories/@Ahhachul/ahhachul_backend/docs/benchmarks/kakao_od30_baseline_2026-02-25.json",
+  "apiBase": "http://localhost:8080",
+  "totalBaselineRows": 30,
+  "comparableCount": 30,
+  "routeMatchCount": 26,
+  "routeMatchRate": 0.8667,
+  "timeMae": 6.309,
+  "transferMae": 0.033,
+  "rows": [
+    {
+      "index": 1,
+      "sourceName": "안암",
+      "destinationName": "강남",
+      "sourceStationId": 151,
+      "destinationStationId": 557,
+      "routeMatch": true,
+      "timeAbsError": 6.23,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 41.77,
+        "transferCount": 1,
+        "lineSequence": [
+          "6호선",
+          "2호선"
+        ],
+        "lineSignature": "6호선>2호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "6호선",
+          "2호선"
+        ],
+        "lineSignature": "6호선>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 48,
+        "totalStops": 20
+      }
+    },
+    {
+      "index": 2,
+      "sourceName": "서울역",
+      "destinationName": "잠실",
+      "sourceStationId": 630,
+      "destinationStationId": 76,
+      "routeMatch": true,
+      "timeAbsError": 0.02,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 38.02,
+        "transferCount": 1,
+        "lineSequence": [
+          "4호선",
+          "2호선"
+        ],
+        "lineSignature": "4호선>2호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "4호선",
+          "2호선"
+        ],
+        "lineSignature": "4호선>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 38,
+        "totalStops": 15
+      }
+    },
+    {
+      "index": 3,
+      "sourceName": "홍대입구",
+      "destinationName": "김포공항",
+      "sourceStationId": 97,
+      "destinationStationId": 623,
+      "routeMatch": true,
+      "timeAbsError": 17.43,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 23.43,
+        "transferCount": 0,
+        "lineSequence": [
+          "공항철도"
+        ],
+        "lineSignature": "공항철도|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "공항철도"
+        ],
+        "lineSignature": "공항철도|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 6,
+        "totalStops": 3
+      }
+    },
+    {
+      "index": 4,
+      "sourceName": "사당",
+      "destinationName": "판교",
+      "sourceStationId": 403,
+      "destinationStationId": 608,
+      "routeMatch": true,
+      "timeAbsError": 4.25,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 28.25,
+        "transferCount": 1,
+        "lineSequence": [
+          "2호선",
+          "신분당선"
+        ],
+        "lineSignature": "2호선>신분당선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선",
+          "신분당선"
+        ],
+        "lineSignature": "2호선>신분당선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 24,
+        "totalStops": 8
+      }
+    },
+    {
+      "index": 5,
+      "sourceName": "광화문",
+      "destinationName": "강남",
+      "sourceStationId": 132,
+      "destinationStationId": 557,
+      "routeMatch": true,
+      "timeAbsError": 5.63,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 42.37,
+        "transferCount": 1,
+        "lineSequence": [
+          "5호선",
+          "2호선"
+        ],
+        "lineSignature": "5호선>2호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "5호선",
+          "2호선"
+        ],
+        "lineSignature": "5호선>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 48,
+        "totalStops": 20
+      }
+    },
+    {
+      "index": 6,
+      "sourceName": "신도림",
+      "destinationName": "잠실",
+      "sourceStationId": 108,
+      "destinationStationId": 76,
+      "routeMatch": true,
+      "timeAbsError": 6.38,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 42.38,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 36,
+        "totalStops": 18
+      }
+    },
+    {
+      "index": 7,
+      "sourceName": "강남",
+      "destinationName": "여의도",
+      "sourceStationId": 557,
+      "destinationStationId": 319,
+      "routeMatch": true,
+      "timeAbsError": 5.25,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 24.75,
+        "transferCount": 1,
+        "lineSequence": [
+          "신분당선",
+          "9호선"
+        ],
+        "lineSignature": "신분당선>9호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "신분당선",
+          "9호선"
+        ],
+        "lineSignature": "신분당선>9호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 30,
+        "totalStops": 11
+      }
+    },
+    {
+      "index": 8,
+      "sourceName": "왕십리",
+      "destinationName": "구로디지털단지",
+      "sourceStationId": 219,
+      "destinationStationId": 269,
+      "routeMatch": false,
+      "timeAbsError": 5,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 39,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "수인분당선",
+          "2호선"
+        ],
+        "lineSignature": "수인분당선>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 34,
+        "totalStops": 13
+      }
+    },
+    {
+      "index": 9,
+      "sourceName": "노원",
+      "destinationName": "명동",
+      "sourceStationId": 237,
+      "destinationStationId": 35,
+      "routeMatch": true,
+      "timeAbsError": 2.5,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 28.5,
+        "transferCount": 0,
+        "lineSequence": [
+          "4호선"
+        ],
+        "lineSignature": "4호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "4호선"
+        ],
+        "lineSignature": "4호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 26,
+        "totalStops": 13
+      }
+    },
+    {
+      "index": 10,
+      "sourceName": "청량리",
+      "destinationName": "서울역",
+      "sourceStationId": 184,
+      "destinationStationId": 630,
+      "routeMatch": true,
+      "timeAbsError": 11.3,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 27.3,
+        "transferCount": 0,
+        "lineSequence": [
+          "1호선"
+        ],
+        "lineSignature": "1호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "1호선"
+        ],
+        "lineSignature": "1호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 16,
+        "totalStops": 8
+      }
+    },
+    {
+      "index": 11,
+      "sourceName": "수서",
+      "destinationName": "홍대입구",
+      "sourceStationId": 622,
+      "destinationStationId": 97,
+      "routeMatch": false,
+      "timeAbsError": 6.73,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 51.27,
+        "transferCount": 1,
+        "lineSequence": [
+          "수인분당선",
+          "2호선"
+        ],
+        "lineSignature": "수인분당선>2호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "3호선",
+          "2호선"
+        ],
+        "lineSignature": "3호선>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 58,
+        "totalStops": 25
+      }
+    },
+    {
+      "index": 12,
+      "sourceName": "합정",
+      "destinationName": "건대입구",
+      "sourceStationId": 571,
+      "destinationStationId": 225,
+      "routeMatch": true,
+      "timeAbsError": 18,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 32,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 50,
+        "totalStops": 25
+      }
+    },
+    {
+      "index": 13,
+      "sourceName": "교대",
+      "destinationName": "잠실나루",
+      "sourceStationId": 127,
+      "destinationStationId": 342,
+      "routeMatch": true,
+      "timeAbsError": 4.07,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 20.07,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 16,
+        "totalStops": 8
+      }
+    },
+    {
+      "index": 14,
+      "sourceName": "마곡나루",
+      "destinationName": "고속터미널",
+      "sourceStationId": 521,
+      "destinationStationId": 360,
+      "routeMatch": true,
+      "timeAbsError": 7.25,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 28.75,
+        "transferCount": 0,
+        "lineSequence": [
+          "9호선"
+        ],
+        "lineSignature": "9호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "9호선"
+        ],
+        "lineSignature": "9호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 36,
+        "totalStops": 18
+      }
+    },
+    {
+      "index": 15,
+      "sourceName": "김포공항",
+      "destinationName": "종로3가",
+      "sourceStationId": 623,
+      "destinationStationId": 41,
+      "routeMatch": false,
+      "timeAbsError": 15.75,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 39.75,
+        "transferCount": 1,
+        "lineSequence": [
+          "9호선",
+          "1호선"
+        ],
+        "lineSignature": "9호선>1호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "공항철도",
+          "1호선"
+        ],
+        "lineSignature": "공항철도>1호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 24,
+        "totalStops": 8
+      }
+    },
+    {
+      "index": 16,
+      "sourceName": "신사",
+      "destinationName": "을지로입구",
+      "sourceStationId": 637,
+      "destinationStationId": 605,
+      "routeMatch": true,
+      "timeAbsError": 6.93,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 17.07,
+        "transferCount": 1,
+        "lineSequence": [
+          "3호선",
+          "2호선"
+        ],
+        "lineSignature": "3호선>2호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "3호선",
+          "2호선"
+        ],
+        "lineSignature": "3호선>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 24,
+        "totalStops": 8
+      }
+    },
+    {
+      "index": 17,
+      "sourceName": "시청",
+      "destinationName": "잠실",
+      "sourceStationId": 354,
+      "destinationStationId": 76,
+      "routeMatch": true,
+      "timeAbsError": 3.4,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 33.4,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 30,
+        "totalStops": 15
+      }
+    },
+    {
+      "index": 18,
+      "sourceName": "공덕",
+      "destinationName": "강남",
+      "sourceStationId": 28,
+      "destinationStationId": 557,
+      "routeMatch": false,
+      "timeAbsError": 3.62,
+      "kakao": {
+        "ranking": 3,
+        "minutes": 47.62,
+        "transferCount": 1,
+        "lineSequence": [
+          "5호선",
+          "2호선"
+        ],
+        "lineSignature": "5호선>2호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "공항철도",
+          "2호선"
+        ],
+        "lineSignature": "공항철도>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 44,
+        "totalStops": 18
+      }
+    },
+    {
+      "index": 19,
+      "sourceName": "이태원",
+      "destinationName": "왕십리",
+      "sourceStationId": 18,
+      "destinationStationId": 219,
+      "routeMatch": true,
+      "timeAbsError": 6.07,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 15.93,
+        "transferCount": 1,
+        "lineSequence": [
+          "6호선",
+          "2호선"
+        ],
+        "lineSignature": "6호선>2호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "6호선",
+          "2호선"
+        ],
+        "lineSignature": "6호선>2호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 22,
+        "totalStops": 7
+      }
+    },
+    {
+      "index": 20,
+      "sourceName": "신당",
+      "destinationName": "성수",
+      "sourceStationId": 576,
+      "destinationStationId": 552,
+      "routeMatch": true,
+      "timeAbsError": 1.5,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 8.5,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 10,
+        "totalStops": 5
+      }
+    },
+    {
+      "index": 21,
+      "sourceName": "강변",
+      "destinationName": "사당",
+      "sourceStationId": 193,
+      "destinationStationId": 403,
+      "routeMatch": true,
+      "timeAbsError": 2,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 26,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 24,
+        "totalStops": 12
+      }
+    },
+    {
+      "index": 22,
+      "sourceName": "대림",
+      "destinationName": "선릉",
+      "sourceStationId": 560,
+      "destinationStationId": 110,
+      "routeMatch": true,
+      "timeAbsError": 2,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 28,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 26,
+        "totalStops": 13
+      }
+    },
+    {
+      "index": 23,
+      "sourceName": "구의",
+      "destinationName": "홍대입구",
+      "sourceStationId": 7,
+      "destinationStationId": 97,
+      "routeMatch": true,
+      "timeAbsError": 18,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 32,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 50,
+        "totalStops": 25
+      }
+    },
+    {
+      "index": 24,
+      "sourceName": "역삼",
+      "destinationName": "을지로3가",
+      "sourceStationId": 584,
+      "destinationStationId": 577,
+      "routeMatch": true,
+      "timeAbsError": 0.5,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 35.5,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 36,
+        "totalStops": 18
+      }
+    },
+    {
+      "index": 25,
+      "sourceName": "삼성",
+      "destinationName": "서울대입구",
+      "sourceStationId": 330,
+      "destinationStationId": 180,
+      "routeMatch": true,
+      "timeAbsError": 2.5,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 20.5,
+        "transferCount": 0,
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "2호선"
+        ],
+        "lineSignature": "2호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 18,
+        "totalStops": 9
+      }
+    },
+    {
+      "index": 26,
+      "sourceName": "약수",
+      "destinationName": "강남구청",
+      "sourceStationId": 13,
+      "destinationStationId": 599,
+      "routeMatch": true,
+      "timeAbsError": 5.7,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 22.3,
+        "transferCount": 1,
+        "lineSequence": [
+          "3호선",
+          "7호선"
+        ],
+        "lineSignature": "3호선>7호선|T1",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "3호선",
+          "7호선"
+        ],
+        "lineSignature": "3호선>7호선|T1",
+        "transferCount": 1,
+        "estimatedMinutes": 28,
+        "totalStops": 10
+      }
+    },
+    {
+      "index": 27,
+      "sourceName": "고속터미널",
+      "destinationName": "충무로",
+      "sourceStationId": 360,
+      "destinationStationId": 615,
+      "routeMatch": true,
+      "timeAbsError": 0.5,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 15.5,
+        "transferCount": 0,
+        "lineSequence": [
+          "3호선"
+        ],
+        "lineSignature": "3호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "3호선"
+        ],
+        "lineSignature": "3호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 16,
+        "totalStops": 8
+      }
+    },
+    {
+      "index": 28,
+      "sourceName": "신논현",
+      "destinationName": "판교",
+      "sourceStationId": 391,
+      "destinationStationId": 608,
+      "routeMatch": true,
+      "timeAbsError": 9.67,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 19.67,
+        "transferCount": 0,
+        "lineSequence": [
+          "신분당선"
+        ],
+        "lineSignature": "신분당선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "신분당선"
+        ],
+        "lineSignature": "신분당선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 10,
+        "totalStops": 5
+      }
+    },
+    {
+      "index": 29,
+      "sourceName": "복정",
+      "destinationName": "선릉",
+      "sourceStationId": 609,
+      "destinationStationId": 110,
+      "routeMatch": true,
+      "timeAbsError": 8.6,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 22.6,
+        "transferCount": 0,
+        "lineSequence": [
+          "수인분당선"
+        ],
+        "lineSignature": "수인분당선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "수인분당선"
+        ],
+        "lineSignature": "수인분당선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 14,
+        "totalStops": 7
+      }
+    },
+    {
+      "index": 30,
+      "sourceName": "청담",
+      "destinationName": "부평구청",
+      "sourceStationId": 173,
+      "destinationStationId": 592,
+      "routeMatch": true,
+      "timeAbsError": 2.5,
+      "kakao": {
+        "ranking": 1,
+        "minutes": 62.5,
+        "transferCount": 0,
+        "lineSequence": [
+          "7호선"
+        ],
+        "lineSignature": "7호선|T0",
+        "rawStatus": "SUCCESS"
+      },
+      "ahhachul": {
+        "lineSequence": [
+          "7호선"
+        ],
+        "lineSignature": "7호선|T0",
+        "transferCount": 0,
+        "estimatedMinutes": 60,
+        "totalStops": 30
+      }
+    }
+  ]
+}

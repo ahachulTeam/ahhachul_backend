@@ -65,6 +65,12 @@ class StationService(
         val edge: GraphEdge,
     )
 
+    private data class StationCodeSortKey(
+        val numericPrefix: Int,
+        val suffix: String,
+        val normalized: String,
+    )
+
     private data class PathResult(
         val nodes: List<Long>,
         val edges: List<GraphEdge>,
@@ -431,34 +437,115 @@ class StationService(
     private fun buildAdjacency(
         allLineStations: List<SubwayLineStationEntity>,
     ): Map<Long, List<GraphEdge>> {
-        val adjacency = mutableMapOf<Long, MutableList<GraphEdge>>()
+        val adjacency = mutableMapOf<Long, MutableSet<GraphEdge>>()
 
         allLineStations
             .groupBy { it.subwayLine.id }
             .forEach { (_, lineStations) ->
-                lineStations
+                val sortedLineStations = lineStations
+                    .sortedWith(::compareLineStationOrder)
+                sortedLineStations
                     .windowed(size = 2, step = 1, partialWindows = false)
                     .forEach { pair ->
                         val left = pair[0]
                         val right = pair[1]
-                        val forward = GraphEdge(
-                            fromStationId = left.station.id,
-                            toStationId = right.station.id,
-                            subwayLineId = left.subwayLine.id,
-                            subwayLineName = left.subwayLine.name,
-                        )
-                        val backward = GraphEdge(
-                            fromStationId = right.station.id,
-                            toStationId = left.station.id,
-                            subwayLineId = left.subwayLine.id,
-                            subwayLineName = left.subwayLine.name,
-                        )
-                        adjacency.getOrPut(forward.fromStationId) { mutableListOf() }.add(forward)
-                        adjacency.getOrPut(backward.fromStationId) { mutableListOf() }.add(backward)
+                        addBidirectionalEdge(adjacency, left, right)
                     }
+
+                if (isCircularLine(lineStations.firstOrNull()?.subwayLine?.name) &&
+                    sortedLineStations.size > 2
+                ) {
+                    addBidirectionalEdge(adjacency, sortedLineStations.first(), sortedLineStations.last())
+                }
             }
 
-        return adjacency
+        return adjacency.mapValues { (_, edges) -> edges.toList() }
+    }
+
+    private fun addBidirectionalEdge(
+        adjacency: MutableMap<Long, MutableSet<GraphEdge>>,
+        left: SubwayLineStationEntity,
+        right: SubwayLineStationEntity,
+    ) {
+        if (left.station.id == right.station.id) {
+            return
+        }
+
+        val forward = GraphEdge(
+            fromStationId = left.station.id,
+            toStationId = right.station.id,
+            subwayLineId = left.subwayLine.id,
+            subwayLineName = left.subwayLine.name,
+        )
+        val backward = GraphEdge(
+            fromStationId = right.station.id,
+            toStationId = left.station.id,
+            subwayLineId = left.subwayLine.id,
+            subwayLineName = left.subwayLine.name,
+        )
+        adjacency.getOrPut(forward.fromStationId) { mutableSetOf() }.add(forward)
+        adjacency.getOrPut(backward.fromStationId) { mutableSetOf() }.add(backward)
+    }
+
+    private fun isCircularLine(lineName: String?): Boolean {
+        return lineName == "2호선"
+    }
+
+    private fun compareLineStationOrder(
+        left: SubwayLineStationEntity,
+        right: SubwayLineStationEntity,
+    ): Int {
+        val leftKey = toStationCodeSortKey(left.stationCode)
+        val rightKey = toStationCodeSortKey(right.stationCode)
+
+        if (leftKey == null && rightKey == null) {
+            return left.id.compareTo(right.id)
+        }
+        if (leftKey == null) {
+            return 1
+        }
+        if (rightKey == null) {
+            return -1
+        }
+
+        if (leftKey.numericPrefix != rightKey.numericPrefix) {
+            return leftKey.numericPrefix.compareTo(rightKey.numericPrefix)
+        }
+        if (leftKey.suffix != rightKey.suffix) {
+            return leftKey.suffix.compareTo(rightKey.suffix)
+        }
+        if (leftKey.normalized != rightKey.normalized) {
+            return leftKey.normalized.compareTo(rightKey.normalized)
+        }
+        return left.id.compareTo(right.id)
+    }
+
+    private fun toStationCodeSortKey(stationCode: String?): StationCodeSortKey? {
+        val normalized = stationCode
+            ?.trim()
+            ?.uppercase()
+            ?.takeIf { it.isNotEmpty() }
+            ?: return null
+
+        val match = Regex("^(\\d+)([A-Z]*)$").matchEntire(normalized)
+        if (match != null) {
+            return StationCodeSortKey(
+                numericPrefix = match.groupValues[1].toInt(),
+                suffix = match.groupValues[2],
+                normalized = normalized,
+            )
+        }
+
+        val numericPrefix = normalized
+            .takeWhile { it.isDigit() }
+            .toIntOrNull()
+            ?: Int.MAX_VALUE
+
+        return StationCodeSortKey(
+            numericPrefix = numericPrefix,
+            suffix = normalized.dropWhile { it.isDigit() },
+            normalized = normalized,
+        )
     }
 
     private fun findShortestPath(
@@ -559,8 +646,8 @@ class StationService(
         return Comparator { left, right ->
             when (strategy) {
                 SearchSubwayRouteDto.RouteSearchStrategy.BALANCED -> {
-                    val leftScore = estimateRouteMinutes(left.stops, left.transfers)
-                    val rightScore = estimateRouteMinutes(right.stops, right.transfers)
+                    val leftScore = estimateRouteSelectionScore(left.stops, left.transfers)
+                    val rightScore = estimateRouteSelectionScore(right.stops, right.transfers)
                     if (leftScore != rightScore) {
                         leftScore.compareTo(rightScore)
                     } else if (left.transfers != right.transfers) {
@@ -622,8 +709,18 @@ class StationService(
         )
     }
 
+    private fun estimateRouteSelectionScore(totalStops: Int, transferCount: Int): Int {
+        val baseTravelMinutes = totalStops * 2
+        if (transferCount <= 0) {
+            return baseTravelMinutes
+        }
+
+        val transferPenaltyMinutes = 14 + (transferCount - 1) * 20
+        return baseTravelMinutes + transferPenaltyMinutes
+    }
+
     private fun estimateRouteMinutes(totalStops: Int, transferCount: Int): Int {
-        return totalStops * 2 + transferCount * 4
+        return totalStops * 2 + transferCount * 8
     }
 
     override fun getQuickExits(command: GetStationQuickExitCommand): GetStationTimesDto.QuickExitResponse {
