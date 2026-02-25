@@ -36,6 +36,7 @@ class CustomCommentRepository(
                 commentEntity.id,
                 commentEntity.upperComment,
                 commentEntity.content,
+                commentEntity.imageUrls,
                 commentEntity.status,
                 commentEntity.createdAt,
                 commentEntity.createdBy,

@@ -22,6 +22,8 @@ class CommentEntity(
 
     var content: String,
 
+    var imageUrls: String?,
+
     @Enumerated(EnumType.STRING)
     var status: CommentType = CommentType.CREATED,
 
@@ -55,6 +57,7 @@ class CommentEntity(
         fun of(command: CreateCommentCommand, commentEntity: CommentEntity?, post: Any, memberEntity: MemberEntity): CommentEntity {
             return CommentEntity(
                 content = command.content,
+                imageUrls = null,
                 visibility = commentEntity?.visibility ?: command.visibility,
                 upperComment = commentEntity,
                 communityPost = post as? CommunityPostEntity,

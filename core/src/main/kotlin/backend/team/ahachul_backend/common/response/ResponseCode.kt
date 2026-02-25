@@ -80,6 +80,9 @@ enum class ResponseCode(
     STATION_SOCIAL_JOIN_FORBIDDEN("907", "모임 참여/승인 권한이 없습니다.", HttpStatus.FORBIDDEN),
     STATION_SOCIAL_CAPACITY_EXCEEDED("908", "모임 정원이 초과되어 승인할 수 없습니다.", HttpStatus.BAD_REQUEST),
     STATION_SOCIAL_NATIONALITY_MISMATCH("909", "모임 국적 정책과 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+    DAILY_VOTE_POLL_NOT_FOUND("910", "일일 투표가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    DAILY_VOTE_COMMENT_NOT_FOUND("911", "일일 투표 댓글이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    DAILY_VOTE_OPTION_INVALID("912", "유효하지 않은 투표 선택지입니다.", HttpStatus.BAD_REQUEST),
 
     // FILE
     FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

@@ -198,6 +198,7 @@ class LocalMockContentSeeder(
     ): CommentEntity {
         return CommentEntity(
             content = content,
+            imageUrls = null,
             visibility = CommentVisibility.PUBLIC,
             upperComment = null,
             communityPost = post,
@@ -214,6 +215,7 @@ class LocalMockContentSeeder(
     ): CommentEntity {
         return CommentEntity(
             content = content,
+            imageUrls = null,
             visibility = CommentVisibility.PUBLIC,
             upperComment = null,
             communityPost = null,
@@ -230,6 +232,7 @@ class LocalMockContentSeeder(
     ): CommentEntity {
         return CommentEntity(
             content = content,
+            imageUrls = null,
             visibility = CommentVisibility.PUBLIC,
             upperComment = null,
             communityPost = null,

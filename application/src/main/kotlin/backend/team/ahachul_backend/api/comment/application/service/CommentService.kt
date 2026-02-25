@@ -18,6 +18,8 @@ import backend.team.ahachul_backend.api.community.application.port.out.Community
 import backend.team.ahachul_backend.api.complaint.application.port.out.ComplaintPostReader
 import backend.team.ahachul_backend.api.lost.application.port.out.LostPostReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import backend.team.ahachul_backend.common.utils.RequestUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -32,6 +34,7 @@ class CommentService(
     private val lostPostReader: LostPostReader,
     private val complaintPostReader: ComplaintPostReader,
     private val memberReader: MemberReader,
+    private val objectMapper: ObjectMapper,
 ): CommentUseCase {
 
     override fun getComments(command: GetCommentsCommand): GetCommentsDto.Response {
@@ -55,11 +58,12 @@ class CommentService(
         }
 
         val comments = searchedComments.map {
+                val canRead = it.validateReadPermission(loginMemberId) || isPostWriterEqualToLoginMember
                 GetCommentsDto.Comment(
                     it.id,
                     it.upperComment?.id,
-                    if (it.validateReadPermission(loginMemberId)
-                        || isPostWriterEqualToLoginMember) it.content else "",
+                    if (canRead) it.content else "",
+                    if (canRead) parseImageUrls(it.imageUrls) else emptyList(),
                     it.status,
                     it.createdAt,
                     it.createdBy,
@@ -102,9 +106,14 @@ class CommentService(
         upperComment?.validateBelongsTo(command.postType, command.postId)
         val member = memberReader.getMember(memberId.toLong())
         val post = getPost(command.postType, command.postId)
+        val imageUrls = sanitizeImageUrls(command.imageUrls)
+        val imageUrlsJson = if (imageUrls.isEmpty()) null else objectMapper.writeValueAsString(imageUrls)
 
-        val entity = commentWriter.save(CommentEntity.of(command, upperComment, post, member))
-        return CreateCommentDto.Response.from(entity)
+        val entity = CommentEntity.of(command, upperComment, post, member).apply {
+            this.imageUrls = imageUrlsJson
+        }
+
+        return CreateCommentDto.Response.from(commentWriter.save(entity), imageUrls)
     }
 
     @Transactional
@@ -141,5 +150,28 @@ class CommentService(
             PostType.LOST -> lostPostReader.getLostPost(postId)
             PostType.COMPLAINT -> complaintPostReader.getComplaintPost(postId)
         }
+    }
+
+    private fun sanitizeImageUrls(imageUrls: List<String>?): List<String> {
+        return imageUrls.orEmpty()
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .filter { IMAGE_URL_REGEX.matches(it) }
+            .distinct()
+            .take(8)
+    }
+
+    private fun parseImageUrls(imageUrlsJson: String?): List<String> {
+        if (imageUrlsJson.isNullOrBlank()) {
+            return emptyList()
+        }
+
+        return runCatching {
+            objectMapper.readValue(imageUrlsJson, object : TypeReference<List<String>>() {})
+        }.getOrDefault(emptyList())
+    }
+
+    companion object {
+        private val IMAGE_URL_REGEX = Regex("^https?://\\S+$")
     }
 }

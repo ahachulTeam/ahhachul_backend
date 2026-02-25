@@ -72,6 +72,7 @@ class CommentLikeServiceTest(
         communityComment = commentRepository.save(
             CommentEntity(
                 content = "커뮤니티 댓글 내용",
+                imageUrls = null,
                 visibility = CommentVisibility.PUBLIC,
                 upperComment = null,
                 communityPost = communityPost,

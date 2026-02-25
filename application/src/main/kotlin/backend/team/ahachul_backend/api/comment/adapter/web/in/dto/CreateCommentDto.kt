@@ -12,7 +12,8 @@ class CreateCommentDto {
     data class Request(
         val upperCommentId: Long?,
         val content: String,
-        val isPrivate: Boolean?
+        val isPrivate: Boolean?,
+        val imageUrls: List<String>? = null,
     ) {
         init {
             validateChildComment()
@@ -24,6 +25,7 @@ class CreateCommentDto {
                 postType = postType,
                 upperCommentId = upperCommentId,
                 content = content,
+                imageUrls = imageUrls,
                 visibility = CommentVisibility.from(isPrivate)
             )
         }
@@ -43,13 +45,15 @@ class CreateCommentDto {
         val id: Long,
         val upperCommentId: Long?,
         val content: String,
+        val imageUrls: List<String> = emptyList(),
     ) {
         companion object {
-            fun from(entity: CommentEntity): Response {
+            fun from(entity: CommentEntity, imageUrls: List<String> = emptyList()): Response {
                 return Response(
                     id = entity.id,
                     upperCommentId = entity.upperComment?.id,
-                    content = entity.content
+                    content = entity.content,
+                    imageUrls = imageUrls,
                 )
             }
         }

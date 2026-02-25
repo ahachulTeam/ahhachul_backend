@@ -42,24 +42,26 @@ class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         id = 1,
                         upperCommentId = null,
                         content = "상위 내용",
+                        imageUrls = listOf("https://cdn.ahhachul.com/comment/complaint-parent.gif"),
                         status = CommentType.CREATED,
-                        LocalDateTime.now(),
-                        "작성자 ID",
-                        "작성자 닉네임",
-                        true,
-                        0L
+                        createdAt = LocalDateTime.now(),
+                        createdBy = "작성자 ID",
+                        writer = "작성자 닉네임",
+                        isPrivate = true,
+                        likeCnt = 0L,
                     ),
                     childComments = listOf(
                         GetCommentsDto.Comment(
                             id = 2,
                             upperCommentId = 1,
                             content = "하위 내용",
+                            imageUrls = listOf("https://cdn.ahhachul.com/comment/complaint-child.png"),
                             status = CommentType.CREATED,
-                            LocalDateTime.now(),
-                            "작성자 ID",
-                            "작성자 닉네임",
-                            false,
-                            0L
+                            createdAt = LocalDateTime.now(),
+                            createdBy = "작성자 ID",
+                            writer = "작성자 닉네임",
+                            isPrivate = false,
+                            likeCnt = 0L,
                         )
                     )
                 )
@@ -94,6 +96,7 @@ class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].parentComment.id").type(JsonFieldType.NUMBER).description("코멘트 아이디"),
                         fieldWithPath("result.comments[].parentComment.upperCommentId").type(JsonFieldType.NUMBER).description("상위 코멘트 아이디").optional(),
                         fieldWithPath("result.comments[].parentComment.content").type(JsonFieldType.STRING).description("코멘트 내용"),
+                        fieldWithPath("result.comments[].parentComment.imageUrls").type(JsonFieldType.ARRAY).description("코멘트 이미지 URL 목록"),
                         fieldWithPath("result.comments[].parentComment.status").type("CommentType").description("코멘트 상태").attributes(getFormatAttribute("CREATED, DELETED")),
                         fieldWithPath("result.comments[].parentComment.createdAt").type("LocalDateTime").description("작성일자"),
                         fieldWithPath("result.comments[].parentComment.createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
@@ -104,6 +107,7 @@ class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.comments[].childComments[].id").type(JsonFieldType.NUMBER).description("코멘트 아이디"),
                         fieldWithPath("result.comments[].childComments[].upperCommentId").type(JsonFieldType.NUMBER).description("상위 코멘트 아이디").optional(),
                         fieldWithPath("result.comments[].childComments[].content").type(JsonFieldType.STRING).description("코멘트 내용"),
+                        fieldWithPath("result.comments[].childComments[].imageUrls").type(JsonFieldType.ARRAY).description("코멘트 이미지 URL 목록"),
                         fieldWithPath("result.comments[].childComments[].status").type("CommentType").description("코멘트 상태").attributes(getFormatAttribute("CREATED, DELETED")),
                         fieldWithPath("result.comments[].childComments[].createdAt").type("LocalDateTime").description("작성일자"),
                         fieldWithPath("result.comments[].childComments[].createdBy").type(JsonFieldType.STRING).description("작성자 ID"),
@@ -122,7 +126,8 @@ class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
         val response = CreateCommentDto.Response(
             id = 3,
             upperCommentId = 2,
-            content = "생성된 민원 코멘트 내용"
+            content = "생성된 민원 코멘트 내용",
+            imageUrls = listOf("https://cdn.ahhachul.com/comment/new-complaint.gif"),
         )
 
         given(commentUseCase.createComment(any()))
@@ -159,6 +164,7 @@ class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
                     PayloadDocumentation.requestFields(
                         fieldWithPath("upperCommentId").type(JsonFieldType.NUMBER).description("상위 코멘트 아이디").optional(),
                         fieldWithPath("content").type(JsonFieldType.STRING).description("생성할 내용"),
+                        fieldWithPath("imageUrls").type(JsonFieldType.ARRAY).description("첨부 이미지 URL 목록").optional(),
                         fieldWithPath("isPrivate").type(JsonFieldType.BOOLEAN).description("비공개 여부").optional()
                     ),
                     PayloadDocumentation.responseFields(
@@ -166,6 +172,7 @@ class ComplaintPostCommentControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.id").type(JsonFieldType.NUMBER).description("생성된 코멘트 아이디"),
                         fieldWithPath("result.upperCommentId").type(JsonFieldType.NUMBER).description("연결된 상위 코멘트 아이디").optional(),
                         fieldWithPath("result.content").type(JsonFieldType.STRING).description("생성된 내용"),
+                        fieldWithPath("result.imageUrls").type(JsonFieldType.ARRAY).description("생성된 이미지 URL 목록"),
                     )
                 )
             )

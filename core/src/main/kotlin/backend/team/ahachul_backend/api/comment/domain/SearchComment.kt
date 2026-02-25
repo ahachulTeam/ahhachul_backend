@@ -10,6 +10,7 @@ data class SearchComment(
     val id: Long,
     val upperComment: CommentEntity?,
     val content: String,
+    val imageUrls: String?,
     val status: CommentType,
     val createdAt: LocalDateTime,
     val createdBy: String,

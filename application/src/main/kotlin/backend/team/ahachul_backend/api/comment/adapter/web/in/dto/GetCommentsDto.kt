@@ -44,6 +44,7 @@ class GetCommentsDto {
         val id: Long,
         val upperCommentId: Long?,
         val content: String,
+        val imageUrls: List<String> = emptyList(),
         val status: CommentType,
         val createdAt: LocalDateTime,
         val createdBy: String,

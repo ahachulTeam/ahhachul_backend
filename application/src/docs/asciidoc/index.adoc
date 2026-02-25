@@ -76,3 +76,7 @@ include::station/station-times.adoc[]
 == Foreigner
 
 include::foreigner/foreigner-mode.adoc[]
+
+== Daily Vote
+
+include::daily-vote/daily-votes.adoc[]

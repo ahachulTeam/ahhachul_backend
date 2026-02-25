@@ -1,0 +1,19 @@
+== 일일 투표 (Daily Vote)
+
+=== 오늘의 투표 조회
+operation::get-daily-votes-today-v2[snippets='http-request,request-headers,query-parameters,http-response,response-fields']
+
+=== 투표하기
+operation::post-daily-vote-v2[snippets='http-request,request-headers,path-parameters,request-fields,http-response,response-fields']
+
+=== 투표 댓글 조회
+operation::get-daily-vote-comments-v2[snippets='http-request,request-headers,path-parameters,query-parameters,http-response,response-fields']
+
+=== 투표 댓글 작성
+operation::post-daily-vote-comment-v2[snippets='http-request,request-headers,path-parameters,request-fields,http-response,response-fields']
+
+=== 투표 댓글 좋아요
+operation::post-daily-vote-comment-like-v2[snippets='http-request,request-headers,path-parameters,http-response,response-fields']
+
+=== 투표 댓글 좋아요 취소
+operation::delete-daily-vote-comment-like-v2[snippets='http-request,request-headers,path-parameters,http-response,response-fields']
