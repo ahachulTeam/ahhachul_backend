@@ -72,3 +72,7 @@ include::rank/ranks.adoc[]
 == Station
 
 include::station/station-times.adoc[]
+
+== Foreigner
+
+include::foreigner/foreigner-mode.adoc[]

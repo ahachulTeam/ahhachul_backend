@@ -1,0 +1,25 @@
+=== /foreigner
+
+==== 외국인 모드 역 가이드 조회
+
+.Request
+include::{snippets}/get-foreigner-station-guide/http-request.adoc[]
+.Query Parameters
+include::{snippets}/get-foreigner-station-guide/query-parameters.adoc[]
+.Response
+include::{snippets}/get-foreigner-station-guide/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-foreigner-station-guide/response-fields.adoc[]
+
+==== 커뮤니티 게시글 자동 번역 조회
+
+.Request
+include::{snippets}/get-foreigner-community-post-translation/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-foreigner-community-post-translation/path-parameters.adoc[]
+.Query Parameters
+include::{snippets}/get-foreigner-community-post-translation/query-parameters.adoc[]
+.Response
+include::{snippets}/get-foreigner-community-post-translation/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-foreigner-community-post-translation/response-fields.adoc[]
