@@ -22,7 +22,7 @@ class CustomCommentRepository(
     private val queryFactory: JPAQueryFactory
 ) {
 
-    private data class LostCommentCount(
+    data class LostCommentCount(
         val postId: Long,
         val commentCount: Long,
     )
