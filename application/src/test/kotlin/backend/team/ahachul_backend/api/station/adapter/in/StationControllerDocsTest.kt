@@ -257,6 +257,8 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
             stationTimeWeekType = StationTimeWeekType.WEEKDAY,
             upDownType = UpDownType.DOWN,
             walkingMinutes = 15,
+            walkingMinutesSource = GetStationTimesDto.WalkingMinutesSource.USER_PROFILE,
+            walkingMinutesUpdatedAt = "2026-02-27T00:00:00",
             nowAt = "2026-02-23T23:10:00+09:00",
             lastDepartureTime = "23:58:00",
             minutesToLastTrain = 48,
@@ -289,13 +291,15 @@ class StationControllerDocsTest : CommonDocsTestConfig() {
                         parameterWithName("subwayLineId").description("지하철 노선 ID"),
                         parameterWithName("upDownType").description("상행(UP), 하행(DOWN)"),
                         parameterWithName("stationTimeWeekType").description("평일(WEEKDAY), 토요일(SATURDAY), 공휴일(HOLIDAY)"),
-                        parameterWithName("walkingMinutes").description("도보 이동 시간(분)")
+                        parameterWithName("walkingMinutes").description("도보 이동 시간(분), 생략 시 저장된 사용자 프로필 값 또는 기본값 사용").optional()
                     ),
                     PayloadDocumentation.responseFields(
                         *commonResponseFields(),
                         fieldWithPath("result.stationTimeWeekType").type(JsonFieldType.STRING).description("요일 구분"),
                         fieldWithPath("result.upDownType").type(JsonFieldType.STRING).description("상행/하행"),
                         fieldWithPath("result.walkingMinutes").type(JsonFieldType.NUMBER).description("도보 이동 시간(분)"),
+                        fieldWithPath("result.walkingMinutesSource").type(JsonFieldType.STRING).description("도보 이동 시간 소스(REQUEST/USER_PROFILE/DEFAULT)"),
+                        fieldWithPath("result.walkingMinutesUpdatedAt").type(JsonFieldType.STRING).optional().description("도보 이동 시간 마지막 갱신 시각"),
                         fieldWithPath("result.nowAt").type(JsonFieldType.STRING).description("계산 기준 시각"),
                         fieldWithPath("result.lastDepartureTime").type(JsonFieldType.STRING).optional().description("막차 출발시각 - hh:mm:ss"),
                         fieldWithPath("result.minutesToLastTrain").type(JsonFieldType.NUMBER).description("막차까지 남은 분"),

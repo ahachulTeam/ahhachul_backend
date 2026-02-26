@@ -2,6 +2,8 @@ package backend.team.ahachul_backend.api.station.application.service
 
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
+import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
+import backend.team.ahachul_backend.api.member.application.port.out.MemberStationReader
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimesDto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteDto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteQualityV3Dto
@@ -22,6 +24,7 @@ import backend.team.ahachul_backend.common.exception.BusinessException
 import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.logging.Logger
 import backend.team.ahachul_backend.common.response.ResponseCode
+import backend.team.ahachul_backend.common.utils.RequestUtils
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.springframework.data.redis.RedisConnectionFailureException
@@ -37,9 +40,12 @@ class StationService(
     private val subwayLineStationReader: SubwayLineStationReader,
     private val stationTimesCacheUtils: StationTimesCacheUtils,
     private val seoulTrainClient: SeoulTrainClient,
+    private val memberReader: MemberReader,
+    private val memberStationReader: MemberStationReader,
 ): StationUseCase {
 
     private val logger: Logger = Logger(javaClass)
+    private val defaultLastTrainWalkingMinutes = 15
 
     private data class GraphEdge(
         val fromStationId: Long,
@@ -94,6 +100,12 @@ class StationService(
         val reason: String,
         val isRisk: Boolean,
         val hasData: Boolean,
+    )
+
+    private data class WalkingMinutesDecision(
+        val walkingMinutes: Int,
+        val source: GetStationTimesDto.WalkingMinutesSource,
+        val updatedAt: String?,
     )
 
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesApiGet")
@@ -372,6 +384,7 @@ class StationService(
 
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalStationTimesLastTrainRiskApiGet")
     override fun getLastTrainRisk(command: GetStationLastTrainRiskCommand): GetStationTimesDto.LastTrainRiskResponse {
+        val walkingDecision = resolveWalkingMinutes(command)
         val stationTimes = loadStationTimesForLastTrainRisk(
             GetStationTimesCommand(
                 stationId = command.stationId,
@@ -388,19 +401,53 @@ class StationService(
         val calculated = StationLastTrainRiskCalculator.calculate(
             nowAt = OffsetDateTime.now(),
             lastDepartureTime = lastDepartureTime,
-            walkingMinutes = command.walkingMinutes,
+            walkingMinutes = walkingDecision.walkingMinutes,
         )
 
         return GetStationTimesDto.LastTrainRiskResponse(
             stationTimeWeekType = command.stationTimeWeekType,
             upDownType = command.upDownType,
-            walkingMinutes = command.walkingMinutes,
+            walkingMinutes = walkingDecision.walkingMinutes,
+            walkingMinutesSource = walkingDecision.source,
+            walkingMinutesUpdatedAt = walkingDecision.updatedAt,
             nowAt = calculated.nowAt.toString(),
             lastDepartureTime = lastDepartureTime,
             minutesToLastTrain = calculated.minutesToLastTrain,
             isLastTrainRisk = calculated.isLastTrainRisk,
             riskLevel = calculated.riskLevel,
             message = calculated.message,
+        )
+    }
+
+    private fun resolveWalkingMinutes(command: GetStationLastTrainRiskCommand): WalkingMinutesDecision {
+        command.walkingMinutes?.let {
+            return WalkingMinutesDecision(
+                walkingMinutes = it.coerceIn(0, 180),
+                source = GetStationTimesDto.WalkingMinutesSource.REQUEST,
+                updatedAt = null,
+            )
+        }
+
+        val memberId = RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)?.toLongOrNull()
+        if (memberId != null) {
+            val member = runCatching { memberReader.getMember(memberId) }.getOrNull()
+            if (member != null) {
+                val favorite = memberStationReader.getByMember(member)
+                    .firstOrNull { it.station.id == command.stationId && it.walkingMinutes != null }
+                if (favorite?.walkingMinutes != null) {
+                    return WalkingMinutesDecision(
+                        walkingMinutes = favorite.walkingMinutes!!.coerceIn(0, 180),
+                        source = GetStationTimesDto.WalkingMinutesSource.USER_PROFILE,
+                        updatedAt = favorite.walkingUpdatedAt?.toString(),
+                    )
+                }
+            }
+        }
+
+        return WalkingMinutesDecision(
+            walkingMinutes = defaultLastTrainWalkingMinutes,
+            source = GetStationTimesDto.WalkingMinutesSource.DEFAULT,
+            updatedAt = null,
         )
     }
 

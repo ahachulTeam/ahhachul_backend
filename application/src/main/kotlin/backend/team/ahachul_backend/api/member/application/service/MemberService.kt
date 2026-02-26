@@ -16,6 +16,7 @@ import backend.team.ahachul_backend.api.lost.application.port.out.LostPostReader
 import backend.team.ahachul_backend.api.lost.domain.model.LostPostType
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.*
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
+import backend.team.ahachul_backend.api.member.application.command.BookmarkStationLocationMetaCommand
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
 import backend.team.ahachul_backend.api.member.application.command.CreateFavoriteRouteCommand
 import backend.team.ahachul_backend.api.member.application.port.`in`.MemberUseCase
@@ -1005,20 +1006,34 @@ class MemberService(
         }
 
         return originMemberStations.indices.all {
-            originMemberStations[it].isEquals(
-                normalizeInput(newBookmarkStationCommands[it].stationName),
-                newBookmarkStationCommands[it].label
-            )
+            val current = originMemberStations[it]
+            val next = newBookmarkStationCommands[it]
+            val nextStationId = next.stationId ?: stationReader.getByName(normalizeInput(next.stationName)).id
+            current.station.id == nextStationId &&
+                current.label == normalizeOptionalInput(next.label ?: "") &&
+                isEqualsLocationMeta(current, next.locationMeta)
         }
     }
 
     private fun saveNewStations(member: MemberEntity, bookmarkStations: List<BookmarkStationCommand>): List<MemberStationEntity> {
         return bookmarkStations
             .map {
+                val station = it.stationId?.let { stationId -> stationReader.getById(stationId) }
+                    ?: stationReader.getByName(normalizeInput(it.stationName))
+                val normalizedLabel = normalizeOptionalInput(it.label ?: "")
+                val normalizedLocationMeta = normalizeLocationMeta(it.locationMeta)
                 val memberStation = MemberStationEntity(
                     member = member,
-                    station = stationReader.getByName(normalizeInput(it.stationName)),
-                    label = it.label
+                    station = station,
+                    label = normalizedLabel,
+                    locationName = normalizedLocationMeta?.locationName,
+                    roadAddress = normalizedLocationMeta?.roadAddress,
+                    jibunAddress = normalizedLocationMeta?.jibunAddress,
+                    latitude = normalizedLocationMeta?.latitude,
+                    longitude = normalizedLocationMeta?.longitude,
+                    walkingMinutes = normalizedLocationMeta?.walkingMinutes,
+                    walkingSource = normalizedLocationMeta?.walkingSource,
+                    walkingUpdatedAt = if (normalizedLocationMeta?.walkingMinutes != null) LocalDateTime.now() else null,
                 )
                 memberStationWriter.save(memberStation)
             }
@@ -1032,6 +1047,7 @@ class MemberService(
                     stationId = station.id,
                     stationName = station.name,
                     label = it.label,
+                    locationMeta = toLocationMeta(it),
                     subwayLineInfoList = getSubwayLineInfos(station)
                 )
             }
@@ -1049,6 +1065,31 @@ class MemberService(
         }
     }
 
+    private fun toLocationMeta(memberStation: MemberStationEntity): GetBookmarkStationDto.LocationMeta? {
+        val hasValue = memberStation.locationName != null ||
+            memberStation.roadAddress != null ||
+            memberStation.jibunAddress != null ||
+            memberStation.latitude != null ||
+            memberStation.longitude != null ||
+            memberStation.walkingMinutes != null ||
+            memberStation.walkingSource != null ||
+            memberStation.walkingUpdatedAt != null
+        if (!hasValue) {
+            return null
+        }
+
+        return GetBookmarkStationDto.LocationMeta(
+            locationName = memberStation.locationName,
+            roadAddress = memberStation.roadAddress,
+            jibunAddress = memberStation.jibunAddress,
+            latitude = memberStation.latitude,
+            longitude = memberStation.longitude,
+            walkingMinutes = memberStation.walkingMinutes,
+            walkingSource = memberStation.walkingSource,
+            walkingUpdatedAt = memberStation.walkingUpdatedAt?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        )
+    }
+
     private fun validateNickname(nickname: String) {
         if (nickname.length !in NICKNAME_MIN_LENGTH..NICKNAME_MAX_LENGTH) {
             throw BusinessException(ResponseCode.INVALID_NICKNAME_FORMAT)
@@ -1060,10 +1101,47 @@ class MemberService(
     }
 
     private fun validateDuplicateBookmarkStations(stations: List<BookmarkStationCommand>) {
-        val normalizedStationNames = stations.map { normalizeInput(it.stationName) }
-        if (normalizedStationNames.distinct().size != normalizedStationNames.size) {
+        val normalizedStationKeys = stations.map { station ->
+            station.stationId?.let { "id:$it" } ?: "name:${normalizeInput(station.stationName)}"
+        }
+        if (normalizedStationKeys.distinct().size != normalizedStationKeys.size) {
             throw BusinessException(ResponseCode.DUPLICATE_BOOKMARK_STATION)
         }
+    }
+
+    private fun normalizeLocationMeta(
+        locationMeta: BookmarkStationLocationMetaCommand?,
+    ): BookmarkStationLocationMetaCommand? {
+        if (locationMeta == null) {
+            return null
+        }
+        val locationName = locationMeta.locationName?.let(::normalizeOptionalInput)
+        val roadAddress = locationMeta.roadAddress?.let(::normalizeOptionalInput)
+        val jibunAddress = locationMeta.jibunAddress?.let(::normalizeOptionalInput)
+        val walkingMinutes = locationMeta.walkingMinutes?.coerceIn(0, 180)
+        return BookmarkStationLocationMetaCommand(
+            locationName = locationName,
+            roadAddress = roadAddress,
+            jibunAddress = jibunAddress,
+            latitude = locationMeta.latitude,
+            longitude = locationMeta.longitude,
+            walkingMinutes = walkingMinutes,
+            walkingSource = locationMeta.walkingSource,
+        )
+    }
+
+    private fun isEqualsLocationMeta(
+        memberStation: MemberStationEntity,
+        nextMeta: BookmarkStationLocationMetaCommand?,
+    ): Boolean {
+        val normalized = normalizeLocationMeta(nextMeta)
+        return memberStation.locationName == normalized?.locationName &&
+            memberStation.roadAddress == normalized?.roadAddress &&
+            memberStation.jibunAddress == normalized?.jibunAddress &&
+            memberStation.latitude == normalized?.latitude &&
+            memberStation.longitude == normalized?.longitude &&
+            memberStation.walkingMinutes == normalized?.walkingMinutes &&
+            memberStation.walkingSource == normalized?.walkingSource
     }
 
     private fun normalizeInput(value: String): String {

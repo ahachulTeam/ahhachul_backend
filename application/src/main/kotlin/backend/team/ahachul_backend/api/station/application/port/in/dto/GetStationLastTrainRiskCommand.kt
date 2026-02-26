@@ -8,5 +8,5 @@ class GetStationLastTrainRiskCommand(
     val subwayLineId: Long,
     val upDownType: UpDownType,
     val stationTimeWeekType: StationTimeWeekType,
-    val walkingMinutes: Int,
+    val walkingMinutes: Int?,
 )

@@ -156,7 +156,7 @@ class GetStationTimesDto {
         val subwayLineId: Long,
         val upDownType: UpDownType,
         val stationTimeWeekType: StationTimeWeekType,
-        val walkingMinutes: Int,
+        val walkingMinutes: Int? = null,
     ) {
         fun toCommand(): GetStationLastTrainRiskCommand {
             return GetStationLastTrainRiskCommand(
@@ -173,6 +173,8 @@ class GetStationTimesDto {
         val stationTimeWeekType: StationTimeWeekType,
         val upDownType: UpDownType,
         val walkingMinutes: Int,
+        val walkingMinutesSource: WalkingMinutesSource,
+        val walkingMinutesUpdatedAt: String? = null,
         val nowAt: String,
         val lastDepartureTime: String?,
         val minutesToLastTrain: Int,
@@ -212,6 +214,10 @@ class GetStationTimesDto {
 
     enum class LastTrainRiskLevel {
         SAFE, WARN, RISK
+    }
+
+    enum class WalkingMinutesSource {
+        REQUEST, USER_PROFILE, DEFAULT
     }
 
     enum class QuickExitConfidenceLevel {

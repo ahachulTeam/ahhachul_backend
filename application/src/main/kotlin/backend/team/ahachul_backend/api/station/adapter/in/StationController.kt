@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.station.adapter.`in`.dto.GetStationTimes
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteDto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteQualityV3Dto
 import backend.team.ahachul_backend.api.station.application.port.`in`.StationUseCase
+import backend.team.ahachul_backend.common.annotation.Authentication
 import backend.team.ahachul_backend.common.response.CommonResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
@@ -38,6 +39,7 @@ class StationController(
     }
 
     @GetMapping("/v2/stations/times/last-train-risk")
+    @Authentication(required = false)
     fun getLastTrainRisk(request: GetStationTimesDto.LastTrainRiskRequest): CommonResponse<GetStationTimesDto.LastTrainRiskResponse> {
         val result = stationUseCase.getLastTrainRisk(request.toCommand())
         return CommonResponse.success(result)

@@ -3,6 +3,8 @@ package backend.team.ahachul_backend.api.station.application.service
 import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineStationReader
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
+import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
+import backend.team.ahachul_backend.api.member.application.port.out.MemberStationReader
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteDto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.SearchSubwayRouteQualityV3Dto
 import backend.team.ahachul_backend.api.station.adapter.`in`.dto.StationTimeWeekType
@@ -22,10 +24,14 @@ class StationServiceRouteSearchUnitTest {
     private val subwayLineStationReader: SubwayLineStationReader = Mockito.mock(SubwayLineStationReader::class.java)
     private val stationTimesCacheUtils: StationTimesCacheUtils = Mockito.mock(StationTimesCacheUtils::class.java)
     private val seoulTrainClient: SeoulTrainClient = Mockito.mock(SeoulTrainClient::class.java)
+    private val memberReader: MemberReader = Mockito.mock(MemberReader::class.java)
+    private val memberStationReader: MemberStationReader = Mockito.mock(MemberStationReader::class.java)
     private val stationService = StationService(
         subwayLineStationReader = subwayLineStationReader,
         stationTimesCacheUtils = stationTimesCacheUtils,
         seoulTrainClient = seoulTrainClient,
+        memberReader = memberReader,
+        memberStationReader = memberStationReader,
     )
 
     @Test

@@ -239,6 +239,16 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     stationId = 1L,
                     stationName = "발산역",
                     label = "집",
+                    locationMeta = GetBookmarkStationDto.LocationMeta(
+                        locationName = "우리집",
+                        roadAddress = "서울 강서구 ...",
+                        jibunAddress = "서울 강서구 ...",
+                        latitude = 37.0,
+                        longitude = 127.0,
+                        walkingMinutes = 9,
+                        walkingSource = backend.team.ahachul_backend.api.member.domain.model.MemberStationWalkingSourceType.ADDRESS,
+                        walkingUpdatedAt = "2026-02-27T00:00:00",
+                    ),
                     subwayLineInfoList = listOf(
                         GetBookmarkStationDto.SubwayLineInfo(
                             subwayLineId = 1L,
@@ -250,6 +260,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     stationId = 2L,
                     stationName = "우장산역",
                     label = "학교",
+                    locationMeta = null,
                     subwayLineInfoList = listOf(
                         GetBookmarkStationDto.SubwayLineInfo(
                             subwayLineId = 5L,
@@ -261,6 +272,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     stationId = 3L,
                     stationName = "화곡역",
                     label = "즐겨찾는 장소",
+                    locationMeta = null,
                     subwayLineInfoList = listOf(
                         GetBookmarkStationDto.SubwayLineInfo(
                             subwayLineId = 1L,
@@ -275,7 +287,20 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                 .willReturn(response)
 
         val request = BookmarkStationDto.Request(listOf(
-            BookmarkStation("발산역", "집"),
+            BookmarkStation(
+                stationName = "발산역",
+                label = "집",
+                stationId = 1L,
+                locationMeta = BookmarkStationDto.LocationMeta(
+                    locationName = "우리집",
+                    roadAddress = "서울 강서구 ...",
+                    jibunAddress = "서울 강서구 ...",
+                    latitude = 37.0,
+                    longitude = 127.0,
+                    walkingMinutes = 9,
+                    walkingSource = backend.team.ahachul_backend.api.member.domain.model.MemberStationWalkingSourceType.ADDRESS,
+                )
+            ),
             BookmarkStation("우장산역", "학교"),
             BookmarkStation("화곡역", "즐겨찾는 장소"),
         ))
@@ -299,6 +324,15 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("stations").type(JsonFieldType.ARRAY).description("즐겨찾는 역 이름 및 별명 리스트"),
                         fieldWithPath("stations[].stationName").type(JsonFieldType.STRING).description("즐겨찾는 역 이름"),
                         fieldWithPath("stations[].label").type(JsonFieldType.STRING).description("즐겨찾는 역 별명").optional(),
+                        fieldWithPath("stations[].stationId").type(JsonFieldType.NUMBER).description("즐겨찾는 역 ID").optional(),
+                        fieldWithPath("stations[].locationMeta").type(JsonFieldType.OBJECT).description("위치 메타 정보").optional(),
+                        fieldWithPath("stations[].locationMeta.locationName").type(JsonFieldType.STRING).description("장소명(예: 집/회사)").optional(),
+                        fieldWithPath("stations[].locationMeta.roadAddress").type(JsonFieldType.STRING).description("도로명 주소").optional(),
+                        fieldWithPath("stations[].locationMeta.jibunAddress").type(JsonFieldType.STRING).description("지번 주소").optional(),
+                        fieldWithPath("stations[].locationMeta.latitude").type(JsonFieldType.NUMBER).description("위도").optional(),
+                        fieldWithPath("stations[].locationMeta.longitude").type(JsonFieldType.NUMBER).description("경도").optional(),
+                        fieldWithPath("stations[].locationMeta.walkingMinutes").type(JsonFieldType.NUMBER).description("역까지 도보 분").optional(),
+                        fieldWithPath("stations[].locationMeta.walkingSource").type(JsonFieldType.STRING).description("도보 분 산출 소스(ADDRESS/CURRENT_LOCATION/MANUAL)").optional(),
                     ),
                     responseFields(
                         *commonResponseFields(),
@@ -306,6 +340,15 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.stationInfoList[].stationId").type(JsonFieldType.NUMBER).description("역 고유 ID"),
                         fieldWithPath("result.stationInfoList[].stationName").type(JsonFieldType.STRING).description("역 이름"),
                         fieldWithPath("result.stationInfoList[].label").type(JsonFieldType.STRING).description("역 별명").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta").type(JsonFieldType.OBJECT).description("위치 메타 정보").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.locationName").type(JsonFieldType.STRING).description("장소명(예: 집/회사)").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.roadAddress").type(JsonFieldType.STRING).description("도로명 주소").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.jibunAddress").type(JsonFieldType.STRING).description("지번 주소").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.latitude").type(JsonFieldType.NUMBER).description("위도").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.longitude").type(JsonFieldType.NUMBER).description("경도").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.walkingMinutes").type(JsonFieldType.NUMBER).description("역까지 도보 분").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.walkingSource").type(JsonFieldType.STRING).description("도보 분 산출 소스(ADDRESS/CURRENT_LOCATION/MANUAL)").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.walkingUpdatedAt").type(JsonFieldType.STRING).description("도보 분 마지막 갱신 시각").optional(),
                         fieldWithPath("result.stationInfoList[].subwayLineInfoList").type(JsonFieldType.ARRAY).description("해당 역이 존재하는 노선 리스트"),
                         fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 고유 ID"),
                         fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineName").type(JsonFieldType.STRING).description("노선 이름"),
@@ -323,6 +366,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                     stationId = 1L,
                     stationName = "시청역",
                     label = "집",
+                    locationMeta = null,
                     subwayLineInfoList = listOf(
                         GetBookmarkStationDto.SubwayLineInfo(
                             subwayLineId = 1L,
@@ -355,6 +399,15 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.stationInfoList[].stationId").type(JsonFieldType.NUMBER).description("역 고유 ID"),
                         fieldWithPath("result.stationInfoList[].stationName").type(JsonFieldType.STRING).description("역 이름"),
                         fieldWithPath("result.stationInfoList[].label").type(JsonFieldType.STRING).description("역 별명").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta").type(JsonFieldType.OBJECT).description("위치 메타 정보").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.locationName").type(JsonFieldType.STRING).description("장소명(예: 집/회사)").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.roadAddress").type(JsonFieldType.STRING).description("도로명 주소").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.jibunAddress").type(JsonFieldType.STRING).description("지번 주소").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.latitude").type(JsonFieldType.NUMBER).description("위도").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.longitude").type(JsonFieldType.NUMBER).description("경도").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.walkingMinutes").type(JsonFieldType.NUMBER).description("역까지 도보 분").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.walkingSource").type(JsonFieldType.STRING).description("도보 분 산출 소스(ADDRESS/CURRENT_LOCATION/MANUAL)").optional(),
+                        fieldWithPath("result.stationInfoList[].locationMeta.walkingUpdatedAt").type(JsonFieldType.STRING).description("도보 분 마지막 갱신 시각").optional(),
                         fieldWithPath("result.stationInfoList[].subwayLineInfoList").type(JsonFieldType.ARRAY).description("해당 역이 존재하는 노선 리스트"),
                         fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 고유 ID"),
                         fieldWithPath("result.stationInfoList[].subwayLineInfoList[].subwayLineName").type(JsonFieldType.STRING).description("노선 이름"),
