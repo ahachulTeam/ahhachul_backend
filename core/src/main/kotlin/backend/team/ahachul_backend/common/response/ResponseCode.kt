@@ -83,6 +83,13 @@ enum class ResponseCode(
     DAILY_VOTE_POLL_NOT_FOUND("910", "일일 투표가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     DAILY_VOTE_COMMENT_NOT_FOUND("911", "일일 투표 댓글이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     DAILY_VOTE_OPTION_INVALID("912", "유효하지 않은 투표 선택지입니다.", HttpStatus.BAD_REQUEST),
+    DAILY_VOTE_STATION_FORBIDDEN("913", "즐겨찾기한 역에만 투표를 생성할 수 있습니다.", HttpStatus.FORBIDDEN),
+    DAILY_VOTE_POLL_FORBIDDEN("914", "해당 투표를 삭제할 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    STORY_NOT_FOUND("915", "스토리가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    STORY_FORBIDDEN("916", "해당 스토리를 수정/삭제할 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    STORY_IMAGE_REQUIRED("917", "스토리 이미지는 필수입니다.", HttpStatus.BAD_REQUEST),
+    STORY_INVALID_IMAGE("918", "스토리 이미지 파일이 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
+    STORY_CAPTION_TOO_LONG("919", "스토리 캡션은 280자를 초과할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // FILE
     FILE_READ_FAILED("800", "파일 읽기에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

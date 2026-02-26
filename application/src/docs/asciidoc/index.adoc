@@ -23,6 +23,10 @@ include::member/members.adoc[]
 
 include::member/error.adoc[]
 
+== Story
+
+include::story/stories.adoc[]
+
 == Comment
 
 include::comment/comments.adoc[]

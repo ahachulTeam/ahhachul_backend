@@ -1,0 +1,55 @@
+=== /stories
+
+==== 내 스토리 목록 조회
+
+.Request
+include::{snippets}/get-my-stories/http-request.adoc[]
+.Request Headers
+include::{snippets}/get-my-stories/request-headers.adoc[]
+.Query Parameters
+include::{snippets}/get-my-stories/query-parameters.adoc[]
+.Response
+include::{snippets}/get-my-stories/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-my-stories/response-fields.adoc[]
+
+==== 사용자 스토리 목록 조회
+
+.Request
+include::{snippets}/get-member-stories/http-request.adoc[]
+.Path Parameters
+include::{snippets}/get-member-stories/path-parameters.adoc[]
+.Query Parameters
+include::{snippets}/get-member-stories/query-parameters.adoc[]
+.Response
+include::{snippets}/get-member-stories/http-response.adoc[]
+.Response Fields
+include::{snippets}/get-member-stories/response-fields.adoc[]
+
+==== 스토리 생성
+
+.Request
+include::{snippets}/create-story/http-request.adoc[]
+.Request Headers
+include::{snippets}/create-story/request-headers.adoc[]
+.Request Parts
+include::{snippets}/create-story/request-parts.adoc[]
+.Request Part Fields
+include::{snippets}/create-story/request-part-content-fields.adoc[]
+.Response
+include::{snippets}/create-story/http-response.adoc[]
+.Response Fields
+include::{snippets}/create-story/response-fields.adoc[]
+
+==== 스토리 삭제
+
+.Request
+include::{snippets}/delete-story/http-request.adoc[]
+.Request Headers
+include::{snippets}/delete-story/request-headers.adoc[]
+.Path Parameters
+include::{snippets}/delete-story/path-parameters.adoc[]
+.Response
+include::{snippets}/delete-story/http-response.adoc[]
+.Response Fields
+include::{snippets}/delete-story/response-fields.adoc[]
