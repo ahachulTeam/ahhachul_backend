@@ -142,6 +142,11 @@ class SearchSubwayRouteQualityV3Dto {
         val name: String,
         val walkingMinutes: Int,
         val openNow: Boolean,
+        val operatingHours: String,
+        val crowdLevel: RouteCrowdingLevel,
+        val crowdUpdatedAt: String,
+        val poiAccuracyScore: Int,
+        val poiAccuracyReason: String,
         val reliabilityScore: Int,
         val reliabilityReason: String,
     )

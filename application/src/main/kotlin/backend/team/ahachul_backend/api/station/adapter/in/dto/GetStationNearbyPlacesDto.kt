@@ -35,8 +35,13 @@ class GetStationNearbyPlacesDto {
         val essentialType: NearbyEssentialType,
         val walkingMinutes: Int,
         val openNow: Boolean,
+        val operatingHours: String,
+        val crowdLevel: NearbyPlaceCrowdLevel,
+        val crowdUpdatedAt: String,
         val supportsEnglishMenu: Boolean,
         val confidenceLevel: NearbyPlaceConfidenceLevel,
+        val poiAccuracyScore: Int,
+        val poiAccuracyReason: String,
         val reliabilityScore: Int,
         val reliabilityReason: String,
         val sourceCount: Int,
@@ -49,5 +54,9 @@ class GetStationNearbyPlacesDto {
 
     enum class NearbyPlaceConfidenceLevel {
         HIGH, MEDIUM, LOW
+    }
+
+    enum class NearbyPlaceCrowdLevel {
+        LOW, MEDIUM, HIGH, VERY_HIGH
     }
 }

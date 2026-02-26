@@ -16,6 +16,8 @@ class StationNearbyPlacesRecommendationGeneratorTest {
 
         assertThat(result).hasSize(3)
         assertThat(result.first().category).isEqualTo("편의점")
+        assertThat(result.first().operatingHours).isNotBlank
+        assertThat(result.first().poiAccuracyScore).isGreaterThan(70)
         assertThat(result.first().reliabilityScore).isGreaterThan(70)
     }
 
@@ -30,6 +32,8 @@ class StationNearbyPlacesRecommendationGeneratorTest {
 
         assertThat(result).isNotEmpty()
         assertThat(result.first().name).contains("출구")
+        assertThat(result.first().crowdUpdatedAt).isNotBlank
+        assertThat(result.first().poiAccuracyReason).isNotBlank
         assertThat(result.map { it.essentialType.name }).contains("CONVENIENCE_STORE", "RESTROOM", "ATM")
     }
 }

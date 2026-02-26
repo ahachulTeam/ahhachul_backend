@@ -1260,6 +1260,13 @@ class StationService(
                     name = place.name,
                     walkingMinutes = place.walkingMinutes,
                     openNow = place.openNow,
+                    operatingHours = place.operatingHours,
+                    crowdLevel = SearchSubwayRouteQualityV3Dto.RouteCrowdingLevel.valueOf(
+                        place.crowdLevel.name
+                    ),
+                    crowdUpdatedAt = place.crowdUpdatedAt,
+                    poiAccuracyScore = place.poiAccuracyScore,
+                    poiAccuracyReason = place.poiAccuracyReason,
                     reliabilityScore = place.reliabilityScore,
                     reliabilityReason = place.reliabilityReason,
                 )
