@@ -35,6 +35,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
             nickname = "nickname",
             email = "email",
             maskedEmail = "em***@mail.com",
+            imageUrl = "https://cdn.ahhachul.com/profile/member-1.png",
             gender = GenderType.MALE,
             ageRange = "20",
             profilePublic = true,
@@ -70,6 +71,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.nickname").type(JsonFieldType.STRING).description("사용자 닉네임").optional(),
                         fieldWithPath("result.email").type(JsonFieldType.STRING).description("사용자 이메일").optional(),
                         fieldWithPath("result.maskedEmail").type(JsonFieldType.STRING).description("마스킹된 사용자 이메일").optional(),
+                        fieldWithPath("result.imageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL").optional(),
                         fieldWithPath("result.gender").type("GenderType").description("사용자 성별").attributes(getFormatAttribute("MALE, FEMALE")).optional(),
                         fieldWithPath("result.ageRange").type(JsonFieldType.STRING).description("사용자 연령대").attributes(getFormatAttribute("1 : 1세 이상 10세 미만 ${getNewLine()} 10 : 10세 이상 20세 미만 ${getNewLine()} 20 : 20세 이상 30세 미만 ${getNewLine()} ...")).optional(),
                         fieldWithPath("result.profilePublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
@@ -94,6 +96,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
             genderAgePublic = false,
             postsPublic = true,
             commentsPublic = true,
+            imageUrl = "https://cdn.ahhachul.com/profile/member-1.png",
         )
 
         given(memberUseCase.updateMember(any()))
@@ -108,6 +111,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
             genderAgePublic = false,
             postsPublic = true,
             commentsPublic = true,
+            imageUrl = "https://cdn.ahhachul.com/profile/member-1.png",
         )
 
         // when
@@ -139,6 +143,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부").optional(),
                         fieldWithPath("postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부").optional(),
                         fieldWithPath("commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부").optional(),
+                        fieldWithPath("imageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL").optional(),
 
                         ),
                     responseFields(
@@ -151,6 +156,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.genderAgePublic").type(JsonFieldType.BOOLEAN).description("성별/연령대 공개 여부"),
                         fieldWithPath("result.postsPublic").type(JsonFieldType.BOOLEAN).description("작성 글 공개 여부"),
                         fieldWithPath("result.commentsPublic").type(JsonFieldType.BOOLEAN).description("작성 댓글 공개 여부"),
+                        fieldWithPath("result.imageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL").optional(),
                     )
                 )
             )
@@ -945,6 +951,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
         val response = GetMemberProfileDto.Response(
             memberId = 1,
             nickname = "nickname",
+            imageUrl = "https://cdn.ahhachul.com/profile/member-1.png",
             email = "email@mail.com",
             maskedEmail = "em***@mail.com",
             gender = GenderType.MALE,
@@ -1011,6 +1018,7 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
                         *commonResponseFields(),
                         fieldWithPath("result.memberId").type(JsonFieldType.NUMBER).description("회원 아이디"),
                         fieldWithPath("result.nickname").type(JsonFieldType.STRING).description("닉네임").optional(),
+                        fieldWithPath("result.imageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL").optional(),
                         fieldWithPath("result.email").type(JsonFieldType.STRING).description("이메일").optional(),
                         fieldWithPath("result.maskedEmail").type(JsonFieldType.STRING).description("마스킹 이메일").optional(),
                         fieldWithPath("result.gender").type(JsonFieldType.STRING).description("성별").optional(),

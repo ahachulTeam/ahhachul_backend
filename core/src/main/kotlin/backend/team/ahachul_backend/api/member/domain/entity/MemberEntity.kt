@@ -32,6 +32,8 @@ class MemberEntity(
 
     var email: String?,
 
+    var imageUrl: String? = null,
+
     @Enumerated(EnumType.STRING)
     var gender: GenderType?,
 
@@ -113,6 +115,10 @@ class MemberEntity(
 
     fun changeAgeRange(ageRange: String) {
         this.ageRange = ageRange
+    }
+
+    fun changeImageUrl(imageUrl: String?) {
+        this.imageUrl = imageUrl
     }
 
     fun changeProfilePublic(isPublic: Boolean) {

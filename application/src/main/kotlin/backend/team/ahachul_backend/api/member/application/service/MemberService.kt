@@ -162,6 +162,7 @@ class MemberService(
         command.genderAgePublic?.let { member.changeGenderAgePublic(it) }
         command.postsPublic?.let { member.changeActivityPostsPublic(it) }
         command.commentsPublic?.let { member.changeActivityCommentsPublic(it) }
+        command.imageUrl?.let { member.changeImageUrl(normalizeOptionalInput(it)) }
 
         return UpdateMemberDto.Response.of(
                 nickname = member.nickname,
@@ -172,6 +173,7 @@ class MemberService(
                 genderAgePublic = member.isGenderAgePublic(),
                 postsPublic = member.isActivityPostsPublic(),
                 commentsPublic = member.isActivityCommentsPublic(),
+                imageUrl = member.imageUrl,
         )
     }
 
@@ -203,6 +205,7 @@ class MemberService(
         return GetMemberProfileDto.Response(
             memberId = targetMember.id,
             nickname = targetMember.nickname,
+            imageUrl = if (profileVisible) targetMember.imageUrl else null,
             email = if (emailVisible) targetMember.email else null,
             maskedEmail = if (emailVisible) maskEmail(targetMember.email) else null,
             gender = if (genderAgeVisible) targetMember.gender else null,
@@ -1065,6 +1068,10 @@ class MemberService(
 
     private fun normalizeInput(value: String): String {
         return Normalizer.normalize(value, Normalizer.Form.NFC).trim()
+    }
+
+    private fun normalizeOptionalInput(value: String): String? {
+        return normalizeInput(value).ifBlank { null }
     }
 
     private fun buildArticleHistoryOrNull(

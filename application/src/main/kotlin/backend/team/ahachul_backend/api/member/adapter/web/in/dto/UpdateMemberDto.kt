@@ -13,6 +13,7 @@ class UpdateMemberDto {
             val genderAgePublic: Boolean?,
             val postsPublic: Boolean?,
             val commentsPublic: Boolean?,
+            val imageUrl: String? = null,
     ) {
         fun toCommand(): UpdateMemberCommand {
             return UpdateMemberCommand(
@@ -24,6 +25,7 @@ class UpdateMemberDto {
                     genderAgePublic = genderAgePublic,
                     postsPublic = postsPublic,
                     commentsPublic = commentsPublic,
+                    imageUrl = imageUrl,
             )
         }
     }
@@ -37,6 +39,7 @@ class UpdateMemberDto {
             val genderAgePublic: Boolean,
             val postsPublic: Boolean,
             val commentsPublic: Boolean,
+            val imageUrl: String? = null,
     ) {
         companion object {
             fun of(
@@ -48,6 +51,7 @@ class UpdateMemberDto {
                 genderAgePublic: Boolean,
                 postsPublic: Boolean,
                 commentsPublic: Boolean,
+                imageUrl: String?,
             ): Response {
                 return Response(
                         nickname = nickname,
@@ -58,6 +62,7 @@ class UpdateMemberDto {
                         genderAgePublic = genderAgePublic,
                         postsPublic = postsPublic,
                         commentsPublic = commentsPublic,
+                        imageUrl = imageUrl,
                 )
             }
         }

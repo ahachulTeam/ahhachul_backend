@@ -7,6 +7,7 @@ class GetMemberProfileDto {
     data class Response(
         val memberId: Long,
         val nickname: String?,
+        val imageUrl: String?,
         val email: String?,
         val maskedEmail: String?,
         val gender: GenderType?,

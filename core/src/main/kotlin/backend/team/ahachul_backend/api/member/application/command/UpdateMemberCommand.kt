@@ -11,5 +11,6 @@ data class UpdateMemberCommand(
         val genderAgePublic: Boolean? = null,
         val postsPublic: Boolean? = null,
         val commentsPublic: Boolean? = null,
+        val imageUrl: String? = null,
 ) {
 }

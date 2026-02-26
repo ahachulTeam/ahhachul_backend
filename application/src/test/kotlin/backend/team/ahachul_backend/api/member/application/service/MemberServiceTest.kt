@@ -143,6 +143,26 @@ class MemberServiceTest(
     }
 
     @Test
+    @DisplayName("사용자 프로필 이미지 수정")
+    fun 사용자_프로필_이미지_수정() {
+        // given
+        val command = UpdateMemberCommand(
+            nickname = null,
+            gender = null,
+            ageRange = null,
+            imageUrl = "https://cdn.ahhachul.com/profile/member-profile.png",
+        )
+
+        // when
+        val updated = memberUseCase.updateMember(command)
+        val result = memberUseCase.getMember()
+
+        // then
+        assertThat(updated.imageUrl).isEqualTo("https://cdn.ahhachul.com/profile/member-profile.png")
+        assertThat(result.imageUrl).isEqualTo("https://cdn.ahhachul.com/profile/member-profile.png")
+    }
+
+    @Test
     @DisplayName("사용자 정보 수정 시 닉네임이 중복이면 실패한다")
     fun 사용자_정보_수정_닉네임_중복_실패() {
         // given
