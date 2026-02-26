@@ -69,6 +69,9 @@ class MemberService(
         private const val NICKNAME_MIN_LENGTH = 2
         private const val NICKNAME_MAX_LENGTH = 10
         private const val MAX_FAVORITE_ROUTE_COUNT = 10
+        private const val ROUTE_CONNECTION_SOURCE_MAX_DISTANCE = 1
+        private const val ROUTE_CONNECTION_DESTINATION_MAX_DISTANCE = 1
+        private const val ROUTE_CONNECTION_TOTAL_MAX_DISTANCE = 2
         private val DEFAULT_COMMUTE_ARRIVAL_TIME: LocalTime = LocalTime.of(9, 0)
         private const val DEFAULT_TIMEZONE = "Asia/Seoul"
         private val NICKNAME_REGEX = Regex("^[가-힣a-zA-Z0-9_]+$")
@@ -117,6 +120,15 @@ class MemberService(
         val edges: List<GraphEdge>,
         val metric: RouteMetric,
         val stationNamesById: Map<Long, String>,
+    )
+
+    private data class RouteConnectionCandidate(
+        val member: MemberEntity,
+        val route: MemberStationRouteEntity,
+        val sourceDistance: Int,
+        val destinationDistance: Int,
+        val totalDistance: Int,
+        val matchScore: Int,
     )
 
     private val commuteTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -308,6 +320,167 @@ class MemberService(
         return FavoriteRouteDto.GraphResponse(routes = routes)
     }
 
+    override fun getRouteConnectionRecommendations(limit: Int, groupLimit: Int): RouteConnectionDto.Response {
+        val member = getCurrentMember()
+        val anchorRoute = resolveAnchorRoute(member) ?: return RouteConnectionDto.Response(
+            generatedAt = ZonedDateTime.now(ZoneId.of(DEFAULT_TIMEZONE)).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+            matchingPolicy = RouteConnectionDto.MatchingPolicy(
+                sourceMaxDistance = ROUTE_CONNECTION_SOURCE_MAX_DISTANCE,
+                destinationMaxDistance = ROUTE_CONNECTION_DESTINATION_MAX_DISTANCE,
+                totalMaxDistance = ROUTE_CONNECTION_TOTAL_MAX_DISTANCE,
+            ),
+            anchorRoute = null,
+            recommendations = emptyList(),
+            groups = emptyList(),
+            graph = RouteConnectionDto.SocialGraph(
+                nodes = listOf(
+                    RouteConnectionDto.SocialGraphNode(
+                        memberId = member.id,
+                        nickname = resolveDisplayNickname(member),
+                        me = true,
+                    )
+                ),
+                edges = emptyList(),
+            ),
+        )
+
+        val normalizedLimit = limit.coerceIn(1, 50)
+        val normalizedGroupLimit = groupLimit.coerceIn(1, 20)
+        val others = memberStationRouteReader.findAllByMemberIdNot(member.id)
+        if (others.isEmpty()) {
+            return RouteConnectionDto.Response(
+                generatedAt = ZonedDateTime.now(ZoneId.of(DEFAULT_TIMEZONE)).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                matchingPolicy = RouteConnectionDto.MatchingPolicy(
+                    sourceMaxDistance = ROUTE_CONNECTION_SOURCE_MAX_DISTANCE,
+                    destinationMaxDistance = ROUTE_CONNECTION_DESTINATION_MAX_DISTANCE,
+                    totalMaxDistance = ROUTE_CONNECTION_TOTAL_MAX_DISTANCE,
+                ),
+                anchorRoute = RouteConnectionDto.AnchorRoute(
+                    sourceStationId = anchorRoute.sourceStationId,
+                    sourceStationName = anchorRoute.sourceStationName,
+                    destinationStationId = anchorRoute.destinationStationId,
+                    destinationStationName = anchorRoute.destinationStationName,
+                ),
+                recommendations = emptyList(),
+                groups = emptyList(),
+                graph = RouteConnectionDto.SocialGraph(
+                    nodes = listOf(
+                        RouteConnectionDto.SocialGraphNode(
+                            memberId = member.id,
+                            nickname = resolveDisplayNickname(member),
+                            me = true,
+                        )
+                    ),
+                    edges = emptyList(),
+                ),
+            )
+        }
+
+        val candidates = others.groupBy { it.member.id }
+            .values
+            .mapNotNull { routes -> resolveBestRouteConnectionCandidate(anchorRoute, routes) }
+            .sortedWith(
+                compareByDescending<RouteConnectionCandidate> { it.matchScore }
+                    .thenBy { it.totalDistance }
+                    .thenBy { it.member.id }
+            )
+            .take(normalizedLimit)
+
+        val recommendations = candidates.map { candidate ->
+            RouteConnectionDto.MemberRecommendation(
+                memberId = candidate.member.id,
+                nickname = resolveDisplayNickname(candidate.member),
+                routeId = candidate.route.id,
+                title = candidate.route.title,
+                sourceStationId = candidate.route.sourceStation.id,
+                sourceStationName = candidate.route.sourceStation.name,
+                destinationStationId = candidate.route.destinationStation.id,
+                destinationStationName = candidate.route.destinationStation.name,
+                sourceDistance = candidate.sourceDistance,
+                destinationDistance = candidate.destinationDistance,
+                totalDistance = candidate.totalDistance,
+                matchScore = candidate.matchScore,
+                estimatedMinutes = estimateRouteMinutes(candidate.totalDistance, transferCount = 0),
+                reason = buildRouteConnectionReason(candidate),
+            )
+        }
+
+        val groups = candidates.groupBy { candidate ->
+            "${candidate.route.sourceStation.id}-${candidate.route.destinationStation.id}"
+        }
+            .values
+            .sortedByDescending { groupCandidates -> groupCandidates.size }
+            .take(normalizedGroupLimit)
+            .map { groupCandidates ->
+                val first = groupCandidates.first()
+                RouteConnectionDto.RouteGroup(
+                    groupId = "${first.route.sourceStation.id}-${first.route.destinationStation.id}",
+                    sourceStationId = first.route.sourceStation.id,
+                    sourceStationName = first.route.sourceStation.name,
+                    destinationStationId = first.route.destinationStation.id,
+                    destinationStationName = first.route.destinationStation.name,
+                    memberCount = groupCandidates.size,
+                    members = groupCandidates.sortedByDescending { it.matchScore }.map { candidate ->
+                        RouteConnectionDto.RouteGroupMember(
+                            memberId = candidate.member.id,
+                            nickname = resolveDisplayNickname(candidate.member),
+                            matchScore = candidate.matchScore,
+                            totalDistance = candidate.totalDistance,
+                        )
+                    },
+                )
+            }
+
+        val graphNodes = buildList {
+            add(
+                RouteConnectionDto.SocialGraphNode(
+                    memberId = member.id,
+                    nickname = resolveDisplayNickname(member),
+                    me = true,
+                )
+            )
+            recommendations.forEach { recommendation ->
+                add(
+                    RouteConnectionDto.SocialGraphNode(
+                        memberId = recommendation.memberId,
+                        nickname = recommendation.nickname,
+                        me = false,
+                    )
+                )
+            }
+        }
+
+        val graphEdges = recommendations.map { recommendation ->
+            RouteConnectionDto.SocialGraphEdge(
+                fromMemberId = member.id,
+                toMemberId = recommendation.memberId,
+                score = recommendation.matchScore,
+                label = "${recommendation.sourceDistance}/${recommendation.destinationDistance}",
+            )
+        }
+
+        return RouteConnectionDto.Response(
+            generatedAt = ZonedDateTime.now(ZoneId.of(DEFAULT_TIMEZONE)).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+            matchingPolicy = RouteConnectionDto.MatchingPolicy(
+                sourceMaxDistance = ROUTE_CONNECTION_SOURCE_MAX_DISTANCE,
+                destinationMaxDistance = ROUTE_CONNECTION_DESTINATION_MAX_DISTANCE,
+                totalMaxDistance = ROUTE_CONNECTION_TOTAL_MAX_DISTANCE,
+            ),
+            anchorRoute = RouteConnectionDto.AnchorRoute(
+                sourceStationId = anchorRoute.sourceStationId,
+                sourceStationName = anchorRoute.sourceStationName,
+                destinationStationId = anchorRoute.destinationStationId,
+                destinationStationName = anchorRoute.destinationStationName,
+            ),
+            recommendations = recommendations,
+            groups = groups,
+            graph = RouteConnectionDto.SocialGraph(
+                nodes = graphNodes,
+                edges = graphEdges,
+            ),
+        )
+    }
+
     override fun getTodayCommuteCoach(targetArrivalAt: String?, timezone: String?): CommuteCoachDto.Response {
         val zoneId = parseTimezoneOrDefault(timezone)
         val now = ZonedDateTime.now(zoneId)
@@ -468,6 +641,108 @@ class MemberService(
 
     private fun getCurrentMember(): MemberEntity {
         return memberReader.getMember(RequestUtils.getAttribute(RequestUtils.Attribute.MEMBER_ID)!!.toLong())
+    }
+
+    private data class AnchorRoute(
+        val sourceStationId: Long,
+        val sourceStationName: String,
+        val destinationStationId: Long,
+        val destinationStationName: String,
+    )
+
+    private fun resolveAnchorRoute(member: MemberEntity): AnchorRoute? {
+        val customRoute = memberStationRouteReader.findAllByMember(member).firstOrNull()
+        if (customRoute != null) {
+            return AnchorRoute(
+                sourceStationId = customRoute.sourceStation.id,
+                sourceStationName = customRoute.sourceStation.name,
+                destinationStationId = customRoute.destinationStation.id,
+                destinationStationName = customRoute.destinationStation.name,
+            )
+        }
+
+        val favorites = memberStationReader.getByMember(member)
+        if (favorites.size < 2) {
+            return null
+        }
+
+        val source = favorites.first().station
+        val destination = favorites.drop(1).first().station
+        return AnchorRoute(
+            sourceStationId = source.id,
+            sourceStationName = source.name,
+            destinationStationId = destination.id,
+            destinationStationName = destination.name,
+        )
+    }
+
+    private fun resolveBestRouteConnectionCandidate(
+        anchorRoute: AnchorRoute,
+        routes: List<MemberStationRouteEntity>,
+    ): RouteConnectionCandidate? {
+        return routes.mapNotNull { route ->
+            val sourceDistance = calculateStationDistance(anchorRoute.sourceStationId, route.sourceStation.id)
+            val destinationDistance =
+                calculateStationDistance(anchorRoute.destinationStationId, route.destinationStation.id)
+
+            if (sourceDistance == null || destinationDistance == null) {
+                return@mapNotNull null
+            }
+
+            val totalDistance = sourceDistance + destinationDistance
+            if (sourceDistance > ROUTE_CONNECTION_SOURCE_MAX_DISTANCE ||
+                destinationDistance > ROUTE_CONNECTION_DESTINATION_MAX_DISTANCE ||
+                totalDistance > ROUTE_CONNECTION_TOTAL_MAX_DISTANCE
+            ) {
+                return@mapNotNull null
+            }
+
+            RouteConnectionCandidate(
+                member = route.member,
+                route = route,
+                sourceDistance = sourceDistance,
+                destinationDistance = destinationDistance,
+                totalDistance = totalDistance,
+                matchScore = calculateRouteConnectionScore(sourceDistance, destinationDistance, totalDistance),
+            )
+        }.maxByOrNull { candidate -> candidate.matchScore }
+    }
+
+    private fun calculateStationDistance(sourceStationId: Long, destinationStationId: Long): Int? {
+        return runCatching {
+            findShortestPath(sourceStationId, destinationStationId).metric.stops
+        }.getOrNull()
+    }
+
+    private fun calculateRouteConnectionScore(
+        sourceDistance: Int,
+        destinationDistance: Int,
+        totalDistance: Int,
+    ): Int {
+        val score = 100 - sourceDistance * 25 - destinationDistance * 25 - totalDistance * 10
+        return score.coerceIn(1, 100)
+    }
+
+    private fun buildRouteConnectionReason(candidate: RouteConnectionCandidate): String {
+        val sourceReason = if (candidate.sourceDistance == 0) {
+            "출발역 동일"
+        } else {
+            "출발역 ${candidate.sourceDistance}정거장 차이"
+        }
+        val destinationReason = if (candidate.destinationDistance == 0) {
+            "도착역 동일"
+        } else {
+            "도착역 ${candidate.destinationDistance}정거장 차이"
+        }
+        return "$sourceReason · $destinationReason"
+    }
+
+    private fun resolveDisplayNickname(member: MemberEntity): String {
+        val normalized = member.nickname?.trim().orEmpty()
+        if (normalized.isNotEmpty()) {
+            return normalized
+        }
+        return "아하철러-${member.id}"
     }
 
     private fun buildRoute(

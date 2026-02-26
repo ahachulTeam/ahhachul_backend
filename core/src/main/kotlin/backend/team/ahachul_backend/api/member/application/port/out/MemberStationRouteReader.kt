@@ -9,6 +9,8 @@ interface MemberStationRouteReader {
 
     fun findAllByMember(member: MemberEntity): List<MemberStationRouteEntity>
 
+    fun findAllByMemberIdNot(memberId: Long): List<MemberStationRouteEntity>
+
     fun countByMember(member: MemberEntity): Long
 
     fun existsByMemberAndPair(member: MemberEntity, sourceStationId: Long, destinationStationId: Long): Boolean

@@ -7,6 +7,7 @@ import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEn
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.DeleteMemberDto
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberStationRepository
+import backend.team.ahachul_backend.api.member.adapter.web.out.MemberStationRouteRepository
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommand
 import backend.team.ahachul_backend.api.member.application.command.BookmarkStationCommands
 import backend.team.ahachul_backend.api.member.application.command.SearchMemberCommand
@@ -17,6 +18,7 @@ import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberWriter
 import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.api.member.domain.entity.MemberStationEntity
+import backend.team.ahachul_backend.api.member.domain.entity.MemberStationRouteEntity
 import backend.team.ahachul_backend.api.member.domain.model.GenderType
 import backend.team.ahachul_backend.api.member.domain.model.MemberStatusType
 import backend.team.ahachul_backend.api.member.domain.model.ProviderType
@@ -46,6 +48,7 @@ class MemberServiceTest(
     @Autowired val memberRepository: MemberRepository,
     @Autowired val stationRepository: StationRepository,
     @Autowired val memberStationRepository: MemberStationRepository,
+    @Autowired val memberStationRouteRepository: MemberStationRouteRepository,
     @Autowired val subwayLineStationRepository: SubwayLineStationRepository,
     @Autowired val subwayLineRepository: SubwayLineRepository,
     @Autowired val jwtUtils: JwtUtils,
@@ -439,6 +442,86 @@ class MemberServiceTest(
         assertThat(result.stationInfoList[0].subwayLineInfoList[0].subwayLineName).isEqualTo("1호선")
         assertThat(result.stationInfoList[1].stationName).isEqualTo("발산역")
         assertThat(result.stationInfoList[1].subwayLineInfoList[0].subwayLineName).isEqualTo("5호선")
+    }
+
+    @Test
+    @DisplayName("경로 기반 인맥 추천 - 출발/도착 오차 1정거장 이내 경로를 추천한다")
+    fun 경로_기반_인맥_추천_조회() {
+        // given
+        val anAm = stationRepository.save(StationEntity(name = "안암"))
+        val boMun = stationRepository.save(StationEntity(name = "보문"))
+        val wangSimNi = stationRepository.save(StationEntity(name = "왕십리"))
+        val seongSu = stationRepository.save(StationEntity(name = "성수"))
+        val line = subwayLineRepository.save(
+            SubwayLineEntity(name = "2호선", regionType = RegionType.METROPOLITAN)
+        )
+
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = anAm, subwayLine = line))
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = boMun, subwayLine = line))
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = wangSimNi, subwayLine = line))
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = seongSu, subwayLine = line))
+
+        memberStationRouteRepository.save(
+            MemberStationRouteEntity(
+                member = member!!,
+                sourceStation = anAm,
+                destinationStation = wangSimNi,
+                title = "내 출근",
+            )
+        )
+
+        val nearMember = memberRepository.save(
+            MemberEntity(
+                nickname = "nearMate",
+                provider = ProviderType.GOOGLE,
+                providerUserId = "route-near",
+                email = "near@mail.com",
+                gender = GenderType.MALE,
+                ageRange = "20",
+                status = MemberStatusType.ACTIVE
+            )
+        )
+        memberStationRouteRepository.save(
+            MemberStationRouteEntity(
+                member = nearMember,
+                sourceStation = boMun,
+                destinationStation = seongSu,
+                title = "비슷한 출근",
+            )
+        )
+
+        val farMember = memberRepository.save(
+            MemberEntity(
+                nickname = "farMate",
+                provider = ProviderType.GOOGLE,
+                providerUserId = "route-far",
+                email = "far@mail.com",
+                gender = GenderType.MALE,
+                ageRange = "20",
+                status = MemberStatusType.ACTIVE
+            )
+        )
+        memberStationRouteRepository.save(
+            MemberStationRouteEntity(
+                member = farMember,
+                sourceStation = seongSu,
+                destinationStation = anAm,
+                title = "반대 경로",
+            )
+        )
+
+        // when
+        val result = memberUseCase.getRouteConnectionRecommendations(limit = 10, groupLimit = 5)
+
+        // then
+        assertThat(result.anchorRoute).isNotNull
+        assertThat(result.recommendations).hasSize(1)
+        assertThat(result.recommendations.first().memberId).isEqualTo(nearMember.id)
+        assertThat(result.recommendations.first().sourceDistance).isEqualTo(1)
+        assertThat(result.recommendations.first().destinationDistance).isEqualTo(1)
+        assertThat(result.recommendations.first().totalDistance).isEqualTo(2)
+        assertThat(result.groups).hasSize(1)
+        assertThat(result.graph.edges).hasSize(1)
     }
 
     @Test

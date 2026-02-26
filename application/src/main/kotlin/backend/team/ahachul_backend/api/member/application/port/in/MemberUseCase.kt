@@ -27,6 +27,8 @@ interface MemberUseCase {
 
     fun getFavoriteRoutes(): FavoriteRouteDto.GraphResponse
 
+    fun getRouteConnectionRecommendations(limit: Int, groupLimit: Int): RouteConnectionDto.Response
+
     fun getTodayCommuteCoach(targetArrivalAt: String?, timezone: String?): CommuteCoachDto.Response
 
     fun createFavoriteRoute(command: CreateFavoriteRouteCommand): FavoriteRouteDto.Route

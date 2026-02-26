@@ -68,6 +68,15 @@ class MemberController(
     }
 
     @Authentication
+    @GetMapping("/v2/members/route-connections/recommendations")
+    fun getRouteConnectionRecommendations(
+        @RequestParam(required = false, defaultValue = "12") limit: Int,
+        @RequestParam(required = false, defaultValue = "6") groupLimit: Int,
+    ): CommonResponse<RouteConnectionDto.Response> {
+        return CommonResponse.success(memberUseCase.getRouteConnectionRecommendations(limit, groupLimit))
+    }
+
+    @Authentication
     @GetMapping("/v2/members/commute-coach/today")
     fun getTodayCommuteCoach(
         @RequestParam(required = false) targetArrivalAt: String?,

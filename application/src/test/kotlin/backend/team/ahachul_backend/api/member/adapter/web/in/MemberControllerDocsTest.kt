@@ -700,6 +700,147 @@ class MemberControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
+    fun getRouteConnectionRecommendationsTest() {
+        // given
+        val response = RouteConnectionDto.Response(
+            generatedAt = "2026-02-26T10:00:00+09:00",
+            matchingPolicy = RouteConnectionDto.MatchingPolicy(
+                sourceMaxDistance = 1,
+                destinationMaxDistance = 1,
+                totalMaxDistance = 2,
+            ),
+            anchorRoute = RouteConnectionDto.AnchorRoute(
+                sourceStationId = 1L,
+                sourceStationName = "안암",
+                destinationStationId = 2L,
+                destinationStationName = "성수",
+            ),
+            recommendations = listOf(
+                RouteConnectionDto.MemberRecommendation(
+                    memberId = 10L,
+                    nickname = "routeMate",
+                    routeId = 100L,
+                    title = "출근 루트",
+                    sourceStationId = 11L,
+                    sourceStationName = "보문",
+                    destinationStationId = 3L,
+                    destinationStationName = "뚝섬",
+                    sourceDistance = 1,
+                    destinationDistance = 1,
+                    totalDistance = 2,
+                    matchScore = 60,
+                    estimatedMinutes = 4,
+                    reason = "출발역 1정거장 차이 · 도착역 1정거장 차이",
+                )
+            ),
+            groups = listOf(
+                RouteConnectionDto.RouteGroup(
+                    groupId = "11-3",
+                    sourceStationId = 11L,
+                    sourceStationName = "보문",
+                    destinationStationId = 3L,
+                    destinationStationName = "뚝섬",
+                    memberCount = 1,
+                    members = listOf(
+                        RouteConnectionDto.RouteGroupMember(
+                            memberId = 10L,
+                            nickname = "routeMate",
+                            matchScore = 60,
+                            totalDistance = 2,
+                        )
+                    ),
+                )
+            ),
+            graph = RouteConnectionDto.SocialGraph(
+                nodes = listOf(
+                    RouteConnectionDto.SocialGraphNode(memberId = 1L, nickname = "me", me = true),
+                    RouteConnectionDto.SocialGraphNode(memberId = 10L, nickname = "routeMate", me = false),
+                ),
+                edges = listOf(
+                    RouteConnectionDto.SocialGraphEdge(
+                        fromMemberId = 1L,
+                        toMemberId = 10L,
+                        score = 60,
+                        label = "1/1",
+                    )
+                ),
+            ),
+        )
+
+        given(memberUseCase.getRouteConnectionRecommendations(12, 6)).willReturn(response)
+
+        // when
+        val result = mockMvc.perform(
+            get("/v2/members/route-connections/recommendations")
+                .queryParam("limit", "12")
+                .queryParam("groupLimit", "6")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+
+        // then
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-route-connection-recommendations",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("limit").description("추천 사용자 최대 개수").optional(),
+                        parameterWithName("groupLimit").description("경로 그룹 최대 개수").optional(),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.generatedAt").type(JsonFieldType.STRING).description("응답 생성 시각"),
+                        fieldWithPath("result.matchingPolicy.sourceMaxDistance").type(JsonFieldType.NUMBER).description("출발역 허용 정거장 차이"),
+                        fieldWithPath("result.matchingPolicy.destinationMaxDistance").type(JsonFieldType.NUMBER).description("도착역 허용 정거장 차이"),
+                        fieldWithPath("result.matchingPolicy.totalMaxDistance").type(JsonFieldType.NUMBER).description("전체 허용 정거장 차이"),
+                        fieldWithPath("result.anchorRoute").type(JsonFieldType.OBJECT).description("내 기준 경로").optional(),
+                        fieldWithPath("result.anchorRoute.sourceStationId").type(JsonFieldType.NUMBER).description("기준 출발역 ID").optional(),
+                        fieldWithPath("result.anchorRoute.sourceStationName").type(JsonFieldType.STRING).description("기준 출발역 이름").optional(),
+                        fieldWithPath("result.anchorRoute.destinationStationId").type(JsonFieldType.NUMBER).description("기준 도착역 ID").optional(),
+                        fieldWithPath("result.anchorRoute.destinationStationName").type(JsonFieldType.STRING).description("기준 도착역 이름").optional(),
+                        fieldWithPath("result.recommendations").type(JsonFieldType.ARRAY).description("경로 기반 추천 사용자 목록"),
+                        fieldWithPath("result.recommendations[].memberId").type(JsonFieldType.NUMBER).description("추천 사용자 ID"),
+                        fieldWithPath("result.recommendations[].nickname").type(JsonFieldType.STRING).description("추천 사용자 닉네임"),
+                        fieldWithPath("result.recommendations[].routeId").type(JsonFieldType.NUMBER).description("추천 사용자 경로 ID").optional(),
+                        fieldWithPath("result.recommendations[].title").type(JsonFieldType.STRING).description("추천 사용자 경로 별칭").optional(),
+                        fieldWithPath("result.recommendations[].sourceStationId").type(JsonFieldType.NUMBER).description("추천 사용자 출발역 ID"),
+                        fieldWithPath("result.recommendations[].sourceStationName").type(JsonFieldType.STRING).description("추천 사용자 출발역 이름"),
+                        fieldWithPath("result.recommendations[].destinationStationId").type(JsonFieldType.NUMBER).description("추천 사용자 도착역 ID"),
+                        fieldWithPath("result.recommendations[].destinationStationName").type(JsonFieldType.STRING).description("추천 사용자 도착역 이름"),
+                        fieldWithPath("result.recommendations[].sourceDistance").type(JsonFieldType.NUMBER).description("출발역 정거장 차이"),
+                        fieldWithPath("result.recommendations[].destinationDistance").type(JsonFieldType.NUMBER).description("도착역 정거장 차이"),
+                        fieldWithPath("result.recommendations[].totalDistance").type(JsonFieldType.NUMBER).description("전체 정거장 차이"),
+                        fieldWithPath("result.recommendations[].matchScore").type(JsonFieldType.NUMBER).description("매칭 점수"),
+                        fieldWithPath("result.recommendations[].estimatedMinutes").type(JsonFieldType.NUMBER).description("정거장 차이 기반 추정 이동 시간"),
+                        fieldWithPath("result.recommendations[].reason").type(JsonFieldType.STRING).description("추천 근거 요약"),
+                        fieldWithPath("result.groups").type(JsonFieldType.ARRAY).description("유사 경로 그룹"),
+                        fieldWithPath("result.groups[].groupId").type(JsonFieldType.STRING).description("그룹 식별자"),
+                        fieldWithPath("result.groups[].sourceStationId").type(JsonFieldType.NUMBER).description("그룹 출발역 ID"),
+                        fieldWithPath("result.groups[].sourceStationName").type(JsonFieldType.STRING).description("그룹 출발역 이름"),
+                        fieldWithPath("result.groups[].destinationStationId").type(JsonFieldType.NUMBER).description("그룹 도착역 ID"),
+                        fieldWithPath("result.groups[].destinationStationName").type(JsonFieldType.STRING).description("그룹 도착역 이름"),
+                        fieldWithPath("result.groups[].memberCount").type(JsonFieldType.NUMBER).description("그룹 인원"),
+                        fieldWithPath("result.groups[].members").type(JsonFieldType.ARRAY).description("그룹 구성원"),
+                        fieldWithPath("result.groups[].members[].memberId").type(JsonFieldType.NUMBER).description("구성원 ID"),
+                        fieldWithPath("result.groups[].members[].nickname").type(JsonFieldType.STRING).description("구성원 닉네임"),
+                        fieldWithPath("result.groups[].members[].matchScore").type(JsonFieldType.NUMBER).description("구성원 매칭 점수"),
+                        fieldWithPath("result.groups[].members[].totalDistance").type(JsonFieldType.NUMBER).description("구성원 정거장 차이 합계"),
+                        fieldWithPath("result.graph.nodes").type(JsonFieldType.ARRAY).description("인맥 그래프 노드"),
+                        fieldWithPath("result.graph.nodes[].memberId").type(JsonFieldType.NUMBER).description("노드 회원 ID"),
+                        fieldWithPath("result.graph.nodes[].nickname").type(JsonFieldType.STRING).description("노드 닉네임"),
+                        fieldWithPath("result.graph.nodes[].me").type(JsonFieldType.BOOLEAN).description("내 계정 여부"),
+                        fieldWithPath("result.graph.edges").type(JsonFieldType.ARRAY).description("인맥 그래프 엣지"),
+                        fieldWithPath("result.graph.edges[].fromMemberId").type(JsonFieldType.NUMBER).description("엣지 시작 회원 ID"),
+                        fieldWithPath("result.graph.edges[].toMemberId").type(JsonFieldType.NUMBER).description("엣지 도착 회원 ID"),
+                        fieldWithPath("result.graph.edges[].score").type(JsonFieldType.NUMBER).description("엣지 점수"),
+                        fieldWithPath("result.graph.edges[].label").type(JsonFieldType.STRING).description("엣지 설명 라벨"),
+                    )
+                )
+            )
+    }
+
+    @Test
     fun deleteFavoriteRouteTest() {
         // given
         val response = FavoriteRouteDto.DeleteResponse(routeId = 100L)

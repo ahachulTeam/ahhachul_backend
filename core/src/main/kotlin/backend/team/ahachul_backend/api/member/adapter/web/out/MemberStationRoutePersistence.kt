@@ -23,6 +23,10 @@ class MemberStationRoutePersistence(
         return memberStationRouteRepository.findAllByMemberOrderByCreatedAtDesc(member)
     }
 
+    override fun findAllByMemberIdNot(memberId: Long): List<MemberStationRouteEntity> {
+        return memberStationRouteRepository.findAllByMemberIdNotOrderByCreatedAtDesc(memberId)
+    }
+
     override fun countByMember(member: MemberEntity): Long {
         return memberStationRouteRepository.countByMember(member)
     }

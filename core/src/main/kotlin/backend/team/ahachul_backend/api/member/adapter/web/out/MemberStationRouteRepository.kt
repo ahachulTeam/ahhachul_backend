@@ -14,6 +14,9 @@ interface MemberStationRouteRepository : JpaRepository<MemberStationRouteEntity,
     @EntityGraph(attributePaths = ["member", "sourceStation", "destinationStation"])
     fun findAllByMemberOrderByCreatedAtDesc(member: MemberEntity): List<MemberStationRouteEntity>
 
+    @EntityGraph(attributePaths = ["member", "sourceStation", "destinationStation"])
+    fun findAllByMemberIdNotOrderByCreatedAtDesc(memberId: Long): List<MemberStationRouteEntity>
+
     fun countByMember(member: MemberEntity): Long
 
     fun existsByMemberAndSourceStationIdAndDestinationStationId(
