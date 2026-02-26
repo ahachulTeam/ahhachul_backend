@@ -4,6 +4,7 @@ import backend.team.ahachul_backend.api.common.adapter.web.out.StationRepository
 import backend.team.ahachul_backend.api.common.adapter.web.out.SubwayLineStationRepository
 import backend.team.ahachul_backend.api.common.domain.entity.StationEntity
 import backend.team.ahachul_backend.api.common.domain.entity.SubwayLineStationEntity
+import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.CommuteCoachDto
 import backend.team.ahachul_backend.api.member.adapter.web.`in`.dto.DeleteMemberDto
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberRepository
 import backend.team.ahachul_backend.api.member.adapter.web.out.MemberStationRepository
@@ -553,6 +554,7 @@ class MemberServiceTest(
         // then
         assertThat(result.primaryRoute).isNull()
         assertThat(result.alternativeRoutes).isEmpty()
+        assertThat(result.walkingMeta).isNull()
         assertThat(result.guidanceMessage).contains("즐겨찾는 역을 2개 이상 등록")
     }
 
@@ -579,6 +581,56 @@ class MemberServiceTest(
         assertThat(result.primaryRoute!!.destinationStationName).isEqualTo("성수")
         assertThat(result.safeDepartureAt).matches("\\d{2}:\\d{2}")
         assertThat(result.departureInMinutes).isNotNull
+        assertThat(result.walkingMeta).isNotNull
+        assertThat(result.walkingMeta!!.totalWalkingMinutes).isEqualTo(30)
+        assertThat(result.walkingMeta!!.source.walkingMinutesSource)
+            .isEqualTo(CommuteCoachDto.WalkingMinutesSource.DEFAULT)
+    }
+
+    @Test
+    @DisplayName("출근 코치 - 즐겨찾기 역 도보 메타를 반영한다")
+    fun 출근_코치_도보_메타_반영() {
+        // given
+        val stationA = stationRepository.save(StationEntity(name = "신도림"))
+        val stationB = stationRepository.save(StationEntity(name = "강남"))
+        val line = subwayLineRepository.save(
+            SubwayLineEntity(name = "2호선", regionType = RegionType.METROPOLITAN)
+        )
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = stationA, subwayLine = line))
+        subwayLineStationRepository.save(SubwayLineStationEntity(station = stationB, subwayLine = line))
+        memberStationRepository.save(
+            MemberStationEntity(
+                member = member!!,
+                station = stationA,
+                label = "집",
+                walkingMinutes = 6,
+                walkingSource = backend.team.ahachul_backend.api.member.domain.model.MemberStationWalkingSourceType.ADDRESS,
+            )
+        )
+        memberStationRepository.save(
+            MemberStationEntity(
+                member = member!!,
+                station = stationB,
+                label = "회사",
+                walkingMinutes = 8,
+                walkingSource = backend.team.ahachul_backend.api.member.domain.model.MemberStationWalkingSourceType.CURRENT_LOCATION,
+            )
+        )
+
+        // when
+        val result = memberUseCase.getTodayCommuteCoach("09:00", "Asia/Seoul")
+
+        // then
+        assertThat(result.walkingMeta).isNotNull
+        assertThat(result.walkingMeta!!.totalWalkingMinutes).isEqualTo(14)
+        assertThat(result.walkingMeta!!.source.stationName).isEqualTo("신도림")
+        assertThat(result.walkingMeta!!.source.walkingMinutes).isEqualTo(6)
+        assertThat(result.walkingMeta!!.source.walkingMinutesSource)
+            .isEqualTo(CommuteCoachDto.WalkingMinutesSource.USER_PROFILE)
+        assertThat(result.walkingMeta!!.destination.stationName).isEqualTo("강남")
+        assertThat(result.walkingMeta!!.destination.walkingMinutes).isEqualTo(8)
+        assertThat(result.walkingMeta!!.destination.walkingMinutesSource)
+            .isEqualTo(CommuteCoachDto.WalkingMinutesSource.USER_PROFILE)
     }
 
     @Test

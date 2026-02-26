@@ -73,6 +73,7 @@ class MemberService(
         private const val ROUTE_CONNECTION_SOURCE_MAX_DISTANCE = 1
         private const val ROUTE_CONNECTION_DESTINATION_MAX_DISTANCE = 1
         private const val ROUTE_CONNECTION_TOTAL_MAX_DISTANCE = 2
+        private const val DEFAULT_COMMUTE_WALKING_MINUTES = 15
         private val DEFAULT_COMMUTE_ARRIVAL_TIME: LocalTime = LocalTime.of(9, 0)
         private const val DEFAULT_TIMEZONE = "Asia/Seoul"
         private val NICKNAME_REGEX = Regex("^[가-힣a-zA-Z0-9_]+$")
@@ -130,6 +131,14 @@ class MemberService(
         val destinationDistance: Int,
         val totalDistance: Int,
         val matchScore: Int,
+    )
+
+    private data class CommuteWalkingLegDecision(
+        val stationId: Long,
+        val stationName: String,
+        val walkingMinutes: Int,
+        val source: CommuteCoachDto.WalkingMinutesSource,
+        val updatedAt: String?,
     )
 
     private val commuteTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -500,6 +509,7 @@ class MemberService(
                 departureInMinutes = null,
                 riskLevel = CommuteCoachDto.RiskLevel.HIGH,
                 riskReasons = listOf("출근 코치 계산에 필요한 즐겨찾기 경로가 없습니다."),
+                walkingMeta = null,
                 primaryRoute = null,
                 alternativeRoutes = emptyList(),
                 guidanceMessage = "즐겨찾는 역을 2개 이상 등록하면 출근 코치를 제공할 수 있어요.",
@@ -508,7 +518,11 @@ class MemberService(
 
         val primaryRoute = recommendations.first()
         val alternativeRoutes = recommendations.drop(1).take(2)
-        val requiredMinutes = calculateRequiredMinutes(primaryRoute.summary)
+        val walkingMeta = resolveCommuteWalkingMeta(member = getCurrentMember(), route = primaryRoute)
+        val requiredMinutes = calculateRequiredMinutes(
+            summary = primaryRoute.summary,
+            walkingMinutes = walkingMeta.totalWalkingMinutes,
+        )
         val safeDepartureDateTime = targetArrivalDateTime.minusMinutes(requiredMinutes.toLong())
         val departureInMinutes = Duration.between(now, safeDepartureDateTime).toMinutes().toInt()
         val minutesUntilTarget = Duration.between(now, targetArrivalDateTime).toMinutes().toInt()
@@ -518,6 +532,7 @@ class MemberService(
             targetArrivalAt = targetArrivalDateTime,
             minutesUntilTarget = minutesUntilTarget,
             requiredMinutes = requiredMinutes,
+            walkingMeta = walkingMeta,
         )
 
         return CommuteCoachDto.Response(
@@ -527,6 +542,7 @@ class MemberService(
             departureInMinutes = departureInMinutes,
             riskLevel = riskLevel,
             riskReasons = riskReasons,
+            walkingMeta = walkingMeta,
             primaryRoute = primaryRoute,
             alternativeRoutes = alternativeRoutes,
             guidanceMessage = resolveGuidanceMessage(riskLevel),
@@ -825,10 +841,13 @@ class MemberService(
         }
     }
 
-    private fun calculateRequiredMinutes(summary: FavoriteRouteDto.Summary): Int {
+    private fun calculateRequiredMinutes(
+        summary: FavoriteRouteDto.Summary,
+        walkingMinutes: Int,
+    ): Int {
         val estimatedMinutes = summary.estimatedMinutes
         val transferBuffer = 4 + summary.transferCount * 3
-        return estimatedMinutes + transferBuffer
+        return estimatedMinutes + transferBuffer + walkingMinutes
     }
 
     private fun calculateRiskLevel(
@@ -848,8 +867,13 @@ class MemberService(
         targetArrivalAt: ZonedDateTime,
         minutesUntilTarget: Int,
         requiredMinutes: Int,
+        walkingMeta: CommuteCoachDto.WalkingMeta,
     ): List<String> {
         val reasons = mutableListOf<String>()
+
+        reasons.add(
+            "도보 시간(출발 ${walkingMeta.source.walkingMinutes}분 + 도착 ${walkingMeta.destination.walkingMinutes}분)을 반영했습니다."
+        )
 
         if (route.summary.transferCount > 0) {
             reasons.add("환승 ${route.summary.transferCount}회 경로라 이동 변동 가능성이 있습니다.")
@@ -871,6 +895,66 @@ class MemberService(
         }
 
         return reasons
+    }
+
+    private fun resolveCommuteWalkingMeta(
+        member: MemberEntity,
+        route: FavoriteRouteDto.Route,
+    ): CommuteCoachDto.WalkingMeta {
+        val memberStations = memberStationReader.getByMember(member)
+            .associateBy { it.station.id }
+
+        val sourceLeg = resolveCommuteWalkingLeg(
+            stationId = route.sourceStationId,
+            stationName = route.sourceStationName,
+            memberStation = memberStations[route.sourceStationId],
+        )
+        val destinationLeg = resolveCommuteWalkingLeg(
+            stationId = route.destinationStationId,
+            stationName = route.destinationStationName,
+            memberStation = memberStations[route.destinationStationId],
+        )
+
+        return CommuteCoachDto.WalkingMeta(
+            totalWalkingMinutes = sourceLeg.walkingMinutes + destinationLeg.walkingMinutes,
+            source = sourceLeg.toDto(),
+            destination = destinationLeg.toDto(),
+        )
+    }
+
+    private fun resolveCommuteWalkingLeg(
+        stationId: Long,
+        stationName: String,
+        memberStation: MemberStationEntity?,
+    ): CommuteWalkingLegDecision {
+        val walkingMinutes = memberStation?.walkingMinutes?.coerceIn(0, 180)
+        if (walkingMinutes != null) {
+            return CommuteWalkingLegDecision(
+                stationId = stationId,
+                stationName = stationName,
+                walkingMinutes = walkingMinutes,
+                source = CommuteCoachDto.WalkingMinutesSource.USER_PROFILE,
+                updatedAt = memberStation.walkingUpdatedAt?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            )
+        }
+
+        return CommuteWalkingLegDecision(
+            stationId = stationId,
+            stationName = stationName,
+            walkingMinutes = DEFAULT_COMMUTE_WALKING_MINUTES,
+            source = CommuteCoachDto.WalkingMinutesSource.DEFAULT,
+            updatedAt = null,
+        )
+    }
+
+    private fun CommuteWalkingLegDecision.toDto(): CommuteCoachDto.WalkingLeg {
+        return CommuteCoachDto.WalkingLeg(
+            stationId = stationId,
+            stationName = stationName,
+            walkingMinutes = walkingMinutes,
+            walkingMinutesSource = source,
+            walkingMinutesUpdatedAt = updatedAt,
+        )
     }
 
     private fun resolveGuidanceMessage(riskLevel: CommuteCoachDto.RiskLevel): String {
