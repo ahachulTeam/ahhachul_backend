@@ -1,7 +1,9 @@
 package backend.team.ahachul_backend.api.dailyvote.adapter.`in`.dto
 
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.CreateDailyVoteCommentCommand
+import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.CreateStationDailyVotePollCommand
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.GetDailyVoteCommentsCommand
+import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.GetStationDailyVotePollsCommand
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.GetTodayDailyVoteCommand
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.VoteDailyPollCommand
 
@@ -18,6 +20,7 @@ class DailyVoteDto {
     data class PollCard(
         val pollId: Long,
         val question: String,
+        val pollKind: String,
         val pollContext: String,
         val pollSlot: String,
         val stationId: Long,
@@ -29,6 +32,47 @@ class DailyVoteDto {
         val selectedOptionCode: String?,
         val totalVoteCount: Long,
         val options: List<PollOption>,
+    )
+
+    data class StationPollsRequest(
+        val sort: String? = null,
+        val limit: Int? = null,
+        val subwayLineId: Long? = null,
+    ) {
+        fun toCommand(stationId: Long): GetStationDailyVotePollsCommand {
+            return GetStationDailyVotePollsCommand(
+                stationId = stationId,
+                sort = sort,
+                limit = limit,
+                subwayLineId = subwayLineId,
+            )
+        }
+    }
+
+    data class StationPollsResponse(
+        val stationId: Long,
+        val stationName: String,
+        val sort: String,
+        val polls: List<StationPollSummary>,
+    )
+
+    data class StationPollSummary(
+        val pollId: Long,
+        val question: String,
+        val pollKind: String,
+        val pollContext: String,
+        val pollSlot: String,
+        val stationId: Long,
+        val stationName: String,
+        val subwayLineId: Long,
+        val subwayLineName: String,
+        val totalVoteCount: Long,
+        val commentCount: Long,
+        val voted: Boolean,
+        val selectedOptionCode: String?,
+        val options: List<PollOption>,
+        val mine: Boolean,
+        val createdAt: String,
     )
 
     data class PollOption(
@@ -61,6 +105,28 @@ class DailyVoteDto {
 
     data class VoteResponse(
         val poll: PollCard,
+    )
+
+    data class CreateStationPollRequest(
+        val question: String,
+        val subwayLineId: Long? = null,
+    ) {
+        fun toCommand(stationId: Long): CreateStationDailyVotePollCommand {
+            return CreateStationDailyVotePollCommand(
+                stationId = stationId,
+                question = question,
+                subwayLineId = subwayLineId,
+            )
+        }
+    }
+
+    data class CreateStationPollResponse(
+        val pollId: Long,
+    )
+
+    data class DeletePollResponse(
+        val pollId: Long,
+        val status: String,
     )
 
     data class GetCommentsRequest(
@@ -120,4 +186,5 @@ class DailyVoteDto {
             return GetTodayDailyVoteCommand(timezone = timezone)
         }
     }
+
 }

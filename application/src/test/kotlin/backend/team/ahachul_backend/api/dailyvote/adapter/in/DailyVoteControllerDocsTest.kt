@@ -72,6 +72,7 @@ class DailyVoteControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.profileHint").type(JsonFieldType.STRING).description("개인화 힌트(COMMUTE/SCHOOL/NO_FAVORITE_STATION)"),
                         fieldWithPath("result.primaryPoll.pollId").type(JsonFieldType.NUMBER).description("주 투표 ID").optional(),
                         fieldWithPath("result.primaryPoll.question").type(JsonFieldType.STRING).description("주 투표 질문").optional(),
+                        fieldWithPath("result.primaryPoll.pollKind").type(JsonFieldType.STRING).description("주 투표 종류").optional(),
                         fieldWithPath("result.primaryPoll.pollContext").type(JsonFieldType.STRING).description("주 투표 컨텍스트").optional(),
                         fieldWithPath("result.primaryPoll.pollSlot").type(JsonFieldType.STRING).description("주 투표 시간대").optional(),
                         fieldWithPath("result.primaryPoll.stationId").type(JsonFieldType.NUMBER).description("역 ID").optional(),
@@ -90,6 +91,7 @@ class DailyVoteControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.primaryPoll.options[].voteRatePercent").type(JsonFieldType.NUMBER).description("옵션 점유율(%)").optional(),
                         fieldWithPath("result.secondaryPoll.pollId").type(JsonFieldType.NUMBER).description("보조 투표 ID").optional(),
                         fieldWithPath("result.secondaryPoll.question").type(JsonFieldType.STRING).description("보조 투표 질문").optional(),
+                        fieldWithPath("result.secondaryPoll.pollKind").type(JsonFieldType.STRING).description("보조 투표 종류").optional(),
                         fieldWithPath("result.secondaryPoll.pollContext").type(JsonFieldType.STRING).description("보조 투표 컨텍스트").optional(),
                         fieldWithPath("result.secondaryPoll.pollSlot").type(JsonFieldType.STRING).description("보조 투표 시간대").optional(),
                         fieldWithPath("result.secondaryPoll.stationId").type(JsonFieldType.NUMBER).description("역 ID").optional(),
@@ -125,13 +127,13 @@ class DailyVoteControllerDocsTest : CommonDocsTestConfig() {
                 question = "오늘 2호선 등교길 어땠나요?",
                 isPrimary = true,
                 voted = true,
-                selectedOptionCode = "HARD",
+                selectedOptionCode = "LIKE",
             ),
         )
 
         given(dailyVoteUseCase.vote(any())).willReturn(response)
 
-        val request = DailyVoteDto.VoteRequest(optionCode = "HARD")
+        val request = DailyVoteDto.VoteRequest(optionCode = "LIKE")
 
         mockMvc.perform(
             post("/v2/daily-votes/{pollId}/votes", 301)
@@ -158,6 +160,7 @@ class DailyVoteControllerDocsTest : CommonDocsTestConfig() {
                         *commonResponseFields(),
                         fieldWithPath("result.poll.pollId").type(JsonFieldType.NUMBER).description("투표 ID"),
                         fieldWithPath("result.poll.question").type(JsonFieldType.STRING).description("투표 질문"),
+                        fieldWithPath("result.poll.pollKind").type(JsonFieldType.STRING).description("투표 종류"),
                         fieldWithPath("result.poll.pollContext").type(JsonFieldType.STRING).description("투표 컨텍스트"),
                         fieldWithPath("result.poll.pollSlot").type(JsonFieldType.STRING).description("투표 시간대"),
                         fieldWithPath("result.poll.stationId").type(JsonFieldType.NUMBER).description("역 ID"),
@@ -174,6 +177,167 @@ class DailyVoteControllerDocsTest : CommonDocsTestConfig() {
                         fieldWithPath("result.poll.options[].emoji").type(JsonFieldType.STRING).description("옵션 이모지"),
                         fieldWithPath("result.poll.options[].voteCount").type(JsonFieldType.NUMBER).description("옵션 투표 수"),
                         fieldWithPath("result.poll.options[].voteRatePercent").type(JsonFieldType.NUMBER).description("옵션 점유율"),
+                    ),
+                ),
+            )
+    }
+
+    @Test
+    fun getStationPolls() {
+        val response = DailyVoteDto.StationPollsResponse(
+            stationId = 557,
+            stationName = "안암",
+            sort = "popular",
+            polls = listOf(
+                DailyVoteDto.StationPollSummary(
+                    pollId = 901,
+                    question = "안암역 환승 동선 괜찮으셨나요?",
+                    pollKind = "STATION_BOARD",
+                    pollContext = "COMMUTE",
+                    pollSlot = "MORNING",
+                    stationId = 557,
+                    stationName = "안암",
+                    subwayLineId = 2,
+                    subwayLineName = "2호선",
+                    totalVoteCount = 32,
+                    commentCount = 7,
+                    voted = true,
+                    selectedOptionCode = "LIKE",
+                    options = listOf(
+                        DailyVoteDto.PollOption("LIKE", "좋아요", "👍", 25, 78),
+                        DailyVoteDto.PollOption("DISLIKE", "싫어요", "👎", 7, 21),
+                    ),
+                    mine = true,
+                    createdAt = "2026-02-26T10:15:00",
+                ),
+            ),
+        )
+        given(dailyVoteUseCase.getStationPolls(any())).willReturn(response)
+
+        mockMvc.perform(
+            get("/v2/daily-votes/stations/{stationId}/polls", 557)
+                .header("Authorization", "Bearer <Access Token>")
+                .queryParam("sort", "popular")
+                .queryParam("limit", "30")
+                .queryParam("subwayLineId", "2"),
+        )
+            .andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-daily-vote-station-polls-v2",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰"),
+                    ),
+                    pathParameters(
+                        parameterWithName("stationId").description("역 ID"),
+                    ),
+                    queryParameters(
+                        parameterWithName("sort").optional().description("정렬(latest/popular, 기본 latest)"),
+                        parameterWithName("limit").optional().description("조회 개수(기본 30, 최대 100)"),
+                        parameterWithName("subwayLineId").optional().description("노선 ID 필터"),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.stationId").type(JsonFieldType.NUMBER).description("역 ID"),
+                        fieldWithPath("result.stationName").type(JsonFieldType.STRING).description("역 이름"),
+                        fieldWithPath("result.sort").type(JsonFieldType.STRING).description("정렬 방식"),
+                        fieldWithPath("result.polls").type(JsonFieldType.ARRAY).description("역 게시판 투표 목록"),
+                        fieldWithPath("result.polls[].pollId").type(JsonFieldType.NUMBER).description("투표 ID"),
+                        fieldWithPath("result.polls[].question").type(JsonFieldType.STRING).description("질문"),
+                        fieldWithPath("result.polls[].pollKind").type(JsonFieldType.STRING).description("투표 종류"),
+                        fieldWithPath("result.polls[].pollContext").type(JsonFieldType.STRING).description("컨텍스트"),
+                        fieldWithPath("result.polls[].pollSlot").type(JsonFieldType.STRING).description("슬롯"),
+                        fieldWithPath("result.polls[].stationId").type(JsonFieldType.NUMBER).description("역 ID"),
+                        fieldWithPath("result.polls[].stationName").type(JsonFieldType.STRING).description("역 이름"),
+                        fieldWithPath("result.polls[].subwayLineId").type(JsonFieldType.NUMBER).description("노선 ID"),
+                        fieldWithPath("result.polls[].subwayLineName").type(JsonFieldType.STRING).description("노선명"),
+                        fieldWithPath("result.polls[].totalVoteCount").type(JsonFieldType.NUMBER).description("총 투표 수"),
+                        fieldWithPath("result.polls[].commentCount").type(JsonFieldType.NUMBER).description("댓글 수"),
+                        fieldWithPath("result.polls[].voted").type(JsonFieldType.BOOLEAN).description("내 투표 여부"),
+                        fieldWithPath("result.polls[].selectedOptionCode").type(JsonFieldType.STRING).description("내 선택 옵션").optional(),
+                        fieldWithPath("result.polls[].options").type(JsonFieldType.ARRAY).description("옵션 목록"),
+                        fieldWithPath("result.polls[].options[].optionCode").type(JsonFieldType.STRING).description("옵션 코드"),
+                        fieldWithPath("result.polls[].options[].label").type(JsonFieldType.STRING).description("옵션 라벨"),
+                        fieldWithPath("result.polls[].options[].emoji").type(JsonFieldType.STRING).description("옵션 이모지"),
+                        fieldWithPath("result.polls[].options[].voteCount").type(JsonFieldType.NUMBER).description("옵션 투표 수"),
+                        fieldWithPath("result.polls[].options[].voteRatePercent").type(JsonFieldType.NUMBER).description("옵션 비율"),
+                        fieldWithPath("result.polls[].mine").type(JsonFieldType.BOOLEAN).description("내가 생성한 투표 여부"),
+                        fieldWithPath("result.polls[].createdAt").type(JsonFieldType.STRING).description("생성 시각"),
+                    ),
+                ),
+            )
+    }
+
+    @Test
+    fun createStationPoll() {
+        val response = DailyVoteDto.CreateStationPollResponse(pollId = 991)
+        given(dailyVoteUseCase.createStationPoll(any())).willReturn(response)
+
+        val request = DailyVoteDto.CreateStationPollRequest(
+            question = "안암역 2번 출구 동선 어땠나요?",
+            subwayLineId = 2,
+        )
+
+        mockMvc.perform(
+            post("/v2/daily-votes/stations/{stationId}/polls", 557)
+                .header("Authorization", "Bearer <Access Token>")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isOk)
+            .andDo(
+                document(
+                    "post-daily-vote-station-poll-v2",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰"),
+                    ),
+                    pathParameters(
+                        parameterWithName("stationId").description("역 ID"),
+                    ),
+                    requestFields(
+                        fieldWithPath("question").type(JsonFieldType.STRING).description("투표 질문"),
+                        fieldWithPath("subwayLineId").type(JsonFieldType.NUMBER).optional().description("노선 ID"),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.pollId").type(JsonFieldType.NUMBER).description("생성된 투표 ID"),
+                    ),
+                ),
+            )
+    }
+
+    @Test
+    fun deleteStationPoll() {
+        val response = DailyVoteDto.DeletePollResponse(
+            pollId = 991,
+            status = "CLOSED",
+        )
+        given(dailyVoteUseCase.deletePoll(any())).willReturn(response)
+
+        mockMvc.perform(
+            delete("/v2/daily-votes/polls/{pollId}", 991)
+                .header("Authorization", "Bearer <Access Token>"),
+        )
+            .andExpect(status().isOk)
+            .andDo(
+                document(
+                    "delete-daily-vote-poll-v2",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    requestHeaders(
+                        headerWithName("Authorization").description("엑세스 토큰"),
+                    ),
+                    pathParameters(
+                        parameterWithName("pollId").description("투표 ID"),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.pollId").type(JsonFieldType.NUMBER).description("투표 ID"),
+                        fieldWithPath("result.status").type(JsonFieldType.STRING).description("변경된 상태"),
                     ),
                 ),
             )
@@ -347,6 +511,7 @@ class DailyVoteControllerDocsTest : CommonDocsTestConfig() {
         return DailyVoteDto.PollCard(
             pollId = pollId,
             question = question,
+            pollKind = "MAIN",
             pollContext = "COMMUTE",
             pollSlot = "MORNING",
             stationId = 557,
@@ -358,11 +523,8 @@ class DailyVoteControllerDocsTest : CommonDocsTestConfig() {
             selectedOptionCode = selectedOptionCode,
             totalVoteCount = 120,
             options = listOf(
-                DailyVoteDto.PollOption("TERRIBLE", "지옥철이었어요", "😭", 18, 15),
-                DailyVoteDto.PollOption("HARD", "힘들었어요", "😵", 44, 36),
-                DailyVoteDto.PollOption("NORMAL", "보통이었어요", "😐", 31, 25),
-                DailyVoteDto.PollOption("GOOD", "괜찮았어요", "🙂", 18, 15),
-                DailyVoteDto.PollOption("GREAT", "쾌적했어요", "😎", 9, 7),
+                DailyVoteDto.PollOption("LIKE", "좋아요", "👍", 72, 60),
+                DailyVoteDto.PollOption("DISLIKE", "싫어요", "👎", 48, 40),
             ),
         )
     }

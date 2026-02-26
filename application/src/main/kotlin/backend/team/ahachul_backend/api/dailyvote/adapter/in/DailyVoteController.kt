@@ -2,6 +2,7 @@ package backend.team.ahachul_backend.api.dailyvote.adapter.`in`
 
 import backend.team.ahachul_backend.api.dailyvote.adapter.`in`.dto.DailyVoteDto
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.DailyVoteUseCase
+import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.DeleteDailyVotePollCommand
 import backend.team.ahachul_backend.common.annotation.Authentication
 import backend.team.ahachul_backend.common.response.CommonResponse
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -31,6 +32,32 @@ class DailyVoteController(
         @RequestBody request: DailyVoteDto.VoteRequest,
     ): CommonResponse<DailyVoteDto.VoteResponse> {
         return CommonResponse.success(dailyVoteUseCase.vote(request.toCommand(pollId)))
+    }
+
+    @Authentication
+    @GetMapping("/stations/{stationId}/polls")
+    fun getStationPolls(
+        @PathVariable stationId: Long,
+        request: DailyVoteDto.StationPollsRequest,
+    ): CommonResponse<DailyVoteDto.StationPollsResponse> {
+        return CommonResponse.success(dailyVoteUseCase.getStationPolls(request.toCommand(stationId)))
+    }
+
+    @Authentication
+    @PostMapping("/stations/{stationId}/polls")
+    fun createStationPoll(
+        @PathVariable stationId: Long,
+        @RequestBody request: DailyVoteDto.CreateStationPollRequest,
+    ): CommonResponse<DailyVoteDto.CreateStationPollResponse> {
+        return CommonResponse.success(dailyVoteUseCase.createStationPoll(request.toCommand(stationId)))
+    }
+
+    @Authentication
+    @DeleteMapping("/polls/{pollId}")
+    fun deletePoll(@PathVariable pollId: Long): CommonResponse<DailyVoteDto.DeletePollResponse> {
+        return CommonResponse.success(
+            dailyVoteUseCase.deletePoll(DeleteDailyVotePollCommand(pollId = pollId)),
+        )
     }
 
     @Authentication

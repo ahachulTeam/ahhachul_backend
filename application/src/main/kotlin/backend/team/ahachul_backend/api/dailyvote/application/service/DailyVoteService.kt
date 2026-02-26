@@ -4,7 +4,10 @@ import backend.team.ahachul_backend.api.common.application.port.out.SubwayLineSt
 import backend.team.ahachul_backend.api.dailyvote.adapter.`in`.dto.DailyVoteDto
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.DailyVoteUseCase
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.CreateDailyVoteCommentCommand
+import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.CreateStationDailyVotePollCommand
+import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.DeleteDailyVotePollCommand
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.GetDailyVoteCommentsCommand
+import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.GetStationDailyVotePollsCommand
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.GetTodayDailyVoteCommand
 import backend.team.ahachul_backend.api.dailyvote.application.port.`in`.dto.VoteDailyPollCommand
 import backend.team.ahachul_backend.api.dailyvote.application.port.out.DailyVoteCommentLikeReader
@@ -22,6 +25,7 @@ import backend.team.ahachul_backend.api.dailyvote.domain.entity.DailyVoteRespons
 import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVoteCommentStatusType
 import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVoteContextType
 import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVoteKindType
+import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVotePollStatusType
 import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVoteSlotType
 import backend.team.ahachul_backend.api.member.application.port.out.MemberReader
 import backend.team.ahachul_backend.api.member.application.port.out.MemberStationReader
@@ -64,11 +68,8 @@ class DailyVoteService(
     )
 
     private val voteOptions = listOf(
-        VoteOption(code = "TERRIBLE", label = "지옥철이었어요", emoji = "😭"),
-        VoteOption(code = "HARD", label = "힘들었어요", emoji = "😵"),
-        VoteOption(code = "NORMAL", label = "보통이었어요", emoji = "😐"),
-        VoteOption(code = "GOOD", label = "괜찮았어요", emoji = "🙂"),
-        VoteOption(code = "GREAT", label = "쾌적했어요", emoji = "😎"),
+        VoteOption(code = "LIKE", label = "좋아요", emoji = "👍"),
+        VoteOption(code = "DISLIKE", label = "싫어요", emoji = "👎"),
     )
 
     private val voteOptionCodes = voteOptions.map { it.code }.toSet()
@@ -154,6 +155,7 @@ class DailyVoteService(
 
         val member = currentMember()
         val poll = dailyVotePollReader.getById(command.pollId)
+        ensurePollOpen(poll)
 
         val existing = dailyVoteResponseReader.findByPollAndMember(
             pollId = poll.id,
@@ -175,6 +177,149 @@ class DailyVoteService(
 
         return DailyVoteDto.VoteResponse(
             poll = toPollCard(poll, member.id),
+        )
+    }
+
+    override fun getStationPolls(command: GetStationDailyVotePollsCommand): DailyVoteDto.StationPollsResponse {
+        val member = currentMember()
+        val memberId = member.id
+        val sort = resolvePollSort(command.sort)
+        val limit = resolvePollLimit(command.limit)
+        val polls = dailyVotePollReader.findStationBoardOpenPolls(
+            stationId = command.stationId,
+            subwayLineId = command.subwayLineId,
+        ).take(limit)
+
+        val pollIds = polls.map { it.id }
+        val responsesByPollId = dailyVoteResponseReader.findByPollIds(pollIds)
+            .groupBy { response -> response.poll.id }
+        val totalVoteCountByPollId = dailyVoteResponseReader.countByPollIds(pollIds)
+        val commentCountByPollId = dailyVoteCommentReader.countByPollIdsAndStatus(
+            pollIds = pollIds,
+            status = DailyVoteCommentStatusType.CREATED,
+        )
+
+        val sortedPolls = if (sort == "popular") {
+            polls.sortedWith(
+                compareByDescending<DailyVotePollEntity> { totalVoteCountByPollId[it.id] ?: 0L }
+                    .thenByDescending { it.createdAt },
+            )
+        } else {
+            polls.sortedByDescending { it.createdAt }
+        }
+
+        val favoriteStationName = memberStationReader.getByMember(member)
+            .firstOrNull { it.station.id == command.stationId }
+            ?.station
+            ?.name
+
+        return DailyVoteDto.StationPollsResponse(
+            stationId = command.stationId,
+            stationName = sortedPolls.firstOrNull()?.station?.name
+                ?: favoriteStationName
+                ?: "station-${command.stationId}",
+            sort = sort,
+            polls = sortedPolls.map { poll ->
+                val pollResponses = responsesByPollId[poll.id].orEmpty()
+                val groupedByOption = pollResponses.groupingBy { it.optionCode }.eachCount()
+                val totalVoteCount = totalVoteCountByPollId[poll.id] ?: 0L
+                val selectedOptionCode = pollResponses.firstOrNull { it.member.id == memberId }?.optionCode
+                val options = voteOptions.map { option ->
+                    val voteCount = groupedByOption[option.code]?.toLong() ?: 0L
+                    val voteRatePercent = if (totalVoteCount == 0L) {
+                        0
+                    } else {
+                        ((voteCount * 100.0) / totalVoteCount).toInt()
+                    }
+                    DailyVoteDto.PollOption(
+                        optionCode = option.code,
+                        label = option.label,
+                        emoji = option.emoji,
+                        voteCount = voteCount,
+                        voteRatePercent = voteRatePercent,
+                    )
+                }
+
+                DailyVoteDto.StationPollSummary(
+                    pollId = poll.id,
+                    question = poll.question,
+                    pollKind = poll.pollKind.name,
+                    pollContext = poll.pollContext.name,
+                    pollSlot = poll.pollSlot.name,
+                    stationId = poll.station.id,
+                    stationName = poll.station.name,
+                    subwayLineId = poll.subwayLine.id,
+                    subwayLineName = poll.subwayLine.name,
+                    totalVoteCount = totalVoteCount,
+                    commentCount = commentCountByPollId[poll.id] ?: 0L,
+                    voted = selectedOptionCode != null,
+                    selectedOptionCode = selectedOptionCode,
+                    options = options,
+                    mine = poll.member?.id == memberId,
+                    createdAt = poll.createdAt.toString(),
+                )
+            },
+        )
+    }
+
+    @Transactional
+    override fun createStationPoll(command: CreateStationDailyVotePollCommand): DailyVoteDto.CreateStationPollResponse {
+        val member = currentMember()
+        val favoriteStations = memberStationReader.getByMember(member)
+        val targetFavorite = favoriteStations.firstOrNull { favorite ->
+            favorite.station.id == command.stationId
+        } ?: throw CommonException(ResponseCode.DAILY_VOTE_STATION_FORBIDDEN)
+
+        val normalizedQuestion = command.question.trim()
+        if (normalizedQuestion.isBlank()) {
+            throw CommonException(ResponseCode.BAD_REQUEST)
+        }
+
+        if (normalizedQuestion.length > MAX_POLL_QUESTION_LENGTH) {
+            throw CommonException(ResponseCode.BAD_REQUEST)
+        }
+
+        val station = targetFavorite.station
+        val subwayLine = command.subwayLineId?.let { subwayLineId ->
+            subwayLineStationReader.findBySubwayLineIdAndStationId(subwayLineId, station.id).subwayLine
+        } ?: resolveRepresentativeLine(station)
+        val pollContext = resolvePrimaryContext(favoriteStations.mapNotNull { it.label })
+        val now = OffsetDateTime.now(resolveZoneId(DEFAULT_TIMEZONE))
+
+        val saved = dailyVotePollWriter.save(
+            DailyVotePollEntity.of(
+                pollDate = now.toLocalDate(),
+                pollSlot = resolveSlot(now.toLocalTime()),
+                pollContext = pollContext,
+                pollKind = DailyVoteKindType.STATION_BOARD,
+                station = station,
+                subwayLine = subwayLine,
+                question = normalizedQuestion,
+                isPrimary = true,
+                member = member,
+            ),
+        )
+
+        return DailyVoteDto.CreateStationPollResponse(
+            pollId = saved.id,
+        )
+    }
+
+    @Transactional
+    override fun deletePoll(command: DeleteDailyVotePollCommand): DailyVoteDto.DeletePollResponse {
+        val member = currentMember()
+        val poll = dailyVotePollReader.getById(command.pollId)
+
+        if (poll.pollKind != DailyVoteKindType.STATION_BOARD || poll.member?.id != member.id) {
+            throw CommonException(ResponseCode.DAILY_VOTE_POLL_FORBIDDEN)
+        }
+
+        poll.close()
+        dailyVotePollWriter.save(poll)
+
+        return DailyVoteDto.DeletePollResponse(
+            pollId = poll.id,
+            status = poll.status.name,
         )
     }
 
@@ -226,6 +371,7 @@ class DailyVoteService(
     override fun createComment(command: CreateDailyVoteCommentCommand): DailyVoteDto.CreateCommentResponse {
         val member = currentMember()
         val poll = dailyVotePollReader.getById(command.pollId)
+        ensurePollOpen(poll)
 
         val normalizedContent = command.content.trim()
         val imageUrls = sanitizeImageUrls(command.imageUrls)
@@ -432,6 +578,7 @@ class DailyVoteService(
         return DailyVoteDto.PollCard(
             pollId = poll.id,
             question = poll.question,
+            pollKind = poll.pollKind.name,
             pollContext = poll.pollContext.name,
             pollSlot = poll.pollSlot.name,
             stationId = poll.station.id,
@@ -458,6 +605,12 @@ class DailyVoteService(
                 )
             },
         )
+    }
+
+    private fun ensurePollOpen(poll: DailyVotePollEntity) {
+        if (poll.status != DailyVotePollStatusType.OPEN) {
+            throw CommonException(ResponseCode.DAILY_VOTE_POLL_NOT_FOUND)
+        }
     }
 
     private fun sanitizeImageUrls(imageUrls: List<String>?): List<String> {
@@ -488,6 +641,20 @@ class DailyVoteService(
         }
     }
 
+    private fun resolvePollSort(sort: String?): String {
+        val normalized = sort?.trim()?.lowercase(Locale.KOREAN)
+        return if (normalized == "popular") {
+            "popular"
+        } else {
+            "latest"
+        }
+    }
+
+    private fun resolvePollLimit(limit: Int?): Int {
+        val requested = limit ?: DEFAULT_STATION_POLL_LIMIT
+        return requested.coerceIn(1, MAX_STATION_POLL_LIMIT)
+    }
+
     private fun currentMember(): MemberEntity {
         val memberId = currentMemberIdOrNull() ?: throw CommonException(ResponseCode.INVALID_AUTH)
         return memberReader.getMember(memberId)
@@ -499,6 +666,9 @@ class DailyVoteService(
 
     companion object {
         private const val DEFAULT_TIMEZONE = "Asia/Seoul"
+        private const val DEFAULT_STATION_POLL_LIMIT = 30
+        private const val MAX_STATION_POLL_LIMIT = 100
+        private const val MAX_POLL_QUESTION_LENGTH = 120
         private val IMAGE_URL_REGEX = Regex("^https?://\\S+$")
         private val WORK_LABEL_KEYWORDS = listOf("직장", "회사", "work", "office", "company", "출근")
         private val SCHOOL_LABEL_KEYWORDS = listOf("학교", "학생", "캠퍼스", "school", "student", "university", "등교")

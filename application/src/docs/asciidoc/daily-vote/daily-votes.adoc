@@ -6,6 +6,15 @@ operation::get-daily-votes-today-v2[snippets='http-request,request-headers,query
 === 투표하기
 operation::post-daily-vote-v2[snippets='http-request,request-headers,path-parameters,request-fields,http-response,response-fields']
 
+=== 역 게시판 투표 조회
+operation::get-daily-vote-station-polls-v2[snippets='http-request,request-headers,path-parameters,query-parameters,http-response,response-fields']
+
+=== 역 게시판 투표 작성
+operation::post-daily-vote-station-poll-v2[snippets='http-request,request-headers,path-parameters,request-fields,http-response,response-fields']
+
+=== 역 게시판 투표 삭제
+operation::delete-daily-vote-poll-v2[snippets='http-request,request-headers,path-parameters,http-response,response-fields']
+
 === 투표 댓글 조회
 operation::get-daily-vote-comments-v2[snippets='http-request,request-headers,path-parameters,query-parameters,http-response,response-fields']
 

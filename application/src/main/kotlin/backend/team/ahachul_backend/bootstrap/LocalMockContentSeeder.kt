@@ -1036,7 +1036,7 @@ class LocalMockContentSeeder(
         private const val SEED_MEETUP_COUNT = 28
         private const val SEED_MEETUP_PARTICIPANT_COUNT = 5
 
-        private val DAILY_VOTE_OPTIONS = listOf("TERRIBLE", "HARD", "NORMAL", "GOOD", "GREAT")
+        private val DAILY_VOTE_OPTIONS = listOf("LIKE", "DISLIKE")
         private val AGE_RANGES = listOf("20", "30", "40", "50")
         private val NATIONALITY_CODES = listOf("KR", "JP", "CN", "US", "VN", null)
 

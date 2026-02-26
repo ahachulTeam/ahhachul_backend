@@ -14,6 +14,23 @@ data class GetDailyVoteCommentsCommand(
     val sort: String?,
 )
 
+data class GetStationDailyVotePollsCommand(
+    val stationId: Long,
+    val sort: String?,
+    val limit: Int?,
+    val subwayLineId: Long?,
+)
+
+data class CreateStationDailyVotePollCommand(
+    val stationId: Long,
+    val question: String,
+    val subwayLineId: Long?,
+)
+
+data class DeleteDailyVotePollCommand(
+    val pollId: Long,
+)
+
 data class CreateDailyVoteCommentCommand(
     val pollId: Long,
     val content: String,

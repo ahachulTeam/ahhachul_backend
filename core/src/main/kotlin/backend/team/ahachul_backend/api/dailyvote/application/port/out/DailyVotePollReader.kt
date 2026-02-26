@@ -22,6 +22,8 @@ interface DailyVotePollReader {
 
     fun findById(id: Long): DailyVotePollEntity?
 
+    fun findStationBoardOpenPolls(stationId: Long, subwayLineId: Long?): List<DailyVotePollEntity>
+
     fun getById(id: Long): DailyVotePollEntity {
         return findById(id)
             ?: throw AdapterException(ResponseCode.DAILY_VOTE_POLL_NOT_FOUND)

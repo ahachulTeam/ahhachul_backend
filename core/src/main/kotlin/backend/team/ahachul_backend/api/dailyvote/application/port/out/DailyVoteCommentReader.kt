@@ -13,6 +13,8 @@ interface DailyVoteCommentReader {
 
     fun countByPollIdAndStatus(pollId: Long, status: DailyVoteCommentStatusType): Long
 
+    fun countByPollIdsAndStatus(pollIds: List<Long>, status: DailyVoteCommentStatusType): Map<Long, Long>
+
     fun getCommentById(commentId: Long): DailyVoteCommentEntity {
         return findCommentById(commentId)
             ?: throw AdapterException(ResponseCode.DAILY_VOTE_COMMENT_NOT_FOUND)

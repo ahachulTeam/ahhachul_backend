@@ -5,6 +5,7 @@ import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVoteContextT
 import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVoteKindType
 import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVotePollStatusType
 import backend.team.ahachul_backend.api.dailyvote.domain.model.DailyVoteSlotType
+import backend.team.ahachul_backend.api.member.domain.entity.MemberEntity
 import backend.team.ahachul_backend.common.domain.entity.BaseEntity
 import backend.team.ahachul_backend.common.domain.entity.SubwayLineEntity
 import backend.team.ahachul_backend.common.domain.model.YNType
@@ -56,6 +57,10 @@ class DailyVotePollEntity(
     @Enumerated(EnumType.STRING)
     @Column(name = "primary_yn")
     var primaryYn: YNType,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    var member: MemberEntity? = null,
 ) : BaseEntity() {
 
     companion object {
@@ -68,6 +73,7 @@ class DailyVotePollEntity(
             subwayLine: SubwayLineEntity,
             question: String,
             isPrimary: Boolean,
+            member: MemberEntity? = null,
         ): DailyVotePollEntity {
             return DailyVotePollEntity(
                 pollDate = pollDate,
@@ -79,7 +85,12 @@ class DailyVotePollEntity(
                 subwayLine = subwayLine,
                 question = question,
                 primaryYn = if (isPrimary) YNType.Y else YNType.N,
+                member = member,
             )
         }
+    }
+
+    fun close() {
+        status = DailyVotePollStatusType.CLOSED
     }
 }
