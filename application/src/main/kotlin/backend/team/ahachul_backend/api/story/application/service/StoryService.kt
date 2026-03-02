@@ -93,6 +93,38 @@ class StoryService(
         )
     }
 
+    override fun getPublicStories(
+        limit: Int,
+        stationId: Long?,
+        subwayLineId: Long?,
+    ): StoryDto.PublicStoriesResponse {
+        val normalizedLimit = limit.coerceIn(MIN_LIMIT, MAX_LIMIT)
+        val stories = storyReader.findPublicStories(
+            status = StoryStatusType.CREATED,
+            pageable = PageRequest.of(0, normalizedLimit),
+            stationId = stationId,
+            subwayLineId = subwayLineId,
+        )
+
+        return StoryDto.PublicStoriesResponse(
+            generatedAt = ZonedDateTime.now(ZoneId.of(DEFAULT_TIMEZONE)).format(dateTimeFormatter),
+            stories = stories.map { story ->
+                StoryDto.PublicStoryItem(
+                    storyId = story.id,
+                    memberId = story.member.id,
+                    nickname = story.member.nickname ?: "알수없음",
+                    imageUrl = story.imageUrl,
+                    caption = story.caption,
+                    stationId = story.station?.id,
+                    stationName = story.station?.name,
+                    subwayLineId = story.subwayLine?.id,
+                    subwayLineName = story.subwayLine?.name,
+                    createdAt = story.createdAt.atZone(ZoneId.of(DEFAULT_TIMEZONE)).format(dateTimeFormatter),
+                )
+            },
+        )
+    }
+
     @Transactional
     override fun createStory(command: CreateStoryCommand): StoryDto.CreateResponse {
         validateImage(command)

@@ -11,6 +11,13 @@ interface StoryReader {
 
     fun findByMemberIdAndStatus(memberId: Long, status: StoryStatusType, pageable: Pageable): List<StoryEntity>
 
+    fun findPublicStories(
+        status: StoryStatusType,
+        pageable: Pageable,
+        stationId: Long? = null,
+        subwayLineId: Long? = null,
+    ): List<StoryEntity>
+
     fun getById(id: Long): StoryEntity {
         return findById(id) ?: throw AdapterException(ResponseCode.STORY_NOT_FOUND)
     }

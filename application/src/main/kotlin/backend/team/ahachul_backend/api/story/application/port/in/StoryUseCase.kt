@@ -9,6 +9,8 @@ interface StoryUseCase {
 
     fun getMemberStories(command: GetMemberStoriesCommand): StoryDto.ProfileStoriesResponse
 
+    fun getPublicStories(limit: Int, stationId: Long?, subwayLineId: Long?): StoryDto.PublicStoriesResponse
+
     fun createStory(command: CreateStoryCommand): StoryDto.CreateResponse
 
     fun deleteStory(storyId: Long): StoryDto.DeleteResponse

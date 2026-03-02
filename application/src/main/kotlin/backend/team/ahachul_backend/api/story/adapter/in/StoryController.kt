@@ -36,6 +36,22 @@ class StoryController(
         return CommonResponse.success(storyUseCase.getMemberStories(request.toCommand(nickname)))
     }
 
+    @Authentication(required = false)
+    @GetMapping("/v2/stories/public")
+    fun getPublicStories(
+        @RequestParam(required = false, defaultValue = "12") limit: Int,
+        @RequestParam(required = false) stationId: Long?,
+        @RequestParam(required = false) subwayLineId: Long?,
+    ): CommonResponse<StoryDto.PublicStoriesResponse> {
+        return CommonResponse.success(
+            storyUseCase.getPublicStories(
+                limit = limit,
+                stationId = stationId,
+                subwayLineId = subwayLineId,
+            ),
+        )
+    }
+
     @Authentication
     @PostMapping(
         "/v2/stories",

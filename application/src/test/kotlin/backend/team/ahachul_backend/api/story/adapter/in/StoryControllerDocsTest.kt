@@ -151,6 +151,66 @@ class StoryControllerDocsTest : CommonDocsTestConfig() {
     }
 
     @Test
+    fun getPublicStories() {
+        given(storyUseCase.getPublicStories(12, 130L, 2L)).willReturn(
+            StoryDto.PublicStoriesResponse(
+                generatedAt = "2026-03-03T09:00:00+09:00",
+                stories = listOf(
+                    StoryDto.PublicStoryItem(
+                        storyId = 77L,
+                        memberId = 3L,
+                        nickname = "출근러",
+                        imageUrl = "https://cdn.ahhachul.com/story/77.png",
+                        caption = "강남역 2호선 오늘도 혼잡",
+                        stationId = 130L,
+                        stationName = "강남",
+                        subwayLineId = 2L,
+                        subwayLineName = "2호선",
+                        createdAt = "2026-03-03T08:40:00+09:00",
+                    ),
+                ),
+            ),
+        )
+
+        val result = mockMvc.perform(
+            get("/v2/stories/public")
+                .queryParam("limit", "12")
+                .queryParam("stationId", "130")
+                .queryParam("subwayLineId", "2")
+                .accept(MediaType.APPLICATION_JSON),
+        )
+
+        result.andExpect(status().isOk)
+            .andDo(
+                document(
+                    "get-public-stories",
+                    getDocsRequest(),
+                    getDocsResponse(),
+                    queryParameters(
+                        parameterWithName("limit").optional().description("조회할 공개 스토리 개수(기본 12, 최대 60)"),
+                        parameterWithName("stationId").optional().description("역 필터 ID"),
+                        parameterWithName("subwayLineId").optional().description("호선 필터 ID"),
+                    ),
+                    responseFields(
+                        *commonResponseFields(),
+                        fieldWithPath("result.generatedAt").type(JsonFieldType.STRING).description("응답 생성 시각"),
+                        fieldWithPath("result.stories").type(JsonFieldType.ARRAY).description("공개 스토리 목록"),
+                        fieldWithPath("result.stories[].storyId").type(JsonFieldType.NUMBER).description("스토리 ID"),
+                        fieldWithPath("result.stories[].memberId").type(JsonFieldType.NUMBER).description("작성자 멤버 ID"),
+                        fieldWithPath("result.stories[].nickname").type(JsonFieldType.STRING).description("작성자 닉네임"),
+                        fieldWithPath("result.stories[].imageUrl").type(JsonFieldType.STRING).description("스토리 이미지 URL"),
+                        fieldWithPath("result.stories[].caption").type(JsonFieldType.STRING).description("스토리 캡션").optional(),
+                        fieldWithPath("result.stories[].stationId").type(JsonFieldType.NUMBER).description("역 ID").optional(),
+                        fieldWithPath("result.stories[].stationName").type(JsonFieldType.STRING).description("역 이름").optional(),
+                        fieldWithPath("result.stories[].subwayLineId").type(JsonFieldType.NUMBER).description("호선 ID").optional(),
+                        fieldWithPath("result.stories[].subwayLineName").type(JsonFieldType.STRING).description("호선 이름").optional(),
+                        fieldWithPath("result.stories[].createdAt").type(JsonFieldType.STRING).description("스토리 생성 시각"),
+                    ),
+                ),
+            )
+    }
+
+    @Test
     fun createStory() {
         given(storyUseCase.createStory(any())).willReturn(
             StoryDto.CreateResponse(

@@ -28,6 +28,20 @@ class StoryPersistence(
         )
     }
 
+    override fun findPublicStories(
+        status: StoryStatusType,
+        pageable: Pageable,
+        stationId: Long?,
+        subwayLineId: Long?,
+    ): List<StoryEntity> {
+        return storyRepository.findByStatusAndOptionalFiltersOrderByCreatedAtDesc(
+            status = status,
+            stationId = stationId,
+            subwayLineId = subwayLineId,
+            pageable = pageable,
+        )
+    }
+
     override fun save(entity: StoryEntity): StoryEntity {
         return storyRepository.save(entity)
     }

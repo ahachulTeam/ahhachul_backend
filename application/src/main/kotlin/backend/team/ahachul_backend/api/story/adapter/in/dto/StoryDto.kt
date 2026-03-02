@@ -56,6 +56,24 @@ class StoryDto {
         val stories: List<StoryItem>,
     )
 
+    data class PublicStoryItem(
+        val storyId: Long,
+        val memberId: Long,
+        val nickname: String,
+        val imageUrl: String,
+        val caption: String?,
+        val stationId: Long?,
+        val stationName: String?,
+        val subwayLineId: Long?,
+        val subwayLineName: String?,
+        val createdAt: String,
+    )
+
+    data class PublicStoriesResponse(
+        val generatedAt: String,
+        val stories: List<PublicStoryItem>,
+    )
+
     data class CreateResponse(
         val story: StoryItem,
     ) {
