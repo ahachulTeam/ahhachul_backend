@@ -99,6 +99,27 @@ class CommunityPostServiceTest(
     }
 
     @Test
+    @DisplayName("커뮤니티 게시글 작성 시 stationId 미지정 허용")
+    fun createCommunityPostWithoutStation() {
+        // given
+        val command = CreateCommunityPostCommand(
+            title = "역 미지정",
+            content = "역 없이도 등록",
+            categoryType = CommunityCategoryType.FREE,
+            subwayLineId = subwayLine.id,
+            stationId = null
+        )
+
+        // when
+        val result = communityPostUseCase.createCommunityPost(command)
+        val saved = communityPostRepository.findById(result.id).orElseThrow()
+
+        // then
+        assertThat(result.stationId).isNull()
+        assertThat(saved.station).isNull()
+    }
+
+    @Test
     @DisplayName("커뮤니티 게시글 수정")
     fun updateCommunityPost() {
         // given
