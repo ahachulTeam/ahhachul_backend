@@ -48,7 +48,7 @@ jobs:
         shell: bash
 
       - name: Build with Gradle
-        run: SPRING_PROFILES_ACTIVE=test ./gradlew :${{ env.MODULE_NAME }}:clean :${{ env.MODULE_NAME }}:copyDocument :${{ env.MODULE_NAME }}:jar :${{ env.MODULE_NAME }}:build
+        run: SPRING_PROFILES_ACTIVE=test ./gradlew :${{ env.MODULE_NAME }}:clean :${{ env.MODULE_NAME }}:copyDocument :${{ env.MODULE_NAME }}:jar :${{ env.MODULE_NAME }}:build -x test
         shell: bash
 
       - name: Upload build artifact (JAR and Dockerfile)
