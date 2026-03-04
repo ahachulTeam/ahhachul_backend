@@ -24,6 +24,10 @@ jobs:
           echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
             key=$(echo "$row" | base64 --decode | jq -r '.key')
             value=$(echo "$row" | base64 --decode | jq -r '.value')
+            value="${value//$'\r'/}"
+            if [[ "$key" =~ ^AWS_(ACCESS_KEY_ID|SECRET_ACCESS_KEY|REGION)$ ]]; then
+              value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            fi
             echo "::add-mask::$value"
             {
               echo "${key}<<EOF"
@@ -72,6 +76,10 @@ jobs:
           echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
             key=$(echo "$row" | base64 --decode | jq -r '.key')
             value=$(echo "$row" | base64 --decode | jq -r '.value')
+            value="${value//$'\r'/}"
+            if [[ "$key" =~ ^AWS_(ACCESS_KEY_ID|SECRET_ACCESS_KEY|REGION)$ ]]; then
+              value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            fi
             echo "::add-mask::$value"
             {
               echo "${key}<<EOF"
@@ -84,6 +92,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
+
+      - name: Validate AWS credential format
+        shell: bash
+        run: |
+          echo "AWS_ACCESS_KEY_ID length=${#AWS_ACCESS_KEY_ID}"
+          echo "AWS_SECRET_ACCESS_KEY length=${#AWS_SECRET_ACCESS_KEY}"
+          [[ "$AWS_ACCESS_KEY_ID" =~ ^(AKIA|ASIA)[A-Z0-9]{16}$ ]] || { echo "Invalid AWS_ACCESS_KEY_ID format"; exit 1; }
+          [[ ${#AWS_SECRET_ACCESS_KEY} -ge 40 ]] || { echo "Invalid AWS_SECRET_ACCESS_KEY length"; exit 1; }
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -114,6 +130,10 @@ jobs:
           echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
             key=$(echo "$row" | base64 --decode | jq -r '.key')
             value=$(echo "$row" | base64 --decode | jq -r '.value')
+            value="${value//$'\r'/}"
+            if [[ "$key" =~ ^AWS_(ACCESS_KEY_ID|SECRET_ACCESS_KEY|REGION)$ ]]; then
+              value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            fi
             echo "::add-mask::$value"
             {
               echo "${key}<<EOF"
@@ -175,6 +195,10 @@ jobs:
           echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
             key=$(echo "$row" | base64 --decode | jq -r '.key')
             value=$(echo "$row" | base64 --decode | jq -r '.value')
+            value="${value//$'\r'/}"
+            if [[ "$key" =~ ^AWS_(ACCESS_KEY_ID|SECRET_ACCESS_KEY|REGION)$ ]]; then
+              value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            fi
             echo "::add-mask::$value"
             {
               echo "${key}<<EOF"
