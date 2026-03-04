@@ -18,14 +18,24 @@ jobs:
     steps:
       - name: Parse combined secrets
         id: parse_secrets
+        shell: bash
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
+            key=$(echo "$row" | base64 --decode | jq -r '.key')
+            value=$(echo "$row" | base64 --decode | jq -r '.value')
+            echo "::add-mask::$value"
+            {
+              echo "${key}<<EOF"
+              echo "$value"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          done
 
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          token: ${{ env.TOKEN_GITHUB }}
+          token: ${{ secrets.WORKFLOW_GITHUB_PAT }}
           submodules: true
 
       - name: Set up JDK 17
@@ -56,9 +66,19 @@ jobs:
     steps:
       - name: Parse combined secrets
         id: parse_secrets
+        shell: bash
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
+            key=$(echo "$row" | base64 --decode | jq -r '.key')
+            value=$(echo "$row" | base64 --decode | jq -r '.value')
+            echo "::add-mask::$value"
+            {
+              echo "${key}<<EOF"
+              echo "$value"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          done
 
       - name: Download build artifact (JAR and Dockerfile)
         uses: actions/download-artifact@v4
@@ -88,9 +108,19 @@ jobs:
     steps:
       - name: Parse combined secrets
         id: parse_secrets
+        shell: bash
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
+            key=$(echo "$row" | base64 --decode | jq -r '.key')
+            value=$(echo "$row" | base64 --decode | jq -r '.value')
+            echo "::add-mask::$value"
+            {
+              echo "${key}<<EOF"
+              echo "$value"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          done
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -139,9 +169,19 @@ jobs:
     steps:
       - name: Parse combined secrets
         id: parse_secrets
+        shell: bash
         run: |
           echo "Extracting secrets..."
-          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries | .[] | "echo \(.key)=\(.value) >> $GITHUB_ENV"' | bash
+          echo '${{ secrets.DEV_API_META_DATA }}' | jq -r 'to_entries[] | @base64' | while read -r row; do
+            key=$(echo "$row" | base64 --decode | jq -r '.key')
+            value=$(echo "$row" | base64 --decode | jq -r '.value')
+            echo "::add-mask::$value"
+            {
+              echo "${key}<<EOF"
+              echo "$value"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          done
 
       - name: Download appspec artifact
         uses: actions/download-artifact@v4
