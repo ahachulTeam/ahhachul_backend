@@ -194,7 +194,7 @@ class TrainService(
     }
 
     /**
-     * 실시간 열차 혼잡도 정보를 조회하는 메서드 (Redis 분산 락 적용)
+     * 실시간 열차 혼잡도 정보를 조회하는 메서드
      */
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalCongestionApiGet")
     override fun getTrainCongestion(command: GetCongestionCommand): GetCongestionDto.Response {
