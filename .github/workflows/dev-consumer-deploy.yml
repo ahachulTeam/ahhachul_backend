@@ -1,14 +1,14 @@
 name: CI/CD Pipeline for Dev Consumer
 
-on:
-  push:
-    branches:
-      - develop
-    paths-ignore:
-      - 'application/**'
-      - '.github/**'
-      - 'scheduler/**'
-  workflow_dispatch:
+#on:
+#  push:
+#    branches:
+#      - develop
+#    paths-ignore:
+#      - 'application/**'
+#      - '.github/**'
+#      - 'scheduler/**'
+#  workflow_dispatch:
 
 jobs:
   build:

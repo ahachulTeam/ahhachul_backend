@@ -1,15 +1,15 @@
 name: CI/CD Pipeline for Dev Batch
 
-on:
-  push:
-    branches:
-      - develop
-    paths-ignore:
-      - 'application/**'
-      - '.github/**'
-      - 'scheduler/cron.Dockerfile'
-      - 'consumer/**'
-  workflow_dispatch:
+#on:
+#  push:
+#    branches:
+#      - develop
+#    paths-ignore:
+#      - 'application/**'
+#      - '.github/**'
+#      - 'scheduler/cron.Dockerfile'
+#      - 'consumer/**'
+#  workflow_dispatch:
 
 jobs:
   build:
