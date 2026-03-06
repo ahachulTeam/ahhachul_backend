@@ -1,14 +1,14 @@
 name: CI/CD Pipeline for Dev API
 
-on:
-  push:
-    branches-ignore:
-      - '**'
-    paths-ignore:
-      - 'scheduler/**'
-      - 'consumer/**'
-      - '.github/**'
-  workflow_dispatch:
+#on:
+#  push:
+#    branches-ignore:
+#      - '**'
+#    paths-ignore:
+#      - 'scheduler/**'
+#      - 'consumer/**'
+#      - '.github/**'
+#  workflow_dispatch:
 
 jobs:
   build:

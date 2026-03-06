@@ -1,12 +1,12 @@
 name: CI/CD Pipeline for Dev Cron
 
-on:
-  push:
-    branches:
-      - develop
-    paths:
-      - 'scheduler/cron.Dockerfile'
-  workflow_dispatch:
+#on:
+#  push:
+#    branches:
+#      - develop
+#    paths:
+#      - 'scheduler/cron.Dockerfile'
+#  workflow_dispatch:
 
 jobs:
   build:

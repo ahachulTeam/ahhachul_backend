@@ -182,6 +182,8 @@ project(":application") {
 
         // https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5
         implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
+
+        implementation("org.redisson:redisson-spring-boot-starter:3.52.0")
     }
 
     val snippetsDir by extra {

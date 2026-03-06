@@ -22,9 +22,10 @@ import backend.team.ahachul_backend.common.persistence.SubwayLineReader
 import backend.team.ahachul_backend.common.response.ResponseCode
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
-import org.springframework.data.redis.RedisConnectionFailureException
+import org.redisson.api.RedissonClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.concurrent.TimeUnit
 
 @Service
 @Transactional(readOnly = true)
@@ -38,6 +39,7 @@ class TrainService(
     private val trainCacheUtils: TrainCacheUtils,
     private val congestionCacheUtils: CongestionCacheUtils,
     private val trainCongestionClient: TrainCongestionClient,
+    private val redissonClient: RedissonClient,
 ): TrainUseCase {
 
     private val logger: Logger = Logger(javaClass)
@@ -78,19 +80,48 @@ class TrainService(
         val station = stationLineReader.getById(stationId)
         val subwayLine = subwayLineReader.getById(subwayLineId)
         val subwayLineIdentity = subwayLine.identity
+        val lockKey = "${subwayLineIdentity}-${stationId}"
 
-        trainCacheUtils.getCache(subwayLineIdentity, stationId)?.let { return it }
-
-        val trainRealTimeMap = requestTrainRealTimesAndSorting(station.name)
-        trainRealTimeMap.forEach {
-            trainCacheUtils.setCache(it.key.toLong(), stationId, it.value)
+        trainCacheUtils.getCache(subwayLineIdentity, stationId)?.let {
+            logger.info("[cache hit] 응답 반환: lockKey=$lockKey")
+            return it
         }
 
-        val trainRealTimes = trainRealTimeMap.getOrElse(subwayLineIdentity.toString()) { emptyList() }
+        val lock = redissonClient.getLock(lockKey)
 
-        return upDownType?.let {
-                type ->  trainRealTimes.filter { it.upDownType == type }.take(4)
-        } ?: trainRealTimes
+        try {
+            val acquired = lock.tryLock(10, 15, TimeUnit.SECONDS)
+
+            if (!acquired) {
+                logger.error("분산 락 획득 실패: lockKey=$lockKey")
+                throw BusinessException(ResponseCode.LOCK_ACQUISITION_FAILED)
+            }
+
+            trainCacheUtils.getCache(subwayLineIdentity, stationId)?.let {
+                logger.info("[cache miss] 이미 캐싱된 데이터로 인해 바로 락 해제 후 종료: lockKey=$lockKey")
+                lock.unlock()
+                return it
+            }
+
+            logger.info("[cache miss] 외부 열차 도착 정보 API 호출 시작 (분산 락 획득): lockKey=$lockKey")
+            val result = requestTrainRealTimesAndSorting(station.name)
+            result.forEach { (key, value) ->
+                trainCacheUtils.setCache(key.toLong(), stationId, value)
+            }
+
+            val trainRealTimes = result.getOrElse(subwayLine.identity.toString()) { emptyList() }
+            return upDownType?.let { type ->
+                trainRealTimes.filter { it.upDownType == type }.take(4)
+            } ?: trainRealTimes
+        } catch (e: InterruptedException) {
+            logger.error("Lock 획득 중 인터럽트 발생", e)
+            throw BusinessException(ResponseCode.LOCK_ACQUISITION_FAILED)
+        } finally {
+            if (lock.isHeldByCurrentThread) {
+                lock.unlock()
+                logger.info("[cache miss] 외부 열차 도착 정보 API 호출 완료 (분산 락 해제): lockKey=$lockKey")
+            }
+        }
     }
 
     private fun requestTrainRealTimesAndSorting(
@@ -170,16 +201,47 @@ class TrainService(
         val subwayLineId = subwayLineReader.getById(command.subwayLineId).id
         val trainNo = command.trainNo
 
-        congestionCacheUtils.getCache(subwayLineId, trainNo)?.let { return it }
+        congestionCacheUtils.getCache(subwayLineId, trainNo)?.let {
+            logger.info("[cache hit] 혼잡도 응답 반환: subwayLineId=$subwayLineId, trainNo=$trainNo")
+            return it
+        }
 
-        val correctTrainNum = getCorrectTrainNum(subwayLineId, trainNo)
-        val response = trainCongestionClient.getCongestions(subwayLineId, correctTrainNum.toInt())
-        val trainCongestion = response.data!!
+        val lockKey = "congestion:$subwayLineId-$trainNo"
+        val lock = redissonClient.getLock(lockKey)
 
-        val congestions = mapCongestionDto(response.success, trainCongestion)
-        val congestionDto = GetCongestionDto.Response.from(correctTrainNum, congestions)
-        congestionCacheUtils.setCache(subwayLineId, correctTrainNum, congestionDto)
-        return congestionDto
+        try {
+            val acquired = lock.tryLock(10, 15, TimeUnit.SECONDS)
+            if (!acquired) {
+                logger.error("분산 락 획득 실패: lockKey=$lockKey")
+                throw BusinessException(ResponseCode.LOCK_ACQUISITION_FAILED)
+            }
+
+            congestionCacheUtils.getCache(subwayLineId, trainNo)?.let {
+                logger.info("[cache miss] 이미 캐싱된 데이터로 인해 바로 락 해제 후 종료: lockKey=$lockKey")
+                lock.unlock()
+                return it
+            }
+
+            logger.info("[cache miss] 외부 열차 혼잡도 API 호출 시작 (분산 락 획득): lockKey=$lockKey")
+
+            val correctTrainNum = getCorrectTrainNum(subwayLineId, trainNo)
+            val response = trainCongestionClient.getCongestions(subwayLineId, correctTrainNum.toInt())
+            val trainCongestion = response.data!!
+
+            val congestions = mapCongestionDto(response.success, trainCongestion)
+            val congestionDto = GetCongestionDto.Response.from(correctTrainNum, congestions)
+
+            congestionCacheUtils.setCache(subwayLineId, correctTrainNum, congestionDto)
+            return congestionDto
+        } catch (e: InterruptedException) {
+            logger.error("Lock 획득 중 인터럽트 발생", e)
+            throw BusinessException(ResponseCode.LOCK_ACQUISITION_FAILED)
+        } finally {
+            if (lock.isHeldByCurrentThread) {
+                lock.unlock()
+                logger.info("[cache miss] 외부 열차 혼잡도 API 처리 완료 (분산 락 해제): lockKey=$lockKey")
+            }
+        }
     }
 
     private fun getCorrectTrainNum(subwayLineId: Long, trainNo: String): String {
