@@ -133,7 +133,9 @@ class TrainService(
         val totalTrainRealTimes = mutableListOf<RealtimeArrivalListDTO>()
 
         while (startIndex <= totalSize) {
-            val trainRealTimesPublicData = seoulTrainClient.getTrainRealTimes(stationName, startIndex, endIndex)
+            val trainRealTimesPublicData = seoulTrainClient.getTrainRealTimesByMono(stationName, startIndex, endIndex)
+                .block() ?: throw BusinessException(ResponseCode.NOT_EXIST_ARRIVAL_TRAIN)
+
             totalSize = trainRealTimesPublicData.errorMessage?.total ?: break
             trainRealTimesPublicData.realtimeArrivalList?.let { totalTrainRealTimes.addAll(it) }
             startIndex = endIndex + 1
@@ -225,7 +227,9 @@ class TrainService(
             logger.info("[cache miss] 외부 열차 혼잡도 API 호출 시작 (분산 락 획득): lockKey=$lockKey")
 
             val correctTrainNum = getCorrectTrainNum(subwayLineId, trainNo)
-            val response = trainCongestionClient.getCongestions(subwayLineId, correctTrainNum.toInt())
+            val response = trainCongestionClient.getCongestionsByMono(subwayLineId, correctTrainNum.toInt())
+                .block() ?: throw BusinessException(ResponseCode.FAILED_TO_GET_TRAIN_INFO)
+
             val trainCongestion = response.data!!
 
             val congestions = mapCongestionDto(response.success, trainCongestion)
