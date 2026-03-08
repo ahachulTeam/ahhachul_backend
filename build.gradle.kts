@@ -184,6 +184,8 @@ project(":application") {
         implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 
         implementation("org.redisson:redisson-spring-boot-starter:3.52.0")
+
+        implementation("org.springframework.boot:spring-boot-starter-webflux")
     }
 
     val snippetsDir by extra {
