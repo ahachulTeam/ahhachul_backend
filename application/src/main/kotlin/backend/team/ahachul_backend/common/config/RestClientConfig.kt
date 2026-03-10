@@ -1,37 +1,40 @@
 package backend.team.ahachul_backend.common.config
 
-import io.netty.channel.ChannelOption
-import io.netty.handler.timeout.ReadTimeoutHandler
-import io.netty.handler.timeout.WriteTimeoutHandler
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.impl.classic.HttpClients
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager
+import org.apache.hc.core5.util.TimeValue
+import org.apache.hc.core5.util.Timeout
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.client.reactive.ReactorClientHttpConnector
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.netty.http.client.HttpClient
-import reactor.netty.resources.ConnectionProvider
-import java.time.Duration
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
+import org.springframework.web.client.RestClient
 
 @Configuration
-class WebClientConfig {
+class RestClientConfig {
 
     @Bean
-    fun webClient(): WebClient {
-        val provider = ConnectionProvider.builder("webclient")
-            .maxConnections(100)
-            .pendingAcquireTimeout(Duration.ofSeconds(3))
+    fun restClient(): RestClient {
+
+        val connectionManager = PoolingHttpClientConnectionManager()
+        connectionManager.maxTotal = 200
+        connectionManager.defaultMaxPerRoute = 100
+
+        val requestConfig = RequestConfig.custom()
+            .setConnectTimeout(Timeout.ofSeconds(3))
+            .setResponseTimeout(Timeout.ofSeconds(3))
             .build()
 
-        val httpClient = HttpClient.create(provider)
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000)
-            .responseTimeout(Duration.ofSeconds(3))
-            .doOnConnected { conn ->
-                conn.addHandlerLast(ReadTimeoutHandler(10))
-                conn.addHandlerLast(WriteTimeoutHandler(10))
-            }
+        val httpClient = HttpClients.custom()
+            .setConnectionManager(connectionManager)
+            .setDefaultRequestConfig(requestConfig)
+            .evictIdleConnections(TimeValue.ofSeconds(30))
+            .build()
 
-        return WebClient.builder()
-            .clientConnector(ReactorClientHttpConnector(httpClient))
-            .codecs { it.defaultCodecs().maxInMemorySize(2 * 1024 * 1024) }
+        val requestFactory = HttpComponentsClientHttpRequestFactory(httpClient)
+
+        return RestClient.builder()
+            .requestFactory(requestFactory)
             .build()
     }
 }
