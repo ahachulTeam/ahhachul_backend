@@ -56,7 +56,6 @@ subprojects {
         // TODO: infra-module 분리
         implementation("org.springframework.boot:spring-boot-starter-data-redis")
         implementation("org.springframework.boot:spring-boot-starter-web")
-        testImplementation("org.springframework.boot:spring-boot-starter-test")
 
         // https://mvnrepository.com/artifact/io.github.microutils/kotlin-logging/3.0.5
         implementation("io.github.microutils:kotlin-logging:3.0.5")
@@ -64,11 +63,7 @@ subprojects {
         // https://mvnrepository.com/artifact/com.h2database/h2
         runtimeOnly("com.h2database:h2:2.1.214")
 
-        // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api/5.9.2
-        testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
-
-        // https://www.testcontainers.org/
-        testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+        testImplementation("org.springframework.boot:spring-boot-starter-test")
         testImplementation("org.testcontainers:testcontainers:1.18.1")
         testImplementation("org.testcontainers:junit-jupiter:1.18.1")
 
