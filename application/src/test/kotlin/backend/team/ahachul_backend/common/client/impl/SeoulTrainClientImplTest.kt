@@ -20,19 +20,24 @@ import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers.method
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
+import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestTemplate
 
-class SeoulTrainClientImplTest(
-    @Autowired val seoulTrainClient: SeoulTrainClient,
-    @Autowired val restTemplate: RestTemplate,
-    @Autowired val publicDataProperties: PublicDataProperties,
-) : CommonServiceTestConfig() {
+class SeoulTrainClientImplTest: CommonServiceTestConfig() {
 
     private lateinit var mockServer: MockRestServiceServer
+    private lateinit var restClient: RestClient
+    private lateinit var seoulTrainClient: SeoulTrainClient
+
+    @Autowired
+    lateinit var publicDataProperties: PublicDataProperties
 
     @BeforeEach
     fun setUp() {
-        mockServer = MockRestServiceServer.createServer(restTemplate)
+        val builder = RestClient.builder()
+        mockServer = MockRestServiceServer.bindTo(builder).build()
+        restClient = builder.build()
+        seoulTrainClient = SeoulTrainClientImpl(restClient, publicDataProperties)
     }
 
     @Test
