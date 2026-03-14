@@ -93,8 +93,6 @@
 #### Github Action, AWS ECR / ECS, Docker
 
 <img width="836" height="482" alt="스크린샷 2025-11-18 오후 3 55 54" src="https://github.com/user-attachments/assets/61b29c06-e5fa-4634-b108-b840aa03d09a" />
-" />
-
 
 
 ## ERD 
