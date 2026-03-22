@@ -184,6 +184,9 @@ project(":application") {
         implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 
         implementation("org.redisson:redisson-spring-boot-starter:3.52.0")
+
+        // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine
+        implementation("com.github.ben-manes.caffeine:caffeine")
     }
 
     val snippetsDir by extra {
