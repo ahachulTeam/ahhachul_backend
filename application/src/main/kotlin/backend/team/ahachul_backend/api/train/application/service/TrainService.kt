@@ -1,6 +1,5 @@
 package backend.team.ahachul_backend.api.train.application.service
 
-import backend.team.ahachul_backend.api.common.application.port.out.StationReader
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetCongestionDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesDto
@@ -18,12 +17,14 @@ import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.exception.BusinessException
 import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.logging.Logger
-import backend.team.ahachul_backend.common.persistence.SubwayLineReader
 import backend.team.ahachul_backend.common.response.ResponseCode
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.redisson.api.RedissonClient
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.TimeUnit
 
@@ -31,16 +32,17 @@ import java.util.concurrent.TimeUnit
 @Transactional(readOnly = true)
 class TrainService(
     private val trainReader: TrainReader,
-    private val stationLineReader: StationReader,
-    private val subwayLineReader: SubwayLineReader,
-
     private val seoulTrainClient: SeoulTrainClient,
-
+    private val trainQueryService: TrainQueryService,
     private val trainCacheUtils: TrainCacheUtils,
     private val congestionCacheUtils: CongestionCacheUtils,
     private val trainCongestionClient: TrainCongestionClient,
     private val redissonClient: RedissonClient,
 ): TrainUseCase {
+
+    @Lazy
+    @Autowired
+    private lateinit var self: TrainService
 
     private val logger: Logger = Logger(javaClass)
 
@@ -74,13 +76,12 @@ class TrainService(
 
     /**
      * 실시간 열차 도착 정보를 조회하는 메서드
+     * - DB 조회는 trainQueryService 에서 트랜잭션 내 처리 후 커넥션 반환
+     * - 외부 API 호출은 트랜잭션 없이 수행
      */
-    @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalTrainApiGet")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     override fun getTrainRealTimes(stationId: Long, subwayLineId: Long, upDownType: UpDownType?): List<GetTrainRealTimesDto.TrainRealTime> {
-        val station = stationLineReader.getById(stationId)
-        val subwayLine = subwayLineReader.getById(subwayLineId)
-        val subwayLineIdentity = subwayLine.identity
-        val lockKey = "${subwayLineIdentity}-${stationId}"
+        val (stationName, subwayLineIdentity, lockKey) = trainQueryService.getStationAndSubwayLine(stationId, subwayLineId)
 
         trainCacheUtils.getCache(subwayLineIdentity, stationId)?.let {
             logger.info("[cache hit] 응답 반환: lockKey=$lockKey")
@@ -104,12 +105,12 @@ class TrainService(
             }
 
             logger.info("[cache miss] 외부 열차 도착 정보 API 호출 시작 (분산 락 획득): lockKey=$lockKey")
-            val result = requestTrainRealTimesAndSorting(station.name)
+            val result = self.requestTrainRealTimesAndSorting(stationName)
             result.forEach { (key, value) ->
                 trainCacheUtils.setCache(key.toLong(), stationId, value)
             }
 
-            val trainRealTimes = result.getOrElse(subwayLine.identity.toString()) { emptyList() }
+            val trainRealTimes = result.getOrElse(subwayLineIdentity.toString()) { emptyList() }
             return upDownType?.let { type ->
                 trainRealTimes.filter { it.upDownType == type }.take(4)
             } ?: trainRealTimes
@@ -124,7 +125,8 @@ class TrainService(
         }
     }
 
-    private fun requestTrainRealTimesAndSorting(
+    @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnRequestTrainRealTimes")
+    fun requestTrainRealTimesAndSorting(
         stationName: String
     ): Map<String, List<GetTrainRealTimesDto.TrainRealTime>> {
         var startIndex = 1
@@ -149,16 +151,26 @@ class TrainService(
             .mapValues { generateTrainRealTimeByUpDnType(it.value) }
     }
 
+    fun fallbackOnRequestTrainRealTimes(
+        stationName: String, e: Exception
+    ): Map<String, List<GetTrainRealTimesDto.TrainRealTime>> {
+        logger.error("외부 열차 도착 API fallback: stationName=$stationName, cause=${e::class.simpleName}")
+        throw when (e) {
+            is CallNotPermittedException -> CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
+            else -> CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
+        }
+    }
+
     private fun generateTrainRealTimeByUpDnType(trainRealTime: List<RealtimeArrivalListDTO>?): List<GetTrainRealTimesDto.TrainRealTime> {
         val total = mutableListOf<GetTrainRealTimesDto.TrainRealTime>()
         trainRealTime
             ?.groupBy { it.updnLine }
             ?.entries?.forEach { map ->
-                val subIdx = if (map.value.size >= 2) 2 else 1  // 상행, 하행 각각 최대 두개씩 반환
+                val subIdx = if (map.value.size >= 2) 2 else 1
 
                 val lis = map.value.map { dto ->
                         GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
-                    }.sortedWith( compareBy(
+                    }.sortedWith(compareBy(
                         { it.currentTrainArrivalCode.priority },
                         { it.stationOrder }
                     )).subList(0, subIdx)
@@ -169,7 +181,6 @@ class TrainService(
     }
 
     private fun extractStationOrder(destinationMessage: String): Int {
-        // 도착 우선순위 추출
         return if (destinationMessage.startsWith("[")) {
             pattern.find(destinationMessage)!!.value.toInt().times(2)
         } else if (destinationMessage.contains("분")) {
@@ -179,26 +190,14 @@ class TrainService(
         }
     }
 
-    fun fallbackOnExternalTrainApiGet(
-        stationId: Long, subwayLineId: Long, upDownType: UpDownType?, e: Exception
-    ): List<GetTrainRealTimesDto.TrainRealTime> {
-        when (e) {
-            is CallNotPermittedException -> {
-                logger.error("circuit breaker opened for external train api")
-                throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
-            }
-            else -> {
-                throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
-            }
-        }
-    }
-
     /**
      * 실시간 열차 혼잡도 정보를 조회하는 메서드
+     * - DB 조회는 trainQueryService 에서 트랜잭션 내 처리 후 커넥션 반환
+     * - 외부 API 호출은 트랜잭션 없이 수행
      */
-    @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalCongestionApiGet")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     override fun getTrainCongestion(command: GetCongestionCommand): GetCongestionDto.Response {
-        val subwayLineId = subwayLineReader.getById(command.subwayLineId).id
+        val subwayLineId = trainQueryService.getSubwayLineId(command.subwayLineId)
         val trainNo = command.trainNo
 
         congestionCacheUtils.getCache(subwayLineId, trainNo)?.let {
@@ -223,16 +222,7 @@ class TrainService(
             }
 
             logger.info("[cache miss] 외부 열차 혼잡도 API 호출 시작 (분산 락 획득): lockKey=$lockKey")
-
-            val correctTrainNum = getCorrectTrainNum(subwayLineId, trainNo)
-            val response = trainCongestionClient.getCongestions(subwayLineId, correctTrainNum.toInt())
-            val trainCongestion = response.data!!
-
-            val congestions = mapCongestionDto(response.success, trainCongestion)
-            val congestionDto = GetCongestionDto.Response.from(correctTrainNum, congestions)
-
-            congestionCacheUtils.setCache(subwayLineId, correctTrainNum, congestionDto)
-            return congestionDto
+            return self.fetchCongestion(subwayLineId, trainNo)
         } catch (e: InterruptedException) {
             logger.error("Lock 획득 중 인터럽트 발생", e)
             throw BusinessException(ResponseCode.LOCK_ACQUISITION_FAILED)
@@ -244,8 +234,30 @@ class TrainService(
         }
     }
 
+    @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnFetchCongestion")
+    fun fetchCongestion(subwayLineId: Long, trainNo: String): GetCongestionDto.Response {
+        val correctTrainNum = getCorrectTrainNum(subwayLineId, trainNo)
+        val response = trainCongestionClient.getCongestions(subwayLineId, correctTrainNum.toInt())
+
+        val trainCongestion = response.data!!
+        val congestions = mapCongestionDto(response.success, trainCongestion)
+        val congestionDto = GetCongestionDto.Response.from(correctTrainNum, congestions)
+
+        congestionCacheUtils.setCache(subwayLineId, correctTrainNum, congestionDto)
+        return congestionDto
+    }
+
+    fun fallbackOnFetchCongestion(
+        subwayLineId: Long, trainNo: String, e: Exception
+    ): GetCongestionDto.Response {
+        logger.error("외부 혼잡도 API fallback: subwayLineId=$subwayLineId, cause=${e::class.simpleName}")
+        throw when (e) {
+            is CallNotPermittedException -> CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
+            else -> CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
+        }
+    }
+
     private fun getCorrectTrainNum(subwayLineId: Long, trainNo: String): String {
-        // API 자체에서 발생하는 열차 번호 에러 수정
         return when (trainNo[0] != subwayLineId.toString()[0]) {
             false -> "${subwayLineId}${trainNo.substring(1, trainNo.length)}"
             true -> trainNo
@@ -254,30 +266,15 @@ class TrainService(
 
     private fun mapCongestionDto(
         success: Boolean, trainCongestion: TrainCongestionDto.Train
-    ): List<GetCongestionDto.Section>  {
+    ): List<GetCongestionDto.Section> {
         if (success) {
             val congestion = trainCongestion.congestionResult.congestionCar
             val congestions = congestion.trim().split(DELIMITER)
-            val congestionIntList = congestions.map { it.toInt() }
-            return congestionIntList.mapIndexed {
-                    idx, it -> GetCongestionDto.Section.from(idx, it)
+            return congestions.map { it.toInt() }.mapIndexed { idx, it ->
+                GetCongestionDto.Section.from(idx, it)
             }
         }
         return emptyList()
-    }
-
-    fun fallbackOnExternalCongestionApiGet(
-        command: GetCongestionCommand, e: Exception
-    ): GetCongestionDto.Response {
-        when (e) {
-            is CallNotPermittedException -> {
-                logger.error("circuit breaker opened for external congestion api")
-                throw CommonException(ResponseCode.FAILED_TO_GET_TRAIN_INFO, e)
-            }
-            else -> {
-                throw CommonException(ResponseCode.INTERNAL_SERVER_ERROR, e)
-            }
-        }
     }
 
     companion object {

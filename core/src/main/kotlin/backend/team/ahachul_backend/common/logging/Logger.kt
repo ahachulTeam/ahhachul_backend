@@ -17,6 +17,10 @@ class Logger(
         logger.debug { message }
     }
 
+    fun warn(message: String?) {
+        logger.warn { message }
+    }
+
     fun warn(message: String?, code: ResponseCode, ex: Exception) {
         logger.warn(ex) { makeMessage(message, code) }
     }
