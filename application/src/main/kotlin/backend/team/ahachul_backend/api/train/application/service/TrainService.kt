@@ -1,6 +1,5 @@
 package backend.team.ahachul_backend.api.train.application.service
 
-import backend.team.ahachul_backend.api.common.application.port.out.StationReader
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetCongestionDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainDto
 import backend.team.ahachul_backend.api.train.adapter.`in`.dto.GetTrainRealTimesDto
@@ -18,12 +17,12 @@ import backend.team.ahachul_backend.common.exception.AdapterException
 import backend.team.ahachul_backend.common.exception.BusinessException
 import backend.team.ahachul_backend.common.exception.CommonException
 import backend.team.ahachul_backend.common.logging.Logger
-import backend.team.ahachul_backend.common.persistence.SubwayLineReader
 import backend.team.ahachul_backend.common.response.ResponseCode
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.redisson.api.RedissonClient
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.TimeUnit
 
@@ -31,11 +30,10 @@ import java.util.concurrent.TimeUnit
 @Transactional(readOnly = true)
 class TrainService(
     private val trainReader: TrainReader,
-    private val stationLineReader: StationReader,
-    private val subwayLineReader: SubwayLineReader,
 
     private val seoulTrainClient: SeoulTrainClient,
 
+    private val trainQueryService: TrainQueryService,
     private val trainCacheUtils: TrainCacheUtils,
     private val congestionCacheUtils: CongestionCacheUtils,
     private val trainCongestionClient: TrainCongestionClient,
@@ -74,13 +72,13 @@ class TrainService(
 
     /**
      * 실시간 열차 도착 정보를 조회하는 메서드
+     * - DB 조회는 trainQueryService 에서 트랜잭션 내 처리 후 커넥션 반환
+     * - 외부 API 호출은 트랜잭션 없이 수행
      */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalTrainApiGet")
     override fun getTrainRealTimes(stationId: Long, subwayLineId: Long, upDownType: UpDownType?): List<GetTrainRealTimesDto.TrainRealTime> {
-        val station = stationLineReader.getById(stationId)
-        val subwayLine = subwayLineReader.getById(subwayLineId)
-        val subwayLineIdentity = subwayLine.identity
-        val lockKey = "${subwayLineIdentity}-${stationId}"
+        val (stationName, subwayLineIdentity, lockKey) = trainQueryService.getStationAndSubwayLine(stationId, subwayLineId)
 
         trainCacheUtils.getCache(subwayLineIdentity, stationId)?.let {
             logger.info("[cache hit] 응답 반환: lockKey=$lockKey")
@@ -104,12 +102,12 @@ class TrainService(
             }
 
             logger.info("[cache miss] 외부 열차 도착 정보 API 호출 시작 (분산 락 획득): lockKey=$lockKey")
-            val result = requestTrainRealTimesAndSorting(station.name)
+            val result = requestTrainRealTimesAndSorting(stationName)
             result.forEach { (key, value) ->
                 trainCacheUtils.setCache(key.toLong(), stationId, value)
             }
 
-            val trainRealTimes = result.getOrElse(subwayLine.identity.toString()) { emptyList() }
+            val trainRealTimes = result.getOrElse(subwayLineIdentity.toString()) { emptyList() }
             return upDownType?.let { type ->
                 trainRealTimes.filter { it.upDownType == type }.take(4)
             } ?: trainRealTimes
@@ -195,10 +193,13 @@ class TrainService(
 
     /**
      * 실시간 열차 혼잡도 정보를 조회하는 메서드
+     * - DB 조회는 trainQueryService 에서 트랜잭션 내 처리 후 커넥션 반환
+     * - 외부 API 호출은 트랜잭션 없이 수행
      */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @CircuitBreaker(name = CUSTOM_CIRCUIT_BREAKER, fallbackMethod = "fallbackOnExternalCongestionApiGet")
     override fun getTrainCongestion(command: GetCongestionCommand): GetCongestionDto.Response {
-        val subwayLineId = subwayLineReader.getById(command.subwayLineId).id
+        val subwayLineId = trainQueryService.getSubwayLineId(command.subwayLineId)
         val trainNo = command.trainNo
 
         congestionCacheUtils.getCache(subwayLineId, trainNo)?.let {
