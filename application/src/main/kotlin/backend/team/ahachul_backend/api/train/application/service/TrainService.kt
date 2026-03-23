@@ -169,25 +169,27 @@ class TrainService(
                 val subIdx = if (map.value.size >= 2) 2 else 1
 
                 val lis = map.value.map { dto ->
-                        GetTrainRealTimesDto.TrainRealTime.of(dto, extractStationOrder(dto.arvlMsg2))
+                        GetTrainRealTimesDto.TrainRealTime.of(dto).also { train ->
+                            val remaining = train.currentArrivalTime - System.currentTimeMillis() / 1000
+                            val remainingMin = remaining / 60
+                            val remainingSec = remaining % 60
+                            logger.info(
+                                "[열차 도착 정보] trainNum=${train.trainNum}, " +
+                                "upDownType=${train.upDownType}, " +
+                                "arrivalCode=${train.currentTrainArrivalCode}, " +
+                                "barvlDt(arrivalSeconds)=${train.arrivalSeconds / 60}분 ${train.arrivalSeconds % 60}초, " +
+                                "currentArrivalTime=${train.currentArrivalTime}, " +
+                                "remaining=${remainingMin}분 ${remainingSec}초"
+                            )
+                        }
                     }.sortedWith(compareBy(
                         { it.currentTrainArrivalCode.priority },
-                        { it.stationOrder }
+                        { it.arrivalSeconds }
                     )).subList(0, subIdx)
 
                 total.addAll(lis)
             }
         return total
-    }
-
-    private fun extractStationOrder(destinationMessage: String): Int {
-        return if (destinationMessage.startsWith("[")) {
-            pattern.find(destinationMessage)!!.value.toInt().times(2)
-        } else if (destinationMessage.contains("분")) {
-            pattern.find(destinationMessage)!!.value.toInt()
-        } else {
-            Int.MAX_VALUE
-        }
     }
 
     /**
@@ -279,6 +281,5 @@ class TrainService(
 
     companion object {
         const val DELIMITER = "|"
-        val pattern = "\\d+".toRegex()
     }
 }

@@ -11,41 +11,54 @@ class GetTrainRealTimesDto {
         val stationId: Long,
         val subwayLineId: Long,
         val upDownType: UpDownType?
-    ) {
-    }
+    )
 
     data class Response(
         val trainRealTimes: List<TrainRealTime>,
-    ) {
-    }
+    )
 
     data class TrainRealTime(
         @JsonIgnore
         val subwayId: String?,
         @JsonIgnore
-        val stationOrder: Int?,
+        val arrivalSeconds: Long,
         val upDownType: UpDownType,
         val nextStationDirection: String,
         val destinationStationDirection: String,
         val trainNum: String,
-        val currentArrivalTime: Int,
+        val currentArrivalTime: Long,
         val currentTrainArrivalCode: TrainArrivalCode,
     ) {
 
         companion object {
-            fun of(it: RealtimeArrivalListDTO, stationOrder: Int): TrainRealTime {
-                val trainDirection = it.trainLineNm.split("-")
+            fun of(dto: RealtimeArrivalListDTO): TrainRealTime {
+                val barvlDt = dto.barvlDt?.toLongOrNull() ?: 0L
+                val arrivalSeconds = computeArrivalSeconds(barvlDt, dto.arvlMsg2)
+                val trainDirection = dto.trainLineNm.split("-")
                 return TrainRealTime(
-                    subwayId = it.subwayId,
-                    stationOrder = stationOrder,
-                    upDownType = UpDownType.from(it.updnLine),
+                    subwayId = dto.subwayId,
+                    arrivalSeconds = arrivalSeconds,
+                    upDownType = UpDownType.from(dto.updnLine),
                     nextStationDirection = trainDirection[1].trim(),
                     destinationStationDirection = trainDirection[0].trim(),
-                    trainNum = it.btrainNo,
-                    currentArrivalTime = if (stationOrder == Int.MAX_VALUE) { 0 } else stationOrder,
-                    currentTrainArrivalCode = TrainArrivalCode.from(it.arvlCd)
+                    trainNum = dto.btrainNo,
+                    currentArrivalTime = System.currentTimeMillis() / 1000 + arrivalSeconds,
+                    currentTrainArrivalCode = TrainArrivalCode.from(dto.arvlCd)
                 )
             }
+
+            private fun computeArrivalSeconds(barvlDt: Long, arvlMsg2: String): Long {
+                if (barvlDt > 0) return barvlDt
+                // barvlDt = 0이지만 [N]번째 전역인 경우 → 역당 150초로 추정
+                val match = DISTANT_STATION_PATTERN.find(arvlMsg2)
+                if (match != null) {
+                    return match.groupValues[1].toLong() * SECONDS_PER_STATION
+                }
+                return 0L
+            }
+
+            private val DISTANT_STATION_PATTERN = "\\[(\\d+)\\]번째".toRegex()
+            private const val SECONDS_PER_STATION = 150L  // 역당 2분 30초 추정
         }
     }
 }
