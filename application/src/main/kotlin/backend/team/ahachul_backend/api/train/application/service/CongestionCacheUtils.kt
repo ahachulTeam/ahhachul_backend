@@ -58,19 +58,12 @@ class CongestionCacheUtils(
         return localCache.getIfPresent(createKey(subwayLineId, trainNo))
     }
 
-    fun getLocalCache(
-        subwayLineId: Long,
-        trainNo: String
-    ): GetCongestionDto.Response? {
-        return localCache.getIfPresent(createKey(subwayLineId, trainNo))
-    }
-
     private fun createKey(subwayLineId: Long, trainNo: String): String {
         return "${TRAIN_CONGESTION_REDIS_PREFIX}${subwayLineId}-$trainNo"
     }
 
     companion object {
         const val TRAIN_CONGESTION_REDIS_PREFIX = "TRAIN_CONGESTION:"
-        const val TRAIN_CONGESTION_EXPIRE_SEC = 20L
+        const val TRAIN_CONGESTION_EXPIRE_SEC = 15L
     }
 }
