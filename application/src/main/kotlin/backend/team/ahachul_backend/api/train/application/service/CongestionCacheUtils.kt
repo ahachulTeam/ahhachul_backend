@@ -21,7 +21,7 @@ class CongestionCacheUtils(
     private val logger = Logger(javaClass)
 
     private val localCache: Cache<String, GetCongestionDto.Response> = Caffeine.newBuilder()
-        .expireAfterWrite(TRAIN_CONGESTION_EXPIRE_SEC, TimeUnit.SECONDS)
+        .expireAfterWrite(TRAIN_REAL_TIME_LOCAL_EXPIRE_SEC, TimeUnit.SECONDS)
         .build()
 
     fun setCache(
@@ -65,5 +65,6 @@ class CongestionCacheUtils(
     companion object {
         const val TRAIN_CONGESTION_REDIS_PREFIX = "TRAIN_CONGESTION:"
         const val TRAIN_CONGESTION_EXPIRE_SEC = 15L
+        const val TRAIN_REAL_TIME_LOCAL_EXPIRE_SEC = 60L
     }
 }

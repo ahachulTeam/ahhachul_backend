@@ -21,7 +21,7 @@ class TrainCacheUtils(
     private val logger = Logger(javaClass)
 
     private val localCache: Cache<String, List<GetTrainRealTimesDto.TrainRealTime>> = Caffeine.newBuilder()
-        .expireAfterWrite(TRAIN_REAL_TIME_EXPIRE_SEC, TimeUnit.SECONDS)
+        .expireAfterWrite(TRAIN_REAL_TIME_LOCAL_EXPIRE_SEC, TimeUnit.SECONDS)
         .build()
 
     fun setCache(
@@ -62,5 +62,6 @@ class TrainCacheUtils(
     companion object {
         const val TRAIN_REAL_TIME_REDIS_PREFIX = "TRAIN_TIME:"
         const val TRAIN_REAL_TIME_EXPIRE_SEC = 15L
+        const val TRAIN_REAL_TIME_LOCAL_EXPIRE_SEC = 60L
     }
 }
